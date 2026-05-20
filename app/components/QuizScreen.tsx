@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 type Props = {
   episodeId: string;
   onBack: () => void;
+  onNextEpisode: (nextEpisodeId: string) => void;
 };
 
 type Question = {
@@ -35,8 +36,9 @@ type Episode = {
   questions: Question[];
 };
 
-export default function QuizScreen({ episodeId, onBack }: Props) {
+export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) {
   const [episode, setEpisode] = useState<Episode | null>(null);
+  const [nextEpisode, setNextEpisode] = useState<Episode | null>(null);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState(false);
@@ -56,6 +58,19 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
 
       if (!error && data) {
         setEpisode(data);
+
+        const { data: allEpisodes } = await supabase
+          .from("episodes")
+          .select("id, title, level, audio_url, questions")
+          .eq("level", data.level)
+          .order("created_at", { ascending: true });
+
+        if (allEpisodes) {
+          const currentIndex = allEpisodes.findIndex((e) => e.id === episodeId);
+          if (currentIndex !== -1 && currentIndex < allEpisodes.length - 1) {
+            setNextEpisode(allEpisodes[currentIndex + 1]);
+          }
+        }
       }
 
       setLoading(false);
@@ -66,24 +81,17 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
 
   function calculateScore() {
     if (!episode) return 0;
-
     let score = 0;
     episode.questions.forEach((question, index) => {
-      if (answers[index] === question.correctAnswer) {
-        score++;
-      }
+      if (answers[index] === question.correctAnswer) score++;
     });
-
     return score;
   }
 
   async function saveResult() {
     if (!episode || resultSaved) return;
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) return;
 
     await supabase.from("user_results").insert([
@@ -119,6 +127,8 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
   const question = episode.questions[currentQuestion];
   const answeredCount = Object.keys(answers).length;
   const progressPercentage = (answeredCount / episode.questions.length) * 100;
+  const score = calculateScore();
+  const scorePercentage = Math.round((score / episode.questions.length) * 100);
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
@@ -155,8 +165,8 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
               <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
                 <p className="font-semibold text-[#3b2f2f]">⚠️ Before you start</p>
                 <p className="mt-2 text-sm text-[#7a6258]">
-                  The audio will not be available during the questions. Make sure you have taken
-                  your notes and are ready to begin.
+                  The audio will not be available during the questions. Make sure
+                  you have taken your notes and are ready to begin.
                 </p>
                 <div className="mt-4 flex gap-3">
                   <button
@@ -207,7 +217,6 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
               {episode.questions.map((_, index) => {
                 const isCurrent = currentQuestion === index;
                 const isAnswered = Boolean(answers[index]);
-
                 return (
                   <button
                     key={index}
@@ -232,9 +241,7 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
               {(["A", "B", "C", "D", "E"] as const).map((letter) => (
                 <button
                   key={letter}
-                  onClick={() =>
-                    setAnswers({ ...answers, [currentQuestion]: letter })
-                  }
+                  onClick={() => setAnswers({ ...answers, [currentQuestion]: letter })}
                   className={`rounded-2xl border p-4 text-left transition ${
                     answers[currentQuestion] === letter
                       ? "border-[#3b2f2f] bg-[#ead7cc]"
@@ -282,9 +289,10 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
           <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 shadow-sm">
             <div className="text-center">
               <h2 className="text-4xl font-bold">Your Score</h2>
-              <p className="mt-4 text-5xl font-bold">
-                {calculateScore()} / {episode.questions.length}
+              <p className="mt-4 text-6xl font-bold">
+                {score} / {episode.questions.length}
               </p>
+              <p className="mt-2 text-lg text-[#7a6258]">{scorePercentage}% accuracy</p>
             </div>
 
             <div className="mt-8 flex flex-col gap-4">
@@ -322,12 +330,12 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
                         let bgColor = "bg-white";
                         let label = null;
 
-                        if (isCorrectAnswer) {
+                        if (isCorrectAnswer && !isCorrect) {
                           borderColor = "border-green-400";
                           bgColor = "bg-green-50";
                           label = (
                             <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
-                              Correct
+                              Correct answer
                             </span>
                           );
                         } else if (isUserAnswer && !isCorrect) {
@@ -338,7 +346,18 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
                               Your answer
                             </span>
                           );
+                        } else if (isCorrectAnswer && isCorrect) {
+                          borderColor = "border-green-400";
+                          bgColor = "bg-green-50";
+                          label = (
+                            <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+                              Correct ✓
+                            </span>
+                          );
                         }
+
+                        const showExplanation =
+                          !isCorrect && explanation && (isCorrectAnswer || isUserAnswer);
 
                         return (
                           <div
@@ -350,10 +369,8 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
                               <span>{item.options[letter]}</span>
                               {label}
                             </div>
-                            {explanation && (isCorrectAnswer || isUserAnswer) && (
-                              <p className="mt-2 text-sm text-[#7a6258]">
-                                💡 {explanation}
-                              </p>
+                            {showExplanation && (
+                              <p className="mt-2 text-sm text-[#7a6258]">💡 {explanation}</p>
                             )}
                           </div>
                         );
@@ -364,19 +381,30 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
               })}
             </div>
 
-            <button
-              onClick={() => alert("Vocabulary review will open from here 😄")}
-              className="mt-8 w-full rounded-2xl border border-[#3b2f2f] bg-white px-6 py-4 font-semibold text-[#3b2f2f]"
-            >
-              Study Vocabulary
-            </button>
+            <div className="mt-8 flex flex-col gap-3">
+              <button
+                onClick={onBack}
+                className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]"
+              >
+                🔊 Study Vocabulary
+              </button>
 
-            <button
-              onClick={onBack}
-              className="mt-4 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white"
-            >
-              Back to Episode
-            </button>
+              {nextEpisode && (
+                <button
+                  onClick={() => onNextEpisode(nextEpisode.id)}
+                  className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white"
+                >
+                  Next Episode →
+                </button>
+              )}
+
+              <button
+                onClick={onBack}
+                className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]"
+              >
+                Back to Episodes
+              </button>
+            </div>
           </div>
         )}
       </section>

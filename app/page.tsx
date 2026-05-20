@@ -22,56 +22,35 @@ type Screen =
   | "progress"
   | "admin";
 
-export default function Home() {
-  const [screen, setScreen] = useState<Screen>("login");
-  const [selectedLevel, setSelectedLevel] = useState("");
-  const [selectedEpisodeId, setSelectedEpisodeId] = useState("");
-  const [userEmail, setUserEmail] = useState("");
+const ADMIN_EMAIL = "cammurat1994@gmail.com";
 
-  useEffect(() => {
-    async function getUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user?.email) {
-        setUserEmail(user.email);
-        setScreen("levels");
-      }
-    }
-
-    getUser();
-  }, []);
-
-  async function logout() {
-    await supabase.auth.signOut();
-    setUserEmail("");
-    setScreen("login");
-  }
-
-  function UserPanel() {
+function UserPanel({
+  userEmail,
+  onNavigate,
+  onLogout,
+}: {
+  userEmail: string;
+  onNavigate: (screen: Screen) => void;
+  onLogout: () => void;
+}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   if (!userEmail) return null;
 
-  const isAdmin = userEmail === "cammurat1994@gmail.com";
+  const isAdmin = userEmail === ADMIN_EMAIL;
 
   return (
     <div className="fixed right-5 top-5 z-50">
       <button
-  onClick={() => setIsMenuOpen(!isMenuOpen)}
-  className="flex items-center gap-3 rounded-full bg-[#3b2f2f] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-[#2f2424]"
->
-  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#3b2f2f]">
-    {isAdmin ? "A" : userEmail.charAt(0).toUpperCase()}
-  </span>
-
-  <span className="hidden sm:inline">
-    Account
-  </span>
-
-  <span>▾</span>
-</button>
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        className="flex items-center gap-3 rounded-full bg-[#3b2f2f] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-[#2f2424]"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#3b2f2f]">
+          {isAdmin ? "A" : userEmail.charAt(0).toUpperCase()}
+        </span>
+        <span className="hidden sm:inline">Account</span>
+        <span>▾</span>
+      </button>
 
       {isMenuOpen && (
         <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-[1.5rem] border border-[#e0c7bb] bg-white shadow-2xl">
@@ -79,18 +58,12 @@ export default function Home() {
             <p className="text-xs font-semibold uppercase tracking-wide text-[#7a6258]">
               {isAdmin ? "Administrator" : "Signed in"}
             </p>
-
-            <p className="mt-1 truncate text-sm font-bold text-[#3b2f2f]">
-              {userEmail}
-            </p>
+            <p className="mt-1 truncate text-sm font-bold text-[#3b2f2f]">{userEmail}</p>
           </div>
 
           {isAdmin && (
             <button
-              onClick={() => {
-                setScreen("admin");
-                setIsMenuOpen(false);
-              }}
+              onClick={() => { onNavigate("admin"); setIsMenuOpen(false); }}
               className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
             >
               🛡️ Admin
@@ -98,20 +71,14 @@ export default function Home() {
           )}
 
           <button
-            onClick={() => {
-              setScreen("progress");
-              setIsMenuOpen(false);
-            }}
+            onClick={() => { onNavigate("progress"); setIsMenuOpen(false); }}
             className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
           >
-            📊 Progress
+            📊 My Progress
           </button>
 
           <button
-            onClick={async () => {
-              await logout();
-              setIsMenuOpen(false);
-            }}
+            onClick={() => { onLogout(); setIsMenuOpen(false); }}
             className="flex w-full items-center gap-3 px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
           >
             🚪 Logout
@@ -122,34 +89,41 @@ export default function Home() {
   );
 }
 
-  function AdminButton() {
-    return (
-      <button
-        onClick={() => setScreen("admin")}
-        className="fixed bottom-6 right-6 z-50 rounded-full bg-[#3b2f2f] px-6 py-4 font-bold text-white shadow-lg"
-      >
-        Admin
-      </button>
-    );
+export default function Home() {
+  const [screen, setScreen] = useState<Screen>("login");
+  const [selectedLevel, setSelectedLevel] = useState("");
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+        setScreen("levels");
+      }
+    }
+    getUser();
+  }, []);
+
+  async function logout() {
+    await supabase.auth.signOut();
+    setUserEmail("");
+    setScreen("login");
   }
 
-  if (
-    screen === "admin" &&
-    userEmail !== "cammurat1994@gmail.com"
-  ) {
+  function navigateTo(s: Screen) {
+    setScreen(s);
+  }
+
+  if (screen === "admin" && userEmail !== ADMIN_EMAIL) {
     return (
       <>
-        <UserPanel />
-
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
           <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-10 text-center shadow-sm">
-            <h1 className="text-3xl font-bold text-red-600">
-              Access Denied
-            </h1>
-
-            <p className="mt-4 text-[#7a6258]">
-              You are not authorized to access admin panel.
-            </p>
+            <h1 className="text-3xl font-bold text-red-600">Access Denied</h1>
+            <p className="mt-4 text-[#7a6258]">You are not authorized to access admin panel.</p>
           </div>
         </main>
       </>
@@ -159,14 +133,14 @@ export default function Home() {
   if (screen === "progress") {
     return (
       <>
-        <UserPanel />
-    <MyProgressScreen
-  onBack={() => setScreen("levels")}
-  onSelectEpisode={(episodeId) => {
-    setSelectedEpisodeId(episodeId);
-    setScreen("mode-selection");
-  }}
-/>
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
+        <MyProgressScreen
+          onBack={() => setScreen("levels")}
+          onSelectEpisode={(episodeId) => {
+            setSelectedEpisodeId(episodeId);
+            setScreen("mode-selection");
+          }}
+        />
       </>
     );
   }
@@ -174,7 +148,7 @@ export default function Home() {
   if (screen === "admin") {
     return (
       <>
-        <UserPanel />
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <AdminScreen onBack={() => setScreen("levels")} />
       </>
     );
@@ -183,7 +157,7 @@ export default function Home() {
   if (screen === "vocabulary") {
     return (
       <>
-        <UserPanel />
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <VocabularyScreen
           episodeId={selectedEpisodeId}
           onBack={() => setScreen("mode-selection")}
@@ -195,7 +169,7 @@ export default function Home() {
   if (screen === "mode-selection") {
     return (
       <>
-        <UserPanel />
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <ModeSelectionScreen
           onSelectVocabulary={() => setScreen("vocabulary")}
           onSelectListening={() => setScreen("quiz")}
@@ -208,10 +182,14 @@ export default function Home() {
   if (screen === "quiz") {
     return (
       <>
-        <UserPanel />
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <QuizScreen
           episodeId={selectedEpisodeId}
-          onBack={() => setScreen("episodes")}
+          onBack={() => setScreen("mode-selection")}
+          onNextEpisode={(nextId) => {
+            setSelectedEpisodeId(nextId);
+            setScreen("mode-selection");
+          }}
         />
       </>
     );
@@ -220,7 +198,7 @@ export default function Home() {
   if (screen === "episodes") {
     return (
       <>
-        <UserPanel />
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <EpisodeScreen
           selectedLevel={selectedLevel}
           onSelectEpisode={(episodeId) => {
@@ -236,7 +214,7 @@ export default function Home() {
   if (screen === "levels") {
     return (
       <>
-        <UserPanel />
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <LevelScreen
           onSelectLevel={(level) => {
             setSelectedLevel(level);
@@ -248,10 +226,5 @@ export default function Home() {
     );
   }
 
-  return (
-    <>
-      <LoginScreen onGuestLogin={() => setScreen("levels")} />
-{userEmail === "cammurat1994@gmail.com" && <AdminButton />}
-    </>
-  );
+  return <LoginScreen onGuestLogin={() => setScreen("levels")} />;
 }

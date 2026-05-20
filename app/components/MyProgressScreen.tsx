@@ -26,17 +26,53 @@ type Episode = {
 
 const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
+function calculateStreak(results: Result[]): number {
+  if (results.length === 0) return 0;
+
+  const uniqueDays = Array.from(
+    new Set(
+      results.map((r) => new Date(r.created_at).toISOString().split("T")[0])
+    )
+  ).sort((a, b) => (a > b ? -1 : 1));
+
+  let streak = 0;
+  const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+  if (uniqueDays[0] !== today && uniqueDays[0] !== yesterday) return 0;
+
+  for (let i = 0; i < uniqueDays.length; i++) {
+    const expected = new Date(Date.now() - i * 86400000)
+      .toISOString()
+      .split("T")[0];
+    if (uniqueDays[i] === expected) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+function getMotivationMessage(streak: number, accuracy: number): string {
+  if (streak >= 7) return "🔥 You're on fire! " + streak + " days in a row!";
+  if (streak >= 3) return "⚡ Great streak! Keep it going — " + streak + " days!";
+  if (streak === 1) return "👋 Welcome back! You studied today.";
+  if (accuracy >= 80) return "🎯 Excellent accuracy! You're making great progress.";
+  if (accuracy >= 60) return "📈 Good work! Keep practicing to improve your score.";
+  return "🎧 Start listening and track your progress here.";
+}
+
 export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
   const [results, setResults] = useState<Result[]>([]);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [selectedLevel, setSelectedLevel] = useState("A1");
+  const [selectedLevel, setSelectedLevel] = useState("B1");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       const { data: episodeData } = await supabase
         .from("episodes")
@@ -63,39 +99,46 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
 
   const latestResultByEpisode = useMemo(() => {
     const map = new Map<string, Result>();
-
     results.forEach((result) => {
       if (!map.has(result.episode_id)) {
         map.set(result.episode_id, result);
       }
     });
-
     return map;
   }, [results]);
 
-  const completedEpisodeIds = Array.from(latestResultByEpisode.keys());
-
-  const filteredEpisodes = episodes.filter(
-    (episode) => episode.level === selectedLevel
-  );
-
+  const completedCount = latestResultByEpisode.size;
   const totalCorrect = results.reduce((sum, r) => sum + r.score, 0);
   const totalQuestions = results.reduce((sum, r) => sum + r.total_questions, 0);
-  const totalWrong = totalQuestions - totalCorrect;
-
   const overallAccuracy =
     totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+  const streak = calculateStreak(results);
+  const motivationMessage = getMotivationMessage(streak, overallAccuracy);
+
+  const lastActivity = results[0]
+    ? (() => {
+        const date = new Date(results[0].created_at);
+        const diff = Math.floor((Date.now() - date.getTime()) / 86400000);
+        if (diff === 0) return "Today";
+        if (diff === 1) return "Yesterday";
+        return `${diff} days ago`;
+      })()
+    : null;
 
   function getLevelStats(level: string) {
+    const levelEpisodes = episodes.filter((e) => e.level === level);
+    const completed = levelEpisodes.filter((e) =>
+      latestResultByEpisode.has(e.id)
+    ).length;
+    const total = levelEpisodes.length;
     const filtered = results.filter((r) => r.level === level);
-
     const correct = filtered.reduce((sum, r) => sum + r.score, 0);
-    const total = filtered.reduce((sum, r) => sum + r.total_questions, 0);
-    const wrong = total - correct;
-    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
-
-    return { correct, wrong, accuracy };
+    const questions = filtered.reduce((sum, r) => sum + r.total_questions, 0);
+    const accuracy = questions > 0 ? Math.round((correct / questions) * 100) : 0;
+    return { completed, total, accuracy };
   }
+
+  const filteredEpisodes = episodes.filter((e) => e.level === selectedLevel);
 
   if (loading) {
     return (
@@ -107,15 +150,13 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
 
   return (
     <main className="min-h-screen bg-[#f7eee8] px-6 py-10 text-[#3b2f2f]">
-      <section className="mx-auto max-w-6xl">
+      <section className="mx-auto max-w-5xl">
+
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl font-bold md:text-5xl">My Progress</h1>
-            <p className="mt-3 text-[#7a6258]">
-              Track your listening journey and continue from where you left off.
-            </p>
+            <p className="mt-2 text-[#7a6258]">Track your listening journey.</p>
           </div>
-
           <button
             onClick={onBack}
             className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold shadow-sm"
@@ -124,85 +165,146 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
           </button>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-4">
+        {/* Motivasyon kartı */}
+        <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#3b2f2f] p-6 text-white shadow-sm">
+          <p className="text-lg font-semibold">{motivationMessage}</p>
+          {lastActivity && (
+            <p className="mt-1 text-sm text-[#c9a99a]">
+              Last activity: {lastActivity}
+              {results[0] && ` — ${results[0].episode_title}`}
+            </p>
+          )}
+        </div>
+
+        {/* Özet kartlar */}
+        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <p className="text-sm text-[#7a6258]">Completed Episodes</p>
-            <h2 className="mt-2 text-4xl font-bold">
-              {completedEpisodeIds.length}
-            </h2>
+            <p className="text-sm text-[#7a6258]">🔥 Streak</p>
+            <h2 className="mt-2 text-4xl font-bold">{streak}</h2>
+            <p className="mt-1 text-xs text-[#7a6258]">days</p>
           </div>
 
           <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <p className="text-sm text-[#7a6258]">Overall Accuracy</p>
+            <p className="text-sm text-[#7a6258]">🎧 Episodes</p>
+            <h2 className="mt-2 text-4xl font-bold">{completedCount}</h2>
+            <p className="mt-1 text-xs text-[#7a6258]">completed</p>
+          </div>
+
+          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
+            <p className="text-sm text-[#7a6258]">🎯 Accuracy</p>
             <h2 className="mt-2 text-4xl font-bold">{overallAccuracy}%</h2>
+            <p className="mt-1 text-xs text-[#7a6258]">overall</p>
           </div>
 
           <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <p className="text-sm text-[#7a6258]">Correct Answers</p>
+            <p className="text-sm text-[#7a6258]">✅ Correct</p>
             <h2 className="mt-2 text-4xl font-bold">{totalCorrect}</h2>
-          </div>
-
-          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <p className="text-sm text-[#7a6258]">Wrong Answers</p>
-            <h2 className="mt-2 text-4xl font-bold">{totalWrong}</h2>
+            <p className="mt-1 text-xs text-[#7a6258]">answers</p>
           </div>
         </div>
 
-        <div className="mt-10 rounded-[2rem] border border-[#e0c7bb] bg-white p-8 shadow-sm">
-          <h2 className="text-3xl font-bold">Continue Learning</h2>
+        {/* Seviye ilerleme çubukları */}
+        <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-white p-8 shadow-sm">
+          <h2 className="text-2xl font-bold">Progress by Level</h2>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            {levels.map((level) => (
-              <button
-                key={level}
-                onClick={() => setSelectedLevel(level)}
-                className={`rounded-2xl px-6 py-3 font-bold transition ${
-                  selectedLevel === level
-                    ? "bg-[#3b2f2f] text-white"
-                    : "border border-[#e0c7bb] bg-[#fffaf7]"
-                }`}
-              >
-                {level}
-              </button>
-            ))}
+          <div className="mt-6 flex flex-col gap-5">
+            {levels.map((level) => {
+              const stats = getLevelStats(level);
+              const barWidth =
+                stats.total > 0
+                  ? Math.round((stats.completed / stats.total) * 100)
+                  : 0;
+
+              return (
+                <button
+                  key={level}
+                  onClick={() => setSelectedLevel(level)}
+                  className={`w-full rounded-2xl border p-4 text-left transition ${
+                    selectedLevel === level
+                      ? "border-[#3b2f2f] bg-[#f7eee8]"
+                      : "border-[#e0c7bb] bg-white hover:bg-[#fffaf7]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-bold">{level}</span>
+                      {stats.total > 0 && stats.completed === stats.total && (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+                          Complete ✓
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right text-sm text-[#7a6258]">
+                      {stats.completed}/{stats.total} episodes
+                      {stats.accuracy > 0 && (
+                        <span className="ml-3 font-semibold text-[#3b2f2f]">
+                          {stats.accuracy}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 h-2 w-full rounded-full bg-[#f1e3da]">
+                    <div
+                      className="h-2 rounded-full bg-[#3b2f2f] transition-all"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
+        {/* Seçilen seviyenin episode listesi */}
+        <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-white p-8 shadow-sm">
+          <h2 className="text-2xl font-bold">{selectedLevel} Episodes</h2>
+
+          <div className="mt-6 flex flex-col gap-3">
             {filteredEpisodes.length === 0 ? (
-              <div className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-6 text-[#7a6258]">
+              <div className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-5 text-[#7a6258]">
                 No episodes added for this level yet.
               </div>
             ) : (
               filteredEpisodes.map((episode, index) => {
                 const result = latestResultByEpisode.get(episode.id);
                 const completed = Boolean(result);
+                const accuracy = result
+                  ? Math.round((result.score / result.total_questions) * 100)
+                  : null;
 
                 return (
                   <button
                     key={episode.id}
                     onClick={() => onSelectEpisode(episode.id)}
-                    className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 text-left shadow-sm transition hover:-translate-y-1 hover:bg-[#f1ded5]"
+                    className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-5 text-left transition hover:-translate-y-0.5 hover:bg-[#f1ded5]"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm text-[#7a6258]">
-                          Episode {index + 1}
-                        </p>
-
-                        <h3 className="text-2xl font-bold">{episode.title}</h3>
-
-                        <p className="mt-2 text-sm text-[#7a6258]">
-                          {completed
-                            ? `${result?.score} correct / ${
-                                (result?.total_questions || 0) -
-                                (result?.score || 0)
-                              } wrong`
-                            : "Not completed yet"}
-                        </p>
-                      </div>
-
+                    <div className="flex items-center gap-4">
                       <span className="text-2xl">{completed ? "✅" : "○"}</span>
+                      <div>
+                        <p className="text-xs text-[#7a6258]">Episode {index + 1}</p>
+                        <h3 className="font-bold">{episode.title}</h3>
+                        {completed && result && (
+                          <p className="mt-0.5 text-xs text-[#7a6258]">
+                            {result.score} correct / {result.total_questions - result.score} wrong
+                          </p>
+                        )}
+                      </div>
                     </div>
+
+                    {accuracy !== null && (
+                      <div
+                        className={`rounded-2xl px-4 py-2 text-sm font-bold ${
+                          accuracy >= 80
+                            ? "bg-green-100 text-green-700"
+                            : accuracy >= 60
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {accuracy}%
+                      </div>
+                    )}
                   </button>
                 );
               })
@@ -210,96 +312,6 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
           </div>
         </div>
 
-        <div className="mt-10 rounded-[2rem] border border-[#e0c7bb] bg-white p-8 shadow-sm">
-          <h2 className="text-3xl font-bold">Score by Level</h2>
-
-          <div className="mt-8 overflow-x-auto">
-            <table className="w-full min-w-[520px]">
-              <thead>
-                <tr className="border-b border-[#ead7cc] text-left">
-                  <th className="pb-4">Level</th>
-                  <th className="pb-4">Accuracy</th>
-                  <th className="pb-4">Correct</th>
-                  <th className="pb-4">Wrong</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {levels.map((level) => {
-                  const stats = getLevelStats(level);
-
-                  return (
-                   <tr
-  key={level}
-  onClick={() => setSelectedLevel(level)}
-  className="cursor-pointer border-b border-[#f1e3da] transition hover:bg-[#fffaf7]"
->
-                      <td className="py-4 font-bold">{level}</td>
-                      <td className="py-4">{stats.accuracy}%</td>
-                      <td className="py-4">{stats.correct}</td>
-                      <td className="py-4">{stats.wrong}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            <div className="mt-8">
-  <h3 className="text-2xl font-bold">
-    {selectedLevel} Episode Details
-  </h3>
-
-  <div className="mt-4 grid gap-3">
-    {filteredEpisodes.length === 0 ? (
-      <div className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-5 text-[#7a6258]">
-        No episodes found for this level.
-      </div>
-    ) : (
-      filteredEpisodes.map((episode, index) => {
-        const result = latestResultByEpisode.get(episode.id);
-
-        return (
-          <div
-            key={episode.id}
-            className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-5"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h4 className="font-bold">
-                  Episode {index + 1} — {episode.title}
-                </h4>
-
-                <p className="mt-1 text-sm text-[#7a6258]">
-                  {result ? "✅ Completed" : "○ Not Completed"}
-                </p>
-              </div>
-
-              {result ? (
-                <div className="text-right text-sm">
-                  <p>{result.score} Correct</p>
-                  <p>
-                    {result.total_questions - result.score} Wrong
-                  </p>
-                  <p className="font-bold">
-                    {Math.round(
-                      (result.score / result.total_questions) * 100
-                    )}
-                    %
-                  </p>
-                </div>
-              ) : (
-                <p className="text-sm text-[#7a6258]">
-                  No score yet
-                </p>
-              )}
-            </div>
-          </div>
-        );
-      })
-    )}
-  </div>
-</div>
-          </div>
-        </div>
       </section>
     </main>
   );
