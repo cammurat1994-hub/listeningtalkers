@@ -59,11 +59,19 @@ export default function Home() {
   return (
     <div className="fixed right-5 top-5 z-50">
       <button
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-[#3b2f2f] text-sm font-bold text-white shadow-xl transition hover:bg-[#2f2424]"
-      >
-        {isAdmin ? "A" : userEmail.charAt(0).toUpperCase()}
-      </button>
+  onClick={() => setIsMenuOpen(!isMenuOpen)}
+  className="flex items-center gap-3 rounded-full bg-[#3b2f2f] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-[#2f2424]"
+>
+  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#3b2f2f]">
+    {isAdmin ? "A" : userEmail.charAt(0).toUpperCase()}
+  </span>
+
+  <span className="hidden sm:inline">
+    Account
+  </span>
+
+  <span>▾</span>
+</button>
 
       {isMenuOpen && (
         <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-[1.5rem] border border-[#e0c7bb] bg-white shadow-2xl">
@@ -152,7 +160,13 @@ export default function Home() {
     return (
       <>
         <UserPanel />
-        <MyProgressScreen onBack={() => setScreen("levels")} />
+    <MyProgressScreen
+  onBack={() => setScreen("levels")}
+  onSelectEpisode={(episodeId) => {
+    setSelectedEpisodeId(episodeId);
+    setScreen("mode-selection");
+  }}
+/>
       </>
     );
   }

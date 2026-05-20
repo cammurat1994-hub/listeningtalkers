@@ -18,6 +18,13 @@ type Question = {
     E: string;
   };
   correctAnswer: "A" | "B" | "C" | "D" | "E";
+  explanations: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+    E: string;
+  };
 };
 
 type Episode = {
@@ -37,6 +44,7 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [testStarted, setTestStarted] = useState(false);
   const [resultSaved, setResultSaved] = useState(false);
+  const [showStartWarning, setShowStartWarning] = useState(false);
 
   useEffect(() => {
     async function fetchEpisode() {
@@ -60,7 +68,6 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
     if (!episode) return 0;
 
     let score = 0;
-
     episode.questions.forEach((question, index) => {
       if (answers[index] === question.correctAnswer) {
         score++;
@@ -111,23 +118,18 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
 
   const question = episode.questions[currentQuestion];
   const answeredCount = Object.keys(answers).length;
-  const progressPercentage =
-    (answeredCount / episode.questions.length) * 100;
+  const progressPercentage = (answeredCount / episode.questions.length) * 100;
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
       <section className="mx-auto max-w-5xl px-6 py-12">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold md:text-5xl">
-              {episode.title}
-            </h1>
-
+            <h1 className="text-4xl font-bold md:text-5xl">{episode.title}</h1>
             <p className="mt-2 text-[#7a6258]">
               Listen carefully, take notes, and answer step by step.
             </p>
           </div>
-
           <button
             onClick={onBack}
             className="rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm"
@@ -142,22 +144,44 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
               <source src={episode.audio_url} type="audio/mpeg" />
             </audio>
 
-            <button
-              onClick={() => setTestStarted(true)}
-              className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white"
-            >
-              Start Questions
-            </button>
+            {!showStartWarning ? (
+              <button
+                onClick={() => setShowStartWarning(true)}
+                className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white"
+              >
+                I have listened — Start Questions
+              </button>
+            ) : (
+              <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
+                <p className="font-semibold text-[#3b2f2f]">⚠️ Before you start</p>
+                <p className="mt-2 text-sm text-[#7a6258]">
+                  The audio will not be available during the questions. Make sure you have taken
+                  your notes and are ready to begin.
+                </p>
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={() => setShowStartWarning(false)}
+                    className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    onClick={() => setTestStarted(true)}
+                    className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white"
+                  >
+                    Yes, I'm Ready
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
           <label className="block text-lg font-bold">My Notes</label>
-
           <p className="mt-1 text-sm text-[#7a6258]">
             You can take notes while listening and use them while answering.
           </p>
-
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -175,9 +199,7 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
             <div className="mt-3 h-3 w-full rounded-full bg-[#ead7cc]">
               <div
                 className="h-3 rounded-full bg-[#3b2f2f] transition-all"
-                style={{
-                  width: `${progressPercentage}%`,
-                }}
+                style={{ width: `${progressPercentage}%` }}
               />
             </div>
 
@@ -204,19 +226,14 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
               })}
             </div>
 
-            <h2 className="mt-6 text-2xl font-bold">
-              {question.question}
-            </h2>
+            <h2 className="mt-6 text-2xl font-bold">{question.question}</h2>
 
             <div className="mt-6 flex flex-col gap-3">
               {(["A", "B", "C", "D", "E"] as const).map((letter) => (
                 <button
                   key={letter}
                   onClick={() =>
-                    setAnswers({
-                      ...answers,
-                      [currentQuestion]: letter,
-                    })
+                    setAnswers({ ...answers, [currentQuestion]: letter })
                   }
                   className={`rounded-2xl border p-4 text-left transition ${
                     answers[currentQuestion] === letter
@@ -265,7 +282,6 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
           <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 shadow-sm">
             <div className="text-center">
               <h2 className="text-4xl font-bold">Your Score</h2>
-
               <p className="mt-4 text-5xl font-bold">
                 {calculateScore()} / {episode.questions.length}
               </p>
@@ -273,7 +289,8 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
 
             <div className="mt-8 flex flex-col gap-4">
               {episode.questions.map((item, index) => {
-                const isCorrect = answers[index] === item.correctAnswer;
+                const userAnswer = answers[index];
+                const isCorrect = userAnswer === item.correctAnswer;
 
                 return (
                   <div
@@ -281,10 +298,7 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
                     className="rounded-2xl border border-[#e0c7bb] bg-white p-5"
                   >
                     <div className="flex items-center justify-between gap-4">
-                      <h3 className="text-xl font-bold">
-                        Question {index + 1}
-                      </h3>
-
+                      <h3 className="text-xl font-bold">Question {index + 1}</h3>
                       <span
                         className={`rounded-full px-4 py-2 text-sm font-bold ${
                           isCorrect
@@ -298,13 +312,53 @@ export default function QuizScreen({ episodeId, onBack }: Props) {
 
                     <p className="mt-3 text-[#3b2f2f]">{item.question}</p>
 
-                    <p className="mt-3 text-sm text-[#7a6258]">
-                      Your answer: {answers[index] || "No answer"}
-                    </p>
+                    <div className="mt-4 flex flex-col gap-2">
+                      {(["A", "B", "C", "D", "E"] as const).map((letter) => {
+                        const isUserAnswer = userAnswer === letter;
+                        const isCorrectAnswer = item.correctAnswer === letter;
+                        const explanation = item.explanations?.[letter];
 
-                    <p className="mt-1 text-sm font-semibold text-[#7a6258]">
-                      Correct answer: {item.correctAnswer}
-                    </p>
+                        let borderColor = "border-[#e0c7bb]";
+                        let bgColor = "bg-white";
+                        let label = null;
+
+                        if (isCorrectAnswer) {
+                          borderColor = "border-green-400";
+                          bgColor = "bg-green-50";
+                          label = (
+                            <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+                              Correct
+                            </span>
+                          );
+                        } else if (isUserAnswer && !isCorrect) {
+                          borderColor = "border-red-400";
+                          bgColor = "bg-red-50";
+                          label = (
+                            <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">
+                              Your answer
+                            </span>
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={letter}
+                            className={`rounded-2xl border ${borderColor} ${bgColor} p-4`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold">{letter}.</span>
+                              <span>{item.options[letter]}</span>
+                              {label}
+                            </div>
+                            {explanation && (isCorrectAnswer || isUserAnswer) && (
+                              <p className="mt-2 text-sm text-[#7a6258]">
+                                💡 {explanation}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
