@@ -190,7 +190,9 @@ export default function Home() {
             setSelectedEpisodeId(nextId);
             setScreen("mode-selection");
           }}
-          onStudyVocabulary={() => setScreen("vocabulary")}
+          onStudyVocabulary={() => {
+  setScreen("vocabulary");
+}}
         />
       </>
     );
