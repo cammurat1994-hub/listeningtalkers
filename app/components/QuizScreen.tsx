@@ -7,6 +7,7 @@ type Props = {
   episodeId: string;
   onBack: () => void;
   onNextEpisode: (nextEpisodeId: string) => void;
+  onStudyVocabulary: () => void;
 };
 
 type Question = {
@@ -36,7 +37,7 @@ type Episode = {
   questions: Question[];
 };
 
-export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) {
+export default function QuizScreen({ episodeId, onBack, onNextEpisode, onStudyVocabulary }: Props) {
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [nextEpisode, setNextEpisode] = useState<Episode | null>(null);
   const [loading, setLoading] = useState(true);
@@ -301,10 +302,7 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
                 const isCorrect = userAnswer === item.correctAnswer;
 
                 return (
-                  <div
-                    key={index}
-                    className="rounded-2xl border border-[#e0c7bb] bg-white p-5"
-                  >
+                  <div key={index} className="rounded-2xl border border-[#e0c7bb] bg-white p-5">
                     <div className="flex items-center justify-between gap-4">
                       <h3 className="text-xl font-bold">Question {index + 1}</h3>
                       <span
@@ -383,16 +381,16 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
 
             <div className="mt-8 flex flex-col gap-3">
               <button
-                onClick={onBack}
-                className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]"
+                onClick={onStudyVocabulary}
+                className="w-full rounded-2xl border border-[#3b2f2f] bg-white px-6 py-4 font-semibold text-[#3b2f2f] transition hover:bg-[#f1ded5]"
               >
-                🔊 Study Vocabulary
+                📘 Study Vocabulary
               </button>
 
               {nextEpisode && (
                 <button
                   onClick={() => onNextEpisode(nextEpisode.id)}
-                  className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white"
+                  className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white transition hover:bg-[#2f2424]"
                 >
                   Next Episode →
                 </button>
@@ -400,7 +398,7 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
 
               <button
                 onClick={onBack}
-                className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]"
+                className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f] transition hover:bg-[#f1ded5]"
               >
                 Back to Episodes
               </button>
