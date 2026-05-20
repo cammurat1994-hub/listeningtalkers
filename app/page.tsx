@@ -160,7 +160,7 @@ export default function Home() {
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <VocabularyScreen
           episodeId={selectedEpisodeId}
-          onBack={() => setScreen("quiz")}
+          onBack={() => setScreen("mode-selection")}
         />
       </>
     );
