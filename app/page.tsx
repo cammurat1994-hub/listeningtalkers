@@ -225,12 +225,14 @@ export default function Home() {
     );
   }
 
-  if (screen === "episodes") {
+if (screen === "episodes") {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <EpisodeScreen
           selectedLevel={selectedLevel}
+          practiceMode={practiceMode}
+          isQuizMode={isQuizMode}
           onSelectEpisode={(episodeId) => {
             setSelectedEpisodeId(episodeId);
             isQuizMode ? goTo("quiz") : goTo("practice");
