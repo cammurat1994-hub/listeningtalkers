@@ -134,16 +134,17 @@ export default function Home() {
 
   if (loading) return <LoadingScreen />;
 
-  if (screen === "admin" && userEmail !== ADMIN_EMAIL) {
+if (screen === "levels") {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
-          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-10 text-center shadow-sm">
-            <h1 className="text-3xl font-bold text-red-600">Access Denied</h1>
-            <p className="mt-4 text-[#7a6258]">You are not authorized to access admin panel.</p>
-          </div>
-        </main>
+        <LevelScreen
+          onSelectLevel={(level) => {
+            setSelectedLevel(level);
+            isQuizMode ? goTo("episodes") : goTo("mode-selection");
+          }}
+          onBack={() => goTo("home")}
+        />
       </>
     );
   }
@@ -181,7 +182,7 @@ export default function Home() {
           onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("practice"); }}
           onSelectDictation={() => { setPracticeMode("dictation"); goTo("practice"); }}
           onSelectMixed={() => { setPracticeMode("mixed"); goTo("practice"); }}
-          onBack={() => goTo("episodes")}
+          onBack={() => goTo("levels")}
         />
       </>
     );
@@ -246,10 +247,10 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <LevelScreen
-          onSelectLevel={(level) => {
-            setSelectedLevel(level);
-            goTo("episodes");
-          }}
+         onSelectLevel={(level) => {
+  setSelectedLevel(level);
+  isQuizMode ? goTo("episodes") : goTo("mode-selection");
+}}
           onBack={() => goTo("home")}
         />
       </>
