@@ -10,7 +10,6 @@ import EpisodeScreen from "./components/EpisodeScreen";
 import QuizScreen from "./components/QuizScreen";
 import AdminScreen from "./components/AdminScreen";
 import ModeSelectionScreen from "./components/ModeSelectionScreen";
-import VocabularyScreen from "./components/VocabularyScreen";
 import MyProgressScreen from "./components/MyProgressScreen";
 import LoadingScreen from "./components/LoadingScreen";
 
@@ -20,12 +19,12 @@ type Screen =
   | "levels"
   | "episodes"
   | "mode-selection"
-  | "vocabulary"
+  | "practice"
   | "quiz"
   | "progress"
   | "admin";
 
-type PracticeMode = "mcq" | "fill-blank" | "dictation" | null;
+type PracticeMode = "mcq" | "fill-blank" | "dictation" | "mixed" | null;
 
 const ADMIN_EMAIL = "cammurat1994@gmail.com";
 
@@ -39,9 +38,7 @@ function UserPanel({
   onLogout: () => void;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   if (!userEmail) return null;
-
   const isAdmin = userEmail === ADMIN_EMAIL;
 
   return (
@@ -65,7 +62,6 @@ function UserPanel({
             </p>
             <p className="mt-1 truncate text-sm font-bold text-[#3b2f2f]">{userEmail}</p>
           </div>
-
           {isAdmin && (
             <button
               onClick={() => { onNavigate("admin"); setIsMenuOpen(false); }}
@@ -74,14 +70,12 @@ function UserPanel({
               🛡️ Admin
             </button>
           )}
-
           <button
             onClick={() => { onNavigate("progress"); setIsMenuOpen(false); }}
             className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
           >
             📊 My Progress
           </button>
-
           <button
             onClick={() => { onLogout(); setIsMenuOpen(false); }}
             className="flex w-full items-center gap-3 px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
@@ -178,36 +172,35 @@ export default function Home() {
     );
   }
 
-  if (screen === "vocabulary") {
-    return (
-      <>
-        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <VocabularyScreen
-          episodeId={selectedEpisodeId}
-          onBack={() => goTo("mode-selection")}
-        />
-      </>
-    );
-  }
-
   if (screen === "mode-selection") {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <ModeSelectionScreen
-          onSelectMCQ={() => {
-            setPracticeMode("mcq");
-            goTo("quiz");
-          }}
-          onSelectFillBlank={() => {
-            setPracticeMode("fill-blank");
-            goTo("quiz");
-          }}
-          onSelectDictation={() => {
-            setPracticeMode("dictation");
-            goTo("quiz");
-          }}
+          onSelectMCQ={() => { setPracticeMode("mcq"); goTo("practice"); }}
+          onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("practice"); }}
+          onSelectDictation={() => { setPracticeMode("dictation"); goTo("practice"); }}
+          onSelectMixed={() => { setPracticeMode("mixed"); goTo("practice"); }}
           onBack={() => goTo("episodes")}
+        />
+      </>
+    );
+  }
+
+  if (screen === "practice") {
+    return (
+      <>
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
+        <QuizScreen
+          episodeId={selectedEpisodeId}
+          practiceMode={practiceMode}
+          isQuizMode={false}
+          onBack={() => goTo("mode-selection")}
+          onNextEpisode={(nextId) => {
+            setSelectedEpisodeId(nextId);
+            goTo("mode-selection");
+          }}
+          onStudyVocabulary={() => {}}
         />
       </>
     );
@@ -219,14 +212,14 @@ export default function Home() {
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <QuizScreen
           episodeId={selectedEpisodeId}
-          practiceMode={practiceMode}
-          isQuizMode={isQuizMode}
-          onBack={() => goTo("mode-selection")}
+          practiceMode={null}
+          isQuizMode={true}
+          onBack={() => goTo("episodes")}
           onNextEpisode={(nextId) => {
             setSelectedEpisodeId(nextId);
-            goTo("mode-selection");
+            goTo("episodes");
           }}
-          onStudyVocabulary={() => goTo("vocabulary")}
+          onStudyVocabulary={() => {}}
         />
       </>
     );
