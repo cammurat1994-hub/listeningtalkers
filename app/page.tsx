@@ -134,17 +134,16 @@ export default function Home() {
 
   if (loading) return <LoadingScreen />;
 
-if (screen === "levels") {
+  if (screen === "admin" && userEmail !== ADMIN_EMAIL) {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <LevelScreen
-          onSelectLevel={(level) => {
-            setSelectedLevel(level);
-            isQuizMode ? goTo("episodes") : goTo("mode-selection");
-          }}
-          onBack={() => goTo("home")}
-        />
+        <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
+          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-10 text-center shadow-sm">
+            <h1 className="text-3xl font-bold text-red-600">Access Denied</h1>
+            <p className="mt-4 text-[#7a6258]">You are not authorized to access admin panel.</p>
+          </div>
+        </main>
       </>
     );
   }
@@ -178,10 +177,10 @@ if (screen === "levels") {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <ModeSelectionScreen
-          onSelectMCQ={() => { setPracticeMode("mcq"); goTo("practice"); }}
-          onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("practice"); }}
-          onSelectDictation={() => { setPracticeMode("dictation"); goTo("practice"); }}
-          onSelectMixed={() => { setPracticeMode("mixed"); goTo("practice"); }}
+          onSelectMCQ={() => { setPracticeMode("mcq"); goTo("episodes"); }}
+          onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("episodes"); }}
+          onSelectDictation={() => { setPracticeMode("dictation"); goTo("episodes"); }}
+          onSelectMixed={() => { setPracticeMode("mixed"); goTo("episodes"); }}
           onBack={() => goTo("levels")}
         />
       </>
@@ -196,10 +195,10 @@ if (screen === "levels") {
           episodeId={selectedEpisodeId}
           practiceMode={practiceMode}
           isQuizMode={false}
-          onBack={() => goTo("mode-selection")}
+          onBack={() => goTo("episodes")}
           onNextEpisode={(nextId) => {
             setSelectedEpisodeId(nextId);
-            goTo("mode-selection");
+            goTo("practice");
           }}
           onStudyVocabulary={() => {}}
         />
@@ -218,7 +217,7 @@ if (screen === "levels") {
           onBack={() => goTo("episodes")}
           onNextEpisode={(nextId) => {
             setSelectedEpisodeId(nextId);
-            goTo("episodes");
+            goTo("quiz");
           }}
           onStudyVocabulary={() => {}}
         />
@@ -234,9 +233,9 @@ if (screen === "levels") {
           selectedLevel={selectedLevel}
           onSelectEpisode={(episodeId) => {
             setSelectedEpisodeId(episodeId);
-            isQuizMode ? goTo("quiz") : goTo("mode-selection");
+            isQuizMode ? goTo("quiz") : goTo("practice");
           }}
-          onBack={() => goTo("levels")}
+          onBack={() => isQuizMode ? goTo("levels") : goTo("mode-selection")}
         />
       </>
     );
@@ -247,10 +246,10 @@ if (screen === "levels") {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <LevelScreen
-         onSelectLevel={(level) => {
-  setSelectedLevel(level);
-  isQuizMode ? goTo("episodes") : goTo("mode-selection");
-}}
+          onSelectLevel={(level) => {
+            setSelectedLevel(level);
+            isQuizMode ? goTo("episodes") : goTo("mode-selection");
+          }}
           onBack={() => goTo("home")}
         />
       </>
