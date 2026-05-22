@@ -11,6 +11,7 @@ import AdminScreen from "./components/AdminScreen";
 import ModeSelectionScreen from "./components/ModeSelectionScreen";
 import VocabularyScreen from "./components/VocabularyScreen";
 import MyProgressScreen from "./components/MyProgressScreen";
+import LoadingScreen from "./components/LoadingScreen";
 
 type Screen =
   | "login"
@@ -94,14 +95,17 @@ export default function Home() {
   const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedEpisodeId, setSelectedEpisodeId] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function getUser() {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
         setUserEmail(user.email);
         setScreen("levels");
       }
+      setLoading(false);
     }
     getUser();
   }, []);
@@ -113,7 +117,23 @@ export default function Home() {
   }
 
   function navigateTo(s: Screen) {
-    setScreen(s);
+    setLoading(true);
+    setTimeout(() => {
+      setScreen(s);
+      setLoading(false);
+    }, 600);
+  }
+
+  function goTo(s: Screen) {
+    setLoading(true);
+    setTimeout(() => {
+      setScreen(s);
+      setLoading(false);
+    }, 500);
+  }
+
+  if (loading) {
+    return <LoadingScreen />;
   }
 
   if (screen === "admin" && userEmail !== ADMIN_EMAIL) {
@@ -135,10 +155,10 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <MyProgressScreen
-          onBack={() => setScreen("levels")}
+          onBack={() => goTo("levels")}
           onSelectEpisode={(episodeId) => {
             setSelectedEpisodeId(episodeId);
-            setScreen("mode-selection");
+            goTo("mode-selection");
           }}
         />
       </>
@@ -149,7 +169,7 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <AdminScreen onBack={() => setScreen("levels")} />
+        <AdminScreen onBack={() => goTo("levels")} />
       </>
     );
   }
@@ -160,7 +180,7 @@ export default function Home() {
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <VocabularyScreen
           episodeId={selectedEpisodeId}
-          onBack={() => setScreen("mode-selection")}
+          onBack={() => goTo("mode-selection")}
         />
       </>
     );
@@ -171,9 +191,9 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <ModeSelectionScreen
-          onSelectVocabulary={() => setScreen("vocabulary")}
-          onSelectListening={() => setScreen("quiz")}
-          onBack={() => setScreen("episodes")}
+          onSelectVocabulary={() => goTo("vocabulary")}
+          onSelectListening={() => goTo("quiz")}
+          onBack={() => goTo("episodes")}
         />
       </>
     );
@@ -185,14 +205,12 @@ export default function Home() {
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <QuizScreen
           episodeId={selectedEpisodeId}
-          onBack={() => setScreen("mode-selection")}
+          onBack={() => goTo("mode-selection")}
           onNextEpisode={(nextId) => {
             setSelectedEpisodeId(nextId);
-            setScreen("mode-selection");
+            goTo("mode-selection");
           }}
-          onStudyVocabulary={() => {
-  setScreen("vocabulary");
-}}
+          onStudyVocabulary={() => goTo("vocabulary")}
         />
       </>
     );
@@ -206,9 +224,9 @@ export default function Home() {
           selectedLevel={selectedLevel}
           onSelectEpisode={(episodeId) => {
             setSelectedEpisodeId(episodeId);
-            setScreen("mode-selection");
+            goTo("mode-selection");
           }}
-          onBack={() => setScreen("levels")}
+          onBack={() => goTo("levels")}
         />
       </>
     );
@@ -221,13 +239,13 @@ export default function Home() {
         <LevelScreen
           onSelectLevel={(level) => {
             setSelectedLevel(level);
-            setScreen("episodes");
+            goTo("episodes");
           }}
-          onBack={() => setScreen("login")}
+          onBack={() => goTo("login")}
         />
       </>
     );
   }
 
-  return <LoginScreen onGuestLogin={() => setScreen("levels")} />;
+  return <LoginScreen onGuestLogin={() => goTo("levels")} />;
 }

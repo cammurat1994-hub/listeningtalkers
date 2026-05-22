@@ -7,27 +7,22 @@ type Props = {
   onBack: () => void;
 };
 
-export default function LevelScreen({
-  onSelectLevel,
-  onBack,
-}: Props) {
+export default function LevelScreen({ onSelectLevel, onBack }: Props) {
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
       <section className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 text-center">
-        <Image
-          src="/logo.png"
-          alt="Logo"
-          width={90}
-          height={90}
-          className="mb-4"
+        <img
+          src="/cat-logo.svg"
+          alt="ListeningTalkers Logo"
+          width={180}
+          height={180}
+          className="mb-2"
         />
 
-        <h1 className="text-4xl font-bold md:text-6xl">
-          Choose your level
-        </h1>
+        <h1 className="text-4xl font-bold md:text-6xl">Choose your level</h1>
 
         <p className="mt-4 max-w-xl text-[#7a6258]">
-          Select the level you listened to on YouTube.
+          Select the level you want to practice.
         </p>
 
         <div className="mt-10 grid w-full max-w-3xl grid-cols-2 gap-4 md:grid-cols-3">
