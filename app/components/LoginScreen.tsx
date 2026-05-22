@@ -23,8 +23,8 @@ export default function LoginScreen({ onGuestLogin }: Props) {
         <img
           src="/cat-logo.svg"
           alt="ListeningTalkers Logo"
-          width={200}
-          height={160}
+          width={280}
+          height={360}
           className="mb-4"
         />
 

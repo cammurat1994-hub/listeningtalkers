@@ -14,8 +14,8 @@ export default function LevelScreen({ onSelectLevel, onBack }: Props) {
         <img
           src="/cat-logo.svg"
           alt="ListeningTalkers Logo"
-          width={220}
-          height={175}
+          width={280}
+          height={360}
           className="mb-2"
         />
 
