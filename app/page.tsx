@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
 
 import LoginScreen from "./components/LoginScreen";
+import HomeScreen from "./components/HomeScreen";
 import LevelScreen from "./components/LevelScreen";
 import EpisodeScreen from "./components/EpisodeScreen";
 import QuizScreen from "./components/QuizScreen";
@@ -15,6 +16,7 @@ import LoadingScreen from "./components/LoadingScreen";
 
 type Screen =
   | "login"
+  | "home"
   | "levels"
   | "episodes"
   | "mode-selection"
@@ -22,6 +24,8 @@ type Screen =
   | "quiz"
   | "progress"
   | "admin";
+
+type PracticeMode = "mcq" | "fill-blank" | "dictation" | null;
 
 const ADMIN_EMAIL = "cammurat1994@gmail.com";
 
@@ -96,6 +100,8 @@ export default function Home() {
   const [selectedEpisodeId, setSelectedEpisodeId] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>(null);
+  const [isQuizMode, setIsQuizMode] = useState(false);
 
   useEffect(() => {
     async function getUser() {
@@ -103,7 +109,7 @@ export default function Home() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
         setUserEmail(user.email);
-        setScreen("levels");
+        setScreen("home");
       }
       setLoading(false);
     }
@@ -116,14 +122,6 @@ export default function Home() {
     setScreen("login");
   }
 
-  function navigateTo(s: Screen) {
-    setLoading(true);
-    setTimeout(() => {
-      setScreen(s);
-      setLoading(false);
-    }, 600);
-  }
-
   function goTo(s: Screen) {
     setLoading(true);
     setTimeout(() => {
@@ -132,9 +130,15 @@ export default function Home() {
     }, 500);
   }
 
-  if (loading) {
-    return <LoadingScreen />;
+  function navigateTo(s: Screen) {
+    setLoading(true);
+    setTimeout(() => {
+      setScreen(s);
+      setLoading(false);
+    }, 500);
   }
+
+  if (loading) return <LoadingScreen />;
 
   if (screen === "admin" && userEmail !== ADMIN_EMAIL) {
     return (
@@ -155,7 +159,7 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <MyProgressScreen
-          onBack={() => goTo("levels")}
+          onBack={() => goTo("home")}
           onSelectEpisode={(episodeId) => {
             setSelectedEpisodeId(episodeId);
             goTo("mode-selection");
@@ -169,7 +173,7 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <AdminScreen onBack={() => goTo("levels")} />
+        <AdminScreen onBack={() => goTo("home")} />
       </>
     );
   }
@@ -191,8 +195,18 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <ModeSelectionScreen
-          onSelectVocabulary={() => goTo("vocabulary")}
-          onSelectListening={() => goTo("quiz")}
+          onSelectMCQ={() => {
+            setPracticeMode("mcq");
+            goTo("quiz");
+          }}
+          onSelectFillBlank={() => {
+            setPracticeMode("fill-blank");
+            goTo("quiz");
+          }}
+          onSelectDictation={() => {
+            setPracticeMode("dictation");
+            goTo("quiz");
+          }}
           onBack={() => goTo("episodes")}
         />
       </>
@@ -205,6 +219,8 @@ export default function Home() {
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <QuizScreen
           episodeId={selectedEpisodeId}
+          practiceMode={practiceMode}
+          isQuizMode={isQuizMode}
           onBack={() => goTo("mode-selection")}
           onNextEpisode={(nextId) => {
             setSelectedEpisodeId(nextId);
@@ -224,7 +240,7 @@ export default function Home() {
           selectedLevel={selectedLevel}
           onSelectEpisode={(episodeId) => {
             setSelectedEpisodeId(episodeId);
-            goTo("mode-selection");
+            isQuizMode ? goTo("quiz") : goTo("mode-selection");
           }}
           onBack={() => goTo("levels")}
         />
@@ -241,11 +257,29 @@ export default function Home() {
             setSelectedLevel(level);
             goTo("episodes");
           }}
-          onBack={() => goTo("login")}
+          onBack={() => goTo("home")}
         />
       </>
     );
   }
 
-  return <LoginScreen onGuestLogin={() => goTo("levels")} />;
+  if (screen === "home") {
+    return (
+      <>
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
+        <HomeScreen
+          onSelectPractice={() => {
+            setIsQuizMode(false);
+            goTo("levels");
+          }}
+          onSelectQuiz={() => {
+            setIsQuizMode(true);
+            goTo("levels");
+          }}
+        />
+      </>
+    );
+  }
+
+  return <LoginScreen onGuestLogin={() => { setUserEmail(""); goTo("home"); }} />;
 }
