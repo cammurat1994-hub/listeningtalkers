@@ -101,7 +101,7 @@ function parseBulkQuestions(raw: string): Question[] {
 }
 
 export default function AdminScreen({ onBack }: Props) {
-  const [level, setLevel] = useState("A1");
+  const [level, setLevel] = useState("Beginner");
   const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -340,17 +340,14 @@ export default function AdminScreen({ onBack }: Props) {
             <div>
               <label className="mb-2 block text-sm font-semibold">Level</label>
               <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4"
-              >
-                <option>A1</option>
-                <option>A2</option>
-                <option>B1</option>
-                <option>B2</option>
-                <option>C1</option>
-                <option>C2</option>
-              </select>
+  value={level}
+  onChange={(e) => setLevel(e.target.value)}
+  className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4"
+>
+  <option>Beginner</option>
+  <option>Intermediate</option>
+  <option>Advanced</option>
+</select>
             </div>
 
             <div>

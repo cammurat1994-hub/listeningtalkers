@@ -24,7 +24,7 @@ type Episode = {
   level: string;
 };
 
-const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+const levels = ["Beginner", "Intermediate", "Advanced"];
 
 function calculateStreak(results: Result[]): number {
   if (results.length === 0) return 0;
@@ -67,7 +67,7 @@ function getMotivationMessage(streak: number, accuracy: number): string {
 export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
   const [results, setResults] = useState<Result[]>([]);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [selectedLevel, setSelectedLevel] = useState("B1");
+  const [selectedLevel, setSelectedLevel] = useState("Beginner");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -1,11 +1,28 @@
-import Image from "next/image";
-
-const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
 type Props = {
   onSelectLevel: (level: string) => void;
   onBack: () => void;
 };
+
+const levels = [
+  {
+    id: "Beginner",
+    label: "Beginner",
+    description: "A1 – A2",
+    emoji: "🌱",
+  },
+  {
+    id: "Intermediate",
+    label: "Intermediate",
+    description: "B1 – B2",
+    emoji: "📚",
+  },
+  {
+    id: "Advanced",
+    label: "Advanced",
+    description: "C1 – C2",
+    emoji: "🎯",
+  },
+];
 
 export default function LevelScreen({ onSelectLevel, onBack }: Props) {
   return (
@@ -22,26 +39,30 @@ export default function LevelScreen({ onSelectLevel, onBack }: Props) {
         <h1 className="text-4xl font-bold md:text-6xl">Choose your level</h1>
 
         <p className="mt-4 max-w-xl text-[#7a6258]">
-          Select the level you want to practice.
+          Select the level that matches your English proficiency.
         </p>
 
-        <div className="mt-10 grid w-full max-w-3xl grid-cols-2 gap-4 md:grid-cols-3">
+        <div className="mt-10 grid w-full max-w-3xl gap-6 md:grid-cols-3">
           {levels.map((level) => (
             <button
-              key={level}
-              onClick={() => onSelectLevel(level)}
-              className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-8 text-4xl font-bold shadow-sm transition hover:-translate-y-1 hover:bg-[#f1ded5]"
+              key={level.id}
+              onClick={() => onSelectLevel(level.id)}
+              className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:bg-[#f1ded5]"
             >
-              {level}
+              <div className="text-5xl">{level.emoji}</div>
+              <h2 className="mt-5 text-2xl font-bold">{level.label}</h2>
+              <p className="mt-2 text-sm font-semibold text-[#c9a99a]">
+                {level.description}
+              </p>
             </button>
           ))}
         </div>
 
         <button
           onClick={onBack}
-          className="mt-8 text-sm font-semibold text-[#7a6258] underline"
+          className="mt-10 text-sm font-semibold text-[#7a6258] underline"
         >
-          Back to login
+          Back
         </button>
       </section>
     </main>
