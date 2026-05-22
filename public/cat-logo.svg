@@ -1,37 +1,53 @@
-<svg width="100%" viewBox="0 0 320 260" role="img" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" viewBox="0 0 680 580" role="img" xmlns="http://www.w3.org/2000/svg">
 <title>ListeningTalkers logo</title>
-<desc>Sevimli kedi, kulağının altında kulaklık</desc>
+<desc>Oturan kedi silüeti, kulaklık takıyor</desc>
 
-<g transform="translate(60, 15)">
-  <ellipse cx="100" cy="118" rx="75" ry="70" fill="#3b2f2f"/>
-  <path d="M 40 76 Q 32 23 72 48 Q 58 68 48 78 Z" fill="#3b2f2f"/>
-  <path d="M 160 76 Q 168 23 128 48 Q 142 68 152 78 Z" fill="#3b2f2f"/>
-  <path d="M 43 73 Q 37 31 68 50 Q 56 66 50 75 Z" fill="#c9a99a"/>
-  <path d="M 157 73 Q 163 31 132 50 Q 144 66 150 75 Z" fill="#c9a99a"/>
-  <path d="M 36 78 Q 100 -4 164 78" stroke="#3b2f2f" stroke-width="4" fill="none" stroke-linecap="round"/>
-  <rect x="12" y="86" width="28" height="36" rx="10" fill="#3b2f2f"/>
-  <rect x="18" y="92" width="16" height="24" rx="7" fill="#c9a99a"/>
-  <rect x="160" y="86" width="28" height="36" rx="10" fill="#3b2f2f"/>
-  <rect x="166" y="92" width="16" height="24" rx="7" fill="#c9a99a"/>
-  <ellipse cx="62" cy="128" rx="19" ry="13" fill="#c9a99a" opacity="0.22"/>
-  <ellipse cx="138" cy="128" rx="19" ry="13" fill="#c9a99a" opacity="0.22"/>
-  <ellipse cx="76" cy="106" rx="14" ry="16" fill="#fffaf7"/>
-  <ellipse cx="124" cy="106" rx="14" ry="16" fill="#fffaf7"/>
-  <ellipse cx="77" cy="108" rx="9" ry="11" fill="#3b2f2f"/>
-  <ellipse cx="123" cy="108" rx="9" ry="11" fill="#3b2f2f"/>
-  <circle cx="74" cy="104" r="3.5" fill="#fffaf7"/>
-  <circle cx="120" cy="104" r="3.5" fill="#fffaf7"/>
-  <path d="M 100 125 Q 96 121 93 124 Q 96 130 100 133 Q 104 130 107 124 Q 104 121 100 125 Z" fill="#c9a99a"/>
-  <path d="M 93 133 Q 100 141 107 133" stroke="#c9a99a" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <line x1="90" y1="128" x2="44" y2="120" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>
-  <line x1="90" y1="132" x2="44" y2="132" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>
-  <line x1="90" y1="136" x2="46" y2="144" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>
-  <line x1="110" y1="128" x2="156" y2="120" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>
-  <line x1="110" y1="132" x2="156" y2="132" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>
-  <line x1="110" y1="136" x2="154" y2="144" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>
-  <path d="M 195 90 Q 207 116 195 142" stroke="#c9a99a" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M 205 80 Q 223 116 205 152" stroke="#c9a99a" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
-  <text x="100" y="218" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="22" fill="#3b2f2f" letter-spacing="-0.5">ListeningTalkers</text>
-  <text x="100" y="238" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="400" font-size="9" fill="#7a6258" letter-spacing="2">PRACTICE · LISTEN · IMPROVE</text>
+<g transform="translate(170, 20)">
+
+  <path d="M 155 310 Q 220 290 230 240 Q 240 190 210 170 Q 195 162 188 175 Q 200 195 192 230 Q 184 265 140 285 Q 120 295 118 310 Z" fill="#3b2f2f"/>
+
+  <ellipse cx="118" cy="270" rx="88" ry="100" fill="#3b2f2f"/>
+
+  <ellipse cx="118" cy="148" rx="72" ry="68" fill="#3b2f2f"/>
+
+  <path d="M 60 110 Q 48 55 88 82 Q 76 100 68 112 Z" fill="#3b2f2f"/>
+  <path d="M 176 110 Q 188 55 148 82 Q 160 100 152 112 Z" fill="#3b2f2f"/>
+
+  <path d="M 58 112 Q 118 38 178 112" stroke="#e8d5c4" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+  <rect x="34" y="120" width="30" height="42" rx="12" fill="#e8d5c4"/>
+  <rect x="40" y="127" width="18" height="28" rx="8" fill="#d4b89a"/>
+
+  <rect x="172" y="120" width="30" height="42" rx="12" fill="#e8d5c4"/>
+  <rect x="178" y="127" width="18" height="28" rx="8" fill="#d4b89a"/>
+
+  <ellipse cx="94" cy="142" rx="13" ry="15" fill="#fffaf7"/>
+  <ellipse cx="142" cy="142" rx="13" ry="15" fill="#fffaf7"/>
+  <ellipse cx="95" cy="144" rx="8" ry="10" fill="#3b2f2f"/>
+  <ellipse cx="141" cy="144" rx="8" ry="10" fill="#3b2f2f"/>
+  <circle cx="92" cy="140" r="3" fill="#fffaf7"/>
+  <circle cx="138" cy="140" r="3" fill="#fffaf7"/>
+
+  <path d="M 118 158 Q 114 154 111 157 Q 114 163 118 166 Q 122 163 125 157 Q 122 154 118 158 Z" fill="#c9a99a"/>
+  <path d="M 111 166 Q 118 174 125 166" stroke="#c9a99a" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <line x1="108" y1="161" x2="62" y2="153" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <line x1="108" y1="165" x2="62" y2="165" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <line x1="108" y1="169" x2="64" y2="177" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <line x1="128" y1="161" x2="174" y2="153" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <line x1="128" y1="165" x2="174" y2="165" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+  <line x1="128" y1="169" x2="172" y2="177" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
+
+  <path d="M 210 128 Q 222 152 210 176" stroke="#d4b89a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M 222 116 Q 240 152 222 188" stroke="#d4b89a" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.65"/>
+  <path d="M 234 104 Q 258 152 234 200" stroke="#d4b89a" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.35"/>
+
+  <ellipse cx="88" cy="368" rx="28" ry="16" fill="#3b2f2f"/>
+  <ellipse cx="148" cy="368" rx="28" ry="16" fill="#3b2f2f"/>
+
+  <text x="118" y="420" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="26" fill="#3b2f2f" letter-spacing="-0.5">ListeningTalkers</text>
+  <text x="118" y="442" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="400" font-size="10" fill="#7a6258" letter-spacing="2.5">PRACTICE · LISTEN · IMPROVE</text>
+
 </g>
+
 </svg>

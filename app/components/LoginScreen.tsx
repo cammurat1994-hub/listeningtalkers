@@ -24,7 +24,7 @@ export default function LoginScreen({ onGuestLogin }: Props) {
           src="/cat-logo.svg"
           alt="ListeningTalkers Logo"
           width={200}
-          height={200}
+          height={160}
           className="mb-4"
         />
 
