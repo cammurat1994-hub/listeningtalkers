@@ -93,12 +93,11 @@ export default function AdminScreen({ onBack }: Props) {
   const [uploading, setUploading] = useState(false);
   const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
   const [publishedEpisodes, setPublishedEpisodes] = useState<PublishedEpisode[]>([]);
-
+  const [showNotes, setShowNotes] = useState(false);
   const [mcqQuestions, setMcqQuestions] = useState<MCQQuestion[]>([createEmptyMCQ()]);
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [bulkError, setBulkError] = useState("");
-
   const [fillQuestions, setFillQuestions] = useState<FillQuestion[]>([createEmptyFill()]);
   const [dictationQuestions, setDictationQuestions] = useState<DictationQuestion[]>([createEmptyDictation()]);
 
@@ -144,6 +143,7 @@ export default function AdminScreen({ onBack }: Props) {
         title,
         audio_url: audioUrl,
         episode_type: episodeType,
+        show_notes: episodeType === "practice-fill" ? showNotes : false,
         questions,
         vocabulary: [],
       };
@@ -169,16 +169,23 @@ export default function AdminScreen({ onBack }: Props) {
   }
 
   function resetForm() {
-    setTitle(""); setEditingEpisodeId(null); setAudioFile(null); setExistingAudioUrl("");
+    setTitle("");
+    setEditingEpisodeId(null);
+    setAudioFile(null);
+    setExistingAudioUrl("");
+    setShowNotes(false);
     setMcqQuestions([createEmptyMCQ()]);
     setFillQuestions([createEmptyFill()]);
     setDictationQuestions([createEmptyDictation()]);
-    setBulkMode(false); setBulkText(""); setBulkError("");
+    setBulkMode(false);
+    setBulkText("");
+    setBulkError("");
   }
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
       <section className="mx-auto max-w-5xl px-6 py-12">
+
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl font-bold md:text-5xl">Admin Panel</h1>
@@ -187,7 +194,7 @@ export default function AdminScreen({ onBack }: Props) {
           <button onClick={onBack} className="rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
         </div>
 
-        {/* Episode Type + Info */}
+        {/* Episode Type */}
         <div className="mt-10 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
           <h2 className="text-2xl font-bold">{editingEpisodeId ? "Edit Episode" : "New Episode"}</h2>
 
@@ -229,12 +236,17 @@ export default function AdminScreen({ onBack }: Props) {
             )}
             <div>
               <label className="mb-2 block text-sm font-semibold">Episode Title</label>
-              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Episode 1 — The Job Interview" className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
+              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+                placeholder="Episode 1 — The Job Interview"
+                className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold">Main Audio</label>
-              {existingAudioUrl && !audioFile && <p className="mb-2 text-sm text-[#7a6258]">Current audio kept. Upload new to replace.</p>}
-              <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
+              {existingAudioUrl && !audioFile && (
+                <p className="mb-2 text-sm text-[#7a6258]">Current audio kept. Upload new to replace.</p>
+              )}
+              <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)}
+                className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
             </div>
           </div>
         </div>
@@ -262,7 +274,9 @@ export default function AdminScreen({ onBack }: Props) {
               <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
                 <p className="text-sm font-semibold">Format:</p>
                 <pre className="mt-2 rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258]">{`Q) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nD) Şık D\nE) Şık E\nCorrect) A\nEA) A neden yanlış\nEB) B neden yanlış\n\nQ) Sonraki soru...`}</pre>
-                <textarea value={bulkText} onChange={(e) => setBulkText(e.target.value)} placeholder="Soruları yapıştır..." className="mt-3 min-h-[280px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 font-mono text-sm" />
+                <textarea value={bulkText} onChange={(e) => setBulkText(e.target.value)}
+                  placeholder="Soruları yapıştır..."
+                  className="mt-3 min-h-[280px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 font-mono text-sm" />
                 {bulkError && <p className="mt-2 text-sm text-red-600">{bulkError}</p>}
                 <button onClick={() => {
                   setBulkError("");
@@ -282,8 +296,10 @@ export default function AdminScreen({ onBack }: Props) {
                       <button onClick={() => setMcqQuestions(mcqQuestions.filter((_, i) => i !== index))}
                         className="text-sm text-red-600">Remove</button>
                     </div>
-                    <textarea value={item.question} onChange={(e) => { const u = [...mcqQuestions]; u[index].question = e.target.value; setMcqQuestions(u); }}
-                      placeholder="Write your question..." className="mt-3 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3" />
+                    <textarea value={item.question}
+                      onChange={(e) => { const u = [...mcqQuestions]; u[index].question = e.target.value; setMcqQuestions(u); }}
+                      placeholder="Write your question..."
+                      className="mt-3 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3" />
                     <div className="mt-4 flex flex-col gap-3">
                       {(["A","B","C","D","E"] as const).map((letter) => (
                         <div key={letter} className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
@@ -296,7 +312,8 @@ export default function AdminScreen({ onBack }: Props) {
                           {item.correctAnswer !== letter && (
                             <textarea value={item.explanations[letter]}
                               onChange={(e) => { const u = [...mcqQuestions]; u[index].explanations[letter] = e.target.value; setMcqQuestions(u); }}
-                              placeholder={`Why is ${letter} wrong?`} className="mt-2 min-h-[60px] w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
+                              placeholder={`Why is ${letter} wrong?`}
+                              className="mt-2 min-h-[60px] w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
                           )}
                         </div>
                       ))}
@@ -328,15 +345,19 @@ export default function AdminScreen({ onBack }: Props) {
                 className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Paragraph</button>
             </div>
 
-            <div className="mt-4 rounded-2xl bg-[#fffaf7] border border-[#e0c7bb] p-4 text-sm text-[#7a6258]">
-              <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
-              <pre className="text-xs leading-6">{`TEXT) The meeting was ___ at 3pm in the ___ room.
-ANS1) scheduled
-ANS2) conference
+            <label className="mt-5 flex items-center gap-3 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={showNotes}
+                onChange={(e) => setShowNotes(e.target.checked)}
+                className="h-4 w-4"
+              />
+              Show notes field (Advanced episodes için önerilir)
+            </label>
 
-TEXT) She ___ to work every day by ___.
-ANS1) commutes
-ANS2) bus`}</pre>
+            <div className="mt-5 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
+              <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
+              <pre className="text-xs leading-6">{`TEXT) The meeting was ___ at 3pm in the ___ room.\nANS1) scheduled\nANS2) conference\n\nTEXT) She ___ to work every day by ___.\nANS1) commutes\nANS2) bus`}</pre>
             </div>
 
             <div className="mt-4">
@@ -392,7 +413,7 @@ ANS2) bus`}</pre>
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl bg-[#fffaf7] border border-[#e0c7bb] p-4 text-sm text-[#7a6258]">
+            <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
               <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
               <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) Please submit your report by Friday afternoon.`}</pre>
             </div>
@@ -445,11 +466,15 @@ ANS2) bus`}</pre>
                     setLevel(data.level || "Beginner");
                     setTitle(data.title);
                     setExistingAudioUrl(data.audio_url || "");
+                    setShowNotes(data.show_notes || false);
                     setAudioFile(null);
                     if (data.questions) {
                       if (data.episode_type === "practice-fill") setFillQuestions(data.questions);
                       else if (data.episode_type === "practice-dictation") setDictationQuestions(data.questions);
-                      else setMcqQuestions(data.questions.map((q: MCQQuestion) => ({ ...q, explanations: q.explanations || { A: "", B: "", C: "", D: "", E: "" } })));
+                      else setMcqQuestions(data.questions.map((q: MCQQuestion) => ({
+                        ...q,
+                        explanations: q.explanations || { A: "", B: "", C: "", D: "", E: "" }
+                      })));
                     }
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
@@ -463,6 +488,7 @@ ANS2) bus`}</pre>
             ))}
           </div>
         </div>
+
       </section>
     </main>
   );
