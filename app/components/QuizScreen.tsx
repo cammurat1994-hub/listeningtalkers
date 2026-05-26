@@ -45,7 +45,7 @@ function normalize(str: string) {
 function checkAnswer(userAnswer: string, correctAnswer: string): boolean {
   const normalizedUser = normalize(userAnswer);
   const variants = correctAnswer.split("|").map(normalize);
-  return variants.some(v => v === normalizedUser);
+  return variants.some((v) => v === normalizedUser);
 }
 
 function formatTime(seconds: number) {
@@ -55,7 +55,9 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function AudioPlayer({ isPlaying, progress, duration, audioRef, onToggle, title, level }: {
+function AudioPlayer({
+  isPlaying, progress, duration, audioRef, onToggle, title, level,
+}: {
   isPlaying: boolean;
   progress: number;
   duration: number;
@@ -194,7 +196,7 @@ function FillQuestionView({ question, answers, feedback, onCheck, onUpdate }: {
         <div className="mt-4 flex flex-col gap-1">
           {question.blanks.map((b, bi) => (
             <p key={bi} className={`text-sm font-semibold ${feedback[bi] ? "text-green-600" : "text-red-600"}`}>
-              {feedback[bi] ? `✓ Blank ${bi + 1}: correct` : `✗ Blank ${bi + 1}: correct answer is "${b.answer}"`}
+              {feedback[bi] ? `✓ Blank ${bi + 1}: correct` : `✗ Blank ${bi + 1}: correct answer is "${b.answer.split("|")[0]}"`}
             </p>
           ))}
         </div>
@@ -231,19 +233,15 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
         <p className="font-bold text-lg">🎙️ Listen and type what you hear</p>
         <span className="text-sm text-[#7a6258]">{playsUsed}/{maxPlays} plays</span>
       </div>
-
       <button
         onClick={onPlay}
         disabled={!canPlay || isPlaying}
         className={`mt-4 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${
-          canPlay && !isPlaying
-            ? "bg-[#3b2f2f] text-white hover:bg-[#2f2424]"
-            : "cursor-not-allowed bg-[#e0c7bb] text-[#7a6258]"
+          canPlay && !isPlaying ? "bg-[#3b2f2f] text-white hover:bg-[#2f2424]" : "cursor-not-allowed bg-[#e0c7bb] text-[#7a6258]"
         }`}
       >
         {isPlaying ? "🔊 Playing..." : canPlay ? `▶ Play${playsUsed > 0 ? " Again" : ""}` : "No plays left"}
       </button>
-
       {hasPlayed && (
         <>
           <textarea
@@ -258,20 +256,14 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
             }`}
           />
           {feedback === null && (
-            <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">
-              Check
-            </button>
+            <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check</button>
           )}
           {feedback === true && (
-            <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
-              ✓ Perfect! Exactly right.
-            </div>
+            <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Perfect! Exactly right.</div>
           )}
           {feedback === false && !revealed && (
             <div className="mt-3 flex flex-col gap-2">
-              <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
-                ✗ Not quite right.
-              </div>
+              <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">✗ Not quite right.</div>
               <div className="flex gap-3">
                 <button onClick={onRetry} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold">Try Again</button>
                 <button onClick={onReveal} className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white">Show Answer</button>
@@ -290,13 +282,7 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
   );
 }
 
-export default function QuizScreen({
-  episodeId,
-  practiceMode,
-  isQuizMode,
-  onBack,
-  onNextEpisode,
-}: Props) {
+export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack, onNextEpisode }: Props) {
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [nextEpisode, setNextEpisode] = useState<Episode | null>(null);
   const [loading, setLoading] = useState(true);
@@ -311,28 +297,20 @@ export default function QuizScreen({
 
   const [mcqAnswers, setMcqAnswers] = useState<Record<number, string>>({});
   const [mcqFeedback, setMcqFeedback] = useState<Record<number, boolean>>({});
-
   const [fillAnswers, setFillAnswers] = useState<Record<number, Record<number, string>>>({});
   const [fillFeedback, setFillFeedback] = useState<Record<number, Record<number, boolean>>>({});
-
   const [dictationAnswers, setDictationAnswers] = useState<Record<number, string>>({});
   const [dictationFeedback, setDictationFeedback] = useState<Record<number, boolean | null>>({});
   const [dictationRevealed, setDictationRevealed] = useState<Record<number, boolean>>({});
   const [dictationPlays, setDictationPlays] = useState<Record<number, number>>({});
   const dictationAudioRef = useRef<HTMLAudioElement | null>(null);
   const [dictationPlaying, setDictationPlaying] = useState(false);
-
   const [showResults, setShowResults] = useState(false);
   const [resultSaved, setResultSaved] = useState(false);
 
   useEffect(() => {
     async function fetchEpisode() {
-      const { data, error } = await supabase
-        .from("episodes")
-        .select("*")
-        .eq("id", episodeId)
-        .single();
-
+      const { data, error } = await supabase.from("episodes").select("*").eq("id", episodeId).single();
       if (!error && data) {
         setEpisode(data);
         const { data: allEpisodes } = await supabase
@@ -341,12 +319,9 @@ export default function QuizScreen({
           .eq("level", data.level)
           .eq("episode_type", data.episode_type)
           .order("created_at", { ascending: true });
-
         if (allEpisodes) {
           const idx = allEpisodes.findIndex((e) => e.id === episodeId);
-          if (idx !== -1 && idx < allEpisodes.length - 1) {
-            setNextEpisode(allEpisodes[idx + 1]);
-          }
+          if (idx !== -1 && idx < allEpisodes.length - 1) setNextEpisode(allEpisodes[idx + 1]);
         }
       }
       setLoading(false);
@@ -370,10 +345,7 @@ export default function QuizScreen({
         total++;
         if (mcqAnswers[i] === (q as MCQQuestion).correctAnswer) correct++;
       } else if (type === "practice-fill") {
-        (q as FillQuestion).blanks.forEach((_, bi) => {
-          total++;
-          if (fillFeedback[i]?.[bi] === true) correct++;
-        });
+        (q as FillQuestion).blanks.forEach((_, bi) => { total++; if (fillFeedback[i]?.[bi] === true) correct++; });
       } else if (type === "practice-dictation") {
         total++;
         if (dictationFeedback[i] === true) correct++;
@@ -398,17 +370,8 @@ export default function QuizScreen({
     setResultSaved(true);
   }
 
-  if (loading) return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
-      <p className="text-xl text-[#3b2f2f]">Loading...</p>
-    </main>
-  );
-
-  if (!episode) return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
-      <p className="text-xl text-[#3b2f2f]">Episode not found.</p>
-    </main>
-  );
+  if (loading) return <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]"><p className="text-xl text-[#3b2f2f]">Loading...</p></main>;
+  if (!episode) return <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]"><p className="text-xl text-[#3b2f2f]">Episode not found.</p></main>;
 
   const questions = episode.questions || [];
   const question = questions[currentQuestion];
@@ -429,34 +392,19 @@ export default function QuizScreen({
           <button onClick={onBack} className="shrink-0 rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
         </div>
 
-        {/* MCQ — önce audio, sonra sorular */}
+        {/* MCQ */}
         {isMCQ && !testStarted && (
           <div className="mt-8">
-            <audio
-              ref={audioRef}
-              src={episode.audio_url}
+            <audio ref={audioRef} src={episode.audio_url}
               onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioProgress((a.currentTime / a.duration) * 100); }}
               onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
               onEnded={() => setIsPlaying(false)}
             />
-            <AudioPlayer
-              isPlaying={isPlaying}
-              progress={audioProgress}
-              duration={audioDuration}
-              audioRef={audioRef}
-              onToggle={toggleMainAudio}
-              title={episode.title}
-              level={episode.level}
-            />
+            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
             <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
               <p className="font-bold">📝 My Notes</p>
               <p className="mt-1 text-sm text-[#7a6258]">Take notes while listening.</p>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Write your notes here..."
-                className="mt-3 min-h-[120px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4"
-              />
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Write your notes here..." className="mt-3 min-h-[120px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
             </div>
             {!showStartWarning ? (
               <button onClick={() => setShowStartWarning(true)} className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
@@ -475,42 +423,10 @@ export default function QuizScreen({
           </div>
         )}
 
-      {/* Fill in the Blank — audio + sorular eş zamanlı, buton yok */}
-        {isFill && !testStarted && (
+        {/* Fill in the Blank — tek audio, her zaman üstte */}
+        {isFill && !showResults && (
           <div className="mt-8">
-            <audio
-              ref={audioRef}
-              src={episode.audio_url}
-              onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioProgress((a.currentTime / a.duration) * 100); }}
-              onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
-              onEnded={() => setIsPlaying(false)}
-            />
-           <AudioPlayer
-  isPlaying={isPlaying}
-  progress={audioProgress}
-  duration={audioDuration}
-  audioRef={audioRef}
-  onToggle={() => {
-    if (!testStarted) setTestStarted(true);
-    toggleMainAudio();
-  }}
-  title={episode.title}
-  level={episode.level}
-/>
-          </div>
-        )}
-
-      {/* Dictation — direkt sorulara geç */}
-        {isDictation && !testStarted && (
-          <div className="mt-0">{setTestStarted(true) as never}</div>
-        )}
-
-        {/* Fill — sorular + audio eş zamanlı */}
-        {isFill && testStarted && !showResults && (
-          <div className="mt-8">
-            <audio
-              ref={audioRef}
-              src={episode.audio_url}
+            <audio ref={audioRef} src={episode.audio_url}
               onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioProgress((a.currentTime / a.duration) * 100); }}
               onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
               onEnded={() => setIsPlaying(false)}
@@ -520,72 +436,59 @@ export default function QuizScreen({
               progress={audioProgress}
               duration={audioDuration}
               audioRef={audioRef}
-              onToggle={toggleMainAudio}
+              onToggle={() => {
+                if (!testStarted) setTestStarted(true);
+                toggleMainAudio();
+              }}
               title={episode.title}
               level={episode.level}
             />
 
-            {episode.show_notes && (
-              <div className="mt-4 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 shadow-sm">
-                <p className="text-sm font-bold">📝 Notes</p>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Jot down key words while listening..."
-                  className="mt-2 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm"
-                />
-              </div>
+            {testStarted && (
+              <>
+                {episode.show_notes && (
+                  <div className="mt-4 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 shadow-sm">
+                    <p className="text-sm font-bold">📝 Notes</p>
+                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Jot down key words while listening..." className="mt-2 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+                  </div>
+                )}
+                <div className="mt-6 flex flex-col gap-6">
+                  {questions.map((q, i) => (
+                    <FillQuestionView
+                      key={i}
+                      question={q as FillQuestion}
+                      answers={fillAnswers[i] || {}}
+                      feedback={fillFeedback[i] || {}}
+                      onCheck={(ans) => {
+                        const fb: Record<number, boolean> = {};
+                        (q as FillQuestion).blanks.forEach((b, bi) => { fb[bi] = checkAnswer(ans[bi] || "", b.answer); });
+                        setFillAnswers({ ...fillAnswers, [i]: ans });
+                        setFillFeedback({ ...fillFeedback, [i]: fb });
+                      }}
+                      onUpdate={(ans) => setFillAnswers({ ...fillAnswers, [i]: ans })}
+                    />
+                  ))}
+                </div>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
+                  Finish ✓
+                </button>
+              </>
             )}
-
-            <div className="mt-6 flex flex-col gap-6">
-              {questions.map((q, i) => (
-                <FillQuestionView
-                  key={i}
-                  question={q as FillQuestion}
-                  answers={fillAnswers[i] || {}}
-                  feedback={fillFeedback[i] || {}}
-                  onCheck={(ans) => {
-                    const fb: Record<number, boolean> = {};
-                    (q as FillQuestion).blanks.forEach((b, bi) => {
-                      fb[bi] = checkAnswer(ans[bi] || "", b.answer);
-                    });
-                    setFillAnswers({ ...fillAnswers, [i]: ans });
-                    setFillFeedback({ ...fillFeedback, [i]: fb });
-                  }}
-                  onUpdate={(ans) => setFillAnswers({ ...fillAnswers, [i]: ans })}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={async () => { setShowResults(true); await saveResult(); }}
-              className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white"
-            >
-              Finish ✓
-            </button>
           </div>
         )}
 
-        {/* Dictation — sorular */}
+        {/* Dictation */}
         {isDictation && testStarted && !showResults && question && (
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#7a6258]">
-                Sentence {currentQuestion + 1} of {questions.length}
-              </p>
+              <p className="text-sm font-semibold text-[#7a6258]">Sentence {currentQuestion + 1} of {questions.length}</p>
               <div className="flex gap-1">
                 {questions.map((_, i) => (
                   <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />
                 ))}
               </div>
             </div>
-
-            <audio
-              ref={dictationAudioRef}
-              src={episode.audio_url}
-              onEnded={() => setDictationPlaying(false)}
-            />
-
+            <audio ref={dictationAudioRef} src={episode.audio_url} onEnded={() => setDictationPlaying(false)} />
             <DictationQuestionView
               question={question as DictationQuestion}
               answer={dictationAnswers[currentQuestion] || ""}
@@ -606,7 +509,7 @@ export default function QuizScreen({
                 setDictationPlaying(true);
               }}
               onCheck={() => {
-               const isCorrect = checkAnswer(dictationAnswers[currentQuestion] || "", (question as DictationQuestion).sentence);
+                const isCorrect = checkAnswer(dictationAnswers[currentQuestion] || "", (question as DictationQuestion).sentence);
                 setDictationFeedback({ ...dictationFeedback, [currentQuestion]: isCorrect });
               }}
               onReveal={() => setDictationRevealed({ ...dictationRevealed, [currentQuestion]: true })}
@@ -615,56 +518,45 @@ export default function QuizScreen({
                 setDictationFeedback({ ...dictationFeedback, [currentQuestion]: null });
               }}
             />
-
             <div className="mt-6 flex justify-between gap-4">
-              <button
-                disabled={currentQuestion === 0}
-                onClick={() => {
-                  setCurrentQuestion(currentQuestion - 1);
-                  setDictationPlaying(false);
-                  if (dictationAudioRef.current) dictationAudioRef.current.pause();
-                }}
-                className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30"
-              >
-                Previous
-              </button>
+              <button disabled={currentQuestion === 0}
+                onClick={() => { setCurrentQuestion(currentQuestion - 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }}
+                className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
               {currentQuestion < questions.length - 1 ? (
-                <button
-                  onClick={() => {
-                    setCurrentQuestion(currentQuestion + 1);
-                    setDictationPlaying(false);
-                    if (dictationAudioRef.current) dictationAudioRef.current.pause();
-                  }}
-                  className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white"
-                >
-                  Next →
-                </button>
+                <button onClick={() => { setCurrentQuestion(currentQuestion + 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }}
+                  className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
               ) : (
-                <button
-                  onClick={async () => { setShowResults(true); await saveResult(); }}
-                  className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white"
-                >
-                  Finish ✓
-                </button>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }}
+                  className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
               )}
             </div>
           </div>
         )}
 
-        {/* MCQ — sorular */}
+        {/* Dictation — ilk ekran, direkt testStarted yap */}
+        {isDictation && !testStarted && (
+          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
+            <p className="text-lg font-bold">🎙️ Dictation Practice</p>
+            <p className="mt-2 text-sm text-[#7a6258]">
+              Listen carefully and type exactly what you hear. You have <strong>2 plays</strong> per sentence.
+            </p>
+            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">
+              Start Dictation
+            </button>
+          </div>
+        )}
+
+        {/* MCQ sorular */}
         {isMCQ && testStarted && !showResults && question && (
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#7a6258]">
-                Question {currentQuestion + 1} of {questions.length}
-              </p>
+              <p className="text-sm font-semibold text-[#7a6258]">Question {currentQuestion + 1} of {questions.length}</p>
               <div className="flex gap-1">
                 {questions.map((_, i) => (
                   <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />
                 ))}
               </div>
             </div>
-
             <MCQQuestionView
               question={question as MCQQuestion}
               answer={mcqAnswers[currentQuestion]}
@@ -676,29 +568,13 @@ export default function QuizScreen({
                 setMcqFeedback({ ...mcqFeedback, [currentQuestion]: isCorrect });
               }}
             />
-
             <div className="mt-6 flex justify-between gap-4">
-              <button
-                disabled={currentQuestion === 0}
-                onClick={() => setCurrentQuestion(currentQuestion - 1)}
-                className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30"
-              >
-                Previous
-              </button>
+              <button disabled={currentQuestion === 0} onClick={() => setCurrentQuestion(currentQuestion - 1)}
+                className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
               {currentQuestion < questions.length - 1 ? (
-                <button
-                  onClick={() => setCurrentQuestion(currentQuestion + 1)}
-                  className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white"
-                >
-                  Next →
-                </button>
+                <button onClick={() => setCurrentQuestion(currentQuestion + 1)} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
               ) : (
-                <button
-                  onClick={async () => { setShowResults(true); await saveResult(); }}
-                  className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white"
-                >
-                  Finish ✓
-                </button>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
               )}
             </div>
           </div>
