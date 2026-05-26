@@ -357,12 +357,12 @@ export default function AdminScreen({ onBack }: Props) {
 
             <div className="mt-5 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
               <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
-              <pre className="text-xs leading-6">{`TEXT) The meeting was ___ at 3pm in the ___ room.\nANS1) scheduled\nANS2) conference\n\nTEXT) She ___ to work every day by ___.\nANS1) commutes\nANS2) bus`}</pre>
+             <pre className="text-xs leading-6">{`TEXT) The meeting was ___ at 3pm in the ___ room.\nANS1) scheduled\nANS2) conference room|boardroom\n\nTEXT) She ___ to work every day by ___.\nANS1) commutes\nANS2) bus`}</pre>
             </div>
 
             <div className="mt-4">
               <textarea
-                placeholder={`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled\n\nTEXT) She ___ to work by ___.\nANS1) commutes\nANS2) bus`}
+                placeholder={`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled|planned\n\nTEXT) The colour of the sky is ___.\nANS1) blue`}
                 className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
                 onChange={(e) => {
                   const raw = e.target.value;
@@ -415,7 +415,7 @@ export default function AdminScreen({ onBack }: Props) {
 
             <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
               <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
-              <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) Please submit your report by Friday afternoon.`}</pre>
+             <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
             </div>
 
             <div className="mt-4">
