@@ -2,7 +2,6 @@ type Props = {
   onSelectMCQ: () => void;
   onSelectFillBlank: () => void;
   onSelectDictation: () => void;
-  onSelectMixed: () => void;
   onBack: () => void;
 };
 
@@ -31,28 +30,18 @@ const modes = [
     warning: null,
     exams: ["PTE", "Cambridge", "IELTS"],
   },
-  {
-    id: "mixed",
-    emoji: "🎲",
-    title: "Mixed Practice",
-    description: "All question types combined. Great for full preparation.",
-    warning: "⚠️ This session includes multiple choice questions. Take notes while listening.",
-    exams: ["IELTS", "TOEFL", "TOEIC", "PTE"],
-  },
 ];
 
 export default function ModeSelectionScreen({
   onSelectMCQ,
   onSelectFillBlank,
   onSelectDictation,
-  onSelectMixed,
   onBack,
 }: Props) {
   const handlers: Record<string, () => void> = {
     mcq: onSelectMCQ,
     fill: onSelectFillBlank,
     dictation: onSelectDictation,
-    mixed: onSelectMixed,
   };
 
   return (
@@ -63,7 +52,7 @@ export default function ModeSelectionScreen({
           Select how you want to practice your listening skills.
         </p>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-2">
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
           {modes.map((mode) => (
             <button
               key={mode.id}
@@ -98,7 +87,7 @@ export default function ModeSelectionScreen({
           onClick={onBack}
           className="mt-10 text-sm font-semibold text-[#7a6258] underline"
         >
-          Back to episodes
+          Back
         </button>
       </section>
     </main>

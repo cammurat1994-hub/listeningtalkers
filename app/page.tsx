@@ -24,7 +24,7 @@ type Screen =
   | "progress"
   | "admin";
 
-type PracticeMode = "mcq" | "fill-blank" | "dictation" | "mixed" | null;
+type PracticeMode = "mcq" | "fill-blank" | "dictation" | null;
 
 const ADMIN_EMAIL = "cammurat1994@gmail.com";
 
@@ -156,7 +156,7 @@ export default function Home() {
           onBack={() => goTo("home")}
           onSelectEpisode={(episodeId) => {
             setSelectedEpisodeId(episodeId);
-            goTo("mode-selection");
+            goTo("practice");
           }}
         />
       </>
@@ -180,7 +180,6 @@ export default function Home() {
           onSelectMCQ={() => { setPracticeMode("mcq"); goTo("episodes"); }}
           onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("episodes"); }}
           onSelectDictation={() => { setPracticeMode("dictation"); goTo("episodes"); }}
-          onSelectMixed={() => { setPracticeMode("mixed"); goTo("episodes"); }}
           onBack={() => goTo("levels")}
         />
       </>
@@ -225,7 +224,7 @@ export default function Home() {
     );
   }
 
-if (screen === "episodes") {
+  if (screen === "episodes") {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
