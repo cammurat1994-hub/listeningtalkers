@@ -475,7 +475,7 @@ export default function QuizScreen({
           </div>
         )}
 
-        {/* Fill in the Blank — tek buton, audio + sorular eş zamanlı */}
+      {/* Fill in the Blank — audio + sorular eş zamanlı, buton yok */}
         {isFill && !testStarted && (
           <div className="mt-8">
             <audio
@@ -490,36 +490,19 @@ export default function QuizScreen({
               progress={audioProgress}
               duration={audioDuration}
               audioRef={audioRef}
-              onToggle={toggleMainAudio}
+              onToggle={() => {
+                setTestStarted(true);
+                toggleMainAudio();
+              }}
               title={episode.title}
               level={episode.level}
             />
-            <button
-              onClick={() => {
-                setTestStarted(true);
-                const audio = audioRef.current;
-                if (audio) { audio.play(); setIsPlaying(true); }
-              }}
-              className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white transition hover:bg-[#2f2424]"
-            >
-              ▶ Start Listening & Fill in the Blanks
-            </button>
           </div>
         )}
 
-        {/* Dictation — giriş ekranı */}
+      {/* Dictation — direkt sorulara geç */}
         {isDictation && !testStarted && (
-          <div className="mt-8">
-            <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
-              <p className="text-lg font-bold">🎙️ Dictation Practice</p>
-              <p className="mt-2 text-sm text-[#7a6258]">
-                You will hear sentences one by one. Listen carefully and type exactly what you hear. You have <strong>2 plays</strong> per sentence.
-              </p>
-              <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">
-                Start Dictation
-              </button>
-            </div>
-          </div>
+          <div className="mt-0">{setTestStarted(true) as never}</div>
         )}
 
         {/* Fill — sorular + audio eş zamanlı */}
