@@ -485,18 +485,18 @@ export default function QuizScreen({
               onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
               onEnded={() => setIsPlaying(false)}
             />
-            <AudioPlayer
-              isPlaying={isPlaying}
-              progress={audioProgress}
-              duration={audioDuration}
-              audioRef={audioRef}
-              onToggle={() => {
-                setTestStarted(true);
-                toggleMainAudio();
-              }}
-              title={episode.title}
-              level={episode.level}
-            />
+           <AudioPlayer
+  isPlaying={isPlaying}
+  progress={audioProgress}
+  duration={audioDuration}
+  audioRef={audioRef}
+  onToggle={() => {
+    if (!testStarted) setTestStarted(true);
+    toggleMainAudio();
+  }}
+  title={episode.title}
+  level={episode.level}
+/>
           </div>
         )}
 
