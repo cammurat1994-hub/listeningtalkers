@@ -42,6 +42,12 @@ function normalize(str: string) {
   return str.toLowerCase().trim().replace(/[.,!?;:'"]/g, "");
 }
 
+function checkAnswer(userAnswer: string, correctAnswer: string): boolean {
+  const normalizedUser = normalize(userAnswer);
+  const variants = correctAnswer.split("|").map(normalize);
+  return variants.some(v => v === normalizedUser);
+}
+
 function formatTime(seconds: number) {
   if (!seconds || isNaN(seconds)) return "0:00";
   const m = Math.floor(seconds / 60);
@@ -275,7 +281,7 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
           {revealed && (
             <div className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-4">
               <p className="text-sm text-[#7a6258]">Correct answer:</p>
-              <p className="mt-1 font-semibold">{question.sentence}</p>
+              <p className="mt-1 font-semibold">{question.sentence.split("|")[0]}</p>
             </div>
           )}
         </>
@@ -558,7 +564,7 @@ export default function QuizScreen({
                   onCheck={(ans) => {
                     const fb: Record<number, boolean> = {};
                     (q as FillQuestion).blanks.forEach((b, bi) => {
-                      fb[bi] = normalize(ans[bi] || "") === normalize(b.answer);
+                      fb[bi] = checkAnswer(ans[bi] || "", b.answer);
                     });
                     setFillAnswers({ ...fillAnswers, [i]: ans });
                     setFillFeedback({ ...fillFeedback, [i]: fb });
@@ -617,7 +623,7 @@ export default function QuizScreen({
                 setDictationPlaying(true);
               }}
               onCheck={() => {
-                const isCorrect = normalize(dictationAnswers[currentQuestion] || "") === normalize((question as DictationQuestion).sentence);
+               const isCorrect = checkAnswer(dictationAnswers[currentQuestion] || "", (question as DictationQuestion).sentence);
                 setDictationFeedback({ ...dictationFeedback, [currentQuestion]: isCorrect });
               }}
               onReveal={() => setDictationRevealed({ ...dictationRevealed, [currentQuestion]: true })}
