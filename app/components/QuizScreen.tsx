@@ -55,9 +55,7 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function AudioPlayer({
-  isPlaying, progress, duration, audioRef, onToggle, title, level,
-}: {
+function AudioPlayer({ isPlaying, progress, duration, audioRef, onToggle, title, level }: {
   isPlaying: boolean;
   progress: number;
   duration: number;
@@ -93,10 +91,7 @@ function AudioPlayer({
             <span>{formatTime(duration)}</span>
           </div>
         </div>
-        <button
-          onClick={onToggle}
-          className="flex items-center gap-3 rounded-2xl bg-[#3b2f2f] px-8 py-3 font-bold text-white transition hover:bg-[#2f2424]"
-        >
+        <button onClick={onToggle} className="flex items-center gap-3 rounded-2xl bg-[#3b2f2f] px-8 py-3 font-bold text-white transition hover:bg-[#2f2424]">
           {isPlaying ? <><span>⏸</span> Pause</> : <><span>▶</span> Start Listening</>}
         </button>
       </div>
@@ -121,10 +116,7 @@ function MCQQuestionView({ question, answer, feedback, onAnswer }: {
           const showCorrect = answered && isCorrect;
           const showWrong = answered && isSelected && !isCorrect;
           return (
-            <button
-              key={letter}
-              onClick={() => onAnswer(letter)}
-              disabled={answered}
+            <button key={letter} onClick={() => onAnswer(letter)} disabled={answered}
               className={`rounded-2xl border p-4 text-left transition ${
                 showCorrect ? "border-green-400 bg-green-50" :
                 showWrong ? "border-red-400 bg-red-50" :
@@ -164,7 +156,6 @@ function FillQuestionView({ question, answers, feedback, onCheck, onUpdate }: {
   const checked = Object.keys(feedback).length > 0;
   let blankIndex = 0;
   const parts = question.text.split("___");
-
   return (
     <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
       <p className="mb-3 text-sm font-semibold text-[#7a6258]">Fill in the blanks as you listen:</p>
@@ -176,9 +167,7 @@ function FillQuestionView({ question, answers, feedback, onCheck, onUpdate }: {
               const bi = blankIndex++;
               const fb = feedback[bi];
               return (
-                <input
-                  type="text"
-                  value={answers[bi] || ""}
+                <input type="text" value={answers[bi] || ""}
                   onChange={(e) => { if (!checked) onUpdate({ ...answers, [bi]: e.target.value }); }}
                   disabled={checked}
                   className={`mx-1 inline-block w-28 rounded-xl border px-2 py-1 text-center text-sm font-semibold ${
@@ -226,16 +215,13 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
 }) {
   const canPlay = playsUsed < maxPlays;
   const hasPlayed = playsUsed > 0;
-
   return (
     <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <p className="font-bold text-lg">🎙️ Listen and type what you hear</p>
         <span className="text-sm text-[#7a6258]">{playsUsed}/{maxPlays} plays</span>
       </div>
-      <button
-        onClick={onPlay}
-        disabled={!canPlay || isPlaying}
+      <button onClick={onPlay} disabled={!canPlay || isPlaying}
         className={`mt-4 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${
           canPlay && !isPlaying ? "bg-[#3b2f2f] text-white hover:bg-[#2f2424]" : "cursor-not-allowed bg-[#e0c7bb] text-[#7a6258]"
         }`}
@@ -244,10 +230,7 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
       </button>
       {hasPlayed && (
         <>
-          <textarea
-            value={answer}
-            onChange={(e) => onChange(e.target.value)}
-            disabled={feedback !== null}
+          <textarea value={answer} onChange={(e) => onChange(e.target.value)} disabled={feedback !== null}
             placeholder="Type exactly what you heard..."
             className={`mt-4 min-h-[100px] w-full rounded-2xl border p-4 ${
               feedback === true ? "border-green-400 bg-green-50" :
@@ -255,12 +238,8 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
               "border-[#e0c7bb] bg-white"
             }`}
           />
-          {feedback === null && (
-            <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check</button>
-          )}
-          {feedback === true && (
-            <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Perfect! Exactly right.</div>
-          )}
+          {feedback === null && <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check</button>}
+          {feedback === true && <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Perfect! Exactly right.</div>}
           {feedback === false && !revealed && (
             <div className="mt-3 flex flex-col gap-2">
               <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">✗ Not quite right.</div>
@@ -290,11 +269,11 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
   const [testStarted, setTestStarted] = useState(false);
   const [showStartWarning, setShowStartWarning] = useState(false);
   const [notes, setNotes] = useState("");
+  const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
   const [mcqAnswers, setMcqAnswers] = useState<Record<number, string>>({});
   const [mcqFeedback, setMcqFeedback] = useState<Record<number, boolean>>({});
   const [fillAnswers, setFillAnswers] = useState<Record<number, Record<number, string>>>({});
@@ -392,7 +371,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           <button onClick={onBack} className="shrink-0 rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
         </div>
 
-        {/* MCQ */}
+        {/* MCQ — dinle sonra sorular */}
         {isMCQ && !testStarted && (
           <div className="mt-8">
             <audio ref={audioRef} src={episode.audio_url}
@@ -401,11 +380,6 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
               onEnded={() => setIsPlaying(false)}
             />
             <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
-            <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-              <p className="font-bold">📝 My Notes</p>
-              <p className="mt-1 text-sm text-[#7a6258]">Take notes while listening.</p>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Write your notes here..." className="mt-3 min-h-[120px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
-            </div>
             {!showStartWarning ? (
               <button onClick={() => setShowStartWarning(true)} className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
                 I have listened — Start Questions
@@ -423,7 +397,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           </div>
         )}
 
-        {/* Fill in the Blank — tek audio, her zaman üstte */}
+        {/* Fill in the Blank */}
         {isFill && !showResults && (
           <div className="mt-8">
             <audio ref={audioRef} src={episode.audio_url}
@@ -431,34 +405,16 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
               onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
               onEnded={() => setIsPlaying(false)}
             />
-            <AudioPlayer
-              isPlaying={isPlaying}
-              progress={audioProgress}
-              duration={audioDuration}
-              audioRef={audioRef}
-              onToggle={() => {
-                if (!testStarted) setTestStarted(true);
-                toggleMainAudio();
-              }}
-              title={episode.title}
-              level={episode.level}
+            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef}
+              onToggle={() => { if (!testStarted) setTestStarted(true); toggleMainAudio(); }}
+              title={episode.title} level={episode.level}
             />
-
             {testStarted && (
               <>
-                {episode.show_notes && (
-                  <div className="mt-4 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 shadow-sm">
-                    <p className="text-sm font-bold">📝 Notes</p>
-                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Jot down key words while listening..." className="mt-2 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
-                  </div>
-                )}
                 <div className="mt-6 flex flex-col gap-6">
                   {questions.map((q, i) => (
-                    <FillQuestionView
-                      key={i}
-                      question={q as FillQuestion}
-                      answers={fillAnswers[i] || {}}
-                      feedback={fillFeedback[i] || {}}
+                    <FillQuestionView key={i} question={q as FillQuestion}
+                      answers={fillAnswers[i] || {}} feedback={fillFeedback[i] || {}}
                       onCheck={(ans) => {
                         const fb: Record<number, boolean> = {};
                         (q as FillQuestion).blanks.forEach((b, bi) => { fb[bi] = checkAnswer(ans[bi] || "", b.answer); });
@@ -477,7 +433,20 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           </div>
         )}
 
-        {/* Dictation */}
+        {/* Dictation — giriş ekranı */}
+        {isDictation && !testStarted && (
+          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
+            <p className="text-lg font-bold">🎙️ Dictation Practice</p>
+            <p className="mt-2 text-sm text-[#7a6258]">
+              Listen carefully and type exactly what you hear. You have <strong>2 plays</strong> per sentence.
+            </p>
+            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">
+              Start Dictation
+            </button>
+          </div>
+        )}
+
+        {/* Dictation sorular */}
         {isDictation && testStarted && !showResults && question && (
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
@@ -530,19 +499,6 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
                   className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Dictation — ilk ekran, direkt testStarted yap */}
-        {isDictation && !testStarted && (
-          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
-            <p className="text-lg font-bold">🎙️ Dictation Practice</p>
-            <p className="mt-2 text-sm text-[#7a6258]">
-              Listen carefully and type exactly what you hear. You have <strong>2 plays</strong> per sentence.
-            </p>
-            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">
-              Start Dictation
-            </button>
           </div>
         )}
 
@@ -611,6 +567,41 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
         )}
 
       </section>
+
+      {/* Floating Notes Button */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        {showNotesPanel && (
+          <div className="w-80 rounded-[2rem] border border-[#e0c7bb] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#e0c7bb] px-5 py-4">
+              <p className="font-bold">📝 My Notes</p>
+              <button onClick={() => setShowNotesPanel(false)} className="text-[#7a6258] hover:text-[#3b2f2f]">✕</button>
+            </div>
+            <div className="p-4">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Write your notes here..."
+                className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm"
+              />
+              {notes && (
+                <p className="mt-2 text-right text-xs text-[#7a6258]">{notes.length} chars</p>
+              )}
+            </div>
+          </div>
+        )}
+        <button
+          onClick={() => setShowNotesPanel(!showNotesPanel)}
+          className={`flex items-center gap-2 rounded-full px-5 py-3 font-bold shadow-xl transition ${
+            showNotesPanel ? "bg-[#ead7cc] text-[#3b2f2f]" : "bg-[#3b2f2f] text-white hover:bg-[#2f2424]"
+          }`}
+        >
+          📝 {showNotesPanel ? "Close" : "Notes"}
+          {notes && !showNotesPanel && (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#c9a99a] text-xs text-white">✓</span>
+          )}
+        </button>
+      </div>
+
     </main>
   );
 }
