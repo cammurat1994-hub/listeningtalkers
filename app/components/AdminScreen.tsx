@@ -71,7 +71,7 @@ function parseBulkMCQ(raw: string): MCQQuestion[] {
       else if (/^E[):.\s]/i.test(line)) q.options.E = line.replace(/^E[):.\s]+/i, "").trim();
       else if (/^correct[):.\s]/i.test(line)) {
         const ans = line.replace(/^correct[):.\s]+/i, "").trim().toUpperCase();
-        if (["A","B","C","D","E"].includes(ans)) q.correctAnswer = ans as "A"|"B"|"C"|"D"|"E";
+        if (["A", "B", "C", "D", "E"].includes(ans)) q.correctAnswer = ans as "A" | "B" | "C" | "D" | "E";
       }
       else if (/^EA[):.\s]/i.test(line)) q.explanations.A = line.replace(/^EA[):.\s]+/i, "").trim();
       else if (/^EB[):.\s]/i.test(line)) q.explanations.B = line.replace(/^EB[):.\s]+/i, "").trim();
@@ -129,20 +129,26 @@ export default function AdminScreen({ onBack }: Props) {
     try {
       const audioUrl = audioFile ? await uploadAudioFile(audioFile, "episode") : existingAudioUrl;
 
-      let questions = null;
-     if (episodeType === "practice-mcq" || episodeType.startsWith("quiz-")) {
-  if (bulkMode && bulkText.trim()) {
-    const parsed = parseBulkMCQ(bulkText);
-    if (!parsed.length) {
-      alert("No questions found in bulk text. Check the format.");
-      setUploading(false);
-      return;
-    }
-    questions = parsed;
-  } else {
-    questions = mcqQuestions.filter(q => q.question.trim());
-  }
-} else if (episodeType === "practice-fill") {
+      let questions: MCQQuestion[] | FillQuestion[] | DictationQuestion[] | null = null;
+
+      if (episodeType === "practice-mcq" || episodeType.startsWith("quiz-")) {
+        if (bulkMode && bulkText.trim()) {
+          const parsed = parseBulkMCQ(bulkText);
+          if (!parsed.length) {
+            alert("No questions found in bulk text. Check the format.");
+            setUploading(false);
+            return;
+          }
+          questions = parsed;
+        } else {
+          questions = mcqQuestions.filter(q => q.question.trim());
+          if (!questions.length) {
+            alert("Please add at least one question.");
+            setUploading(false);
+            return;
+          }
+        }
+      } else if (episodeType === "practice-fill") {
         questions = fillQuestions.filter(q => q.text.trim());
       } else if (episodeType === "practice-dictation") {
         questions = dictationQuestions.filter(q => q.sentence.trim());
@@ -170,9 +176,9 @@ export default function AdminScreen({ onBack }: Props) {
 
       resetForm();
       await fetchEpisodes();
-      alert("Episode published successfully.");
+      alert(editingEpisodeId ? "Episode updated successfully." : "Episode published successfully.");
     } catch (err) {
-      alert("Publish failed: " + (err instanceof Error ? err.message : "Unknown error"));
+      alert("Failed: " + (err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setUploading(false);
     }
@@ -190,6 +196,34 @@ export default function AdminScreen({ onBack }: Props) {
     setBulkMode(false);
     setBulkText("");
     setBulkError("");
+  }
+
+  async function handleEdit(epId: string) {
+    const { data, error } = await supabase.from("episodes").select("*").eq("id", epId).single();
+    if (error || !data) return;
+    setEditingEpisodeId(data.id);
+    setEpisodeType(data.episode_type || "practice-mcq");
+    setLevel(data.level || "Beginner");
+    setTitle(data.title);
+    setExistingAudioUrl(data.audio_url || "");
+    setShowNotes(data.show_notes || false);
+    setAudioFile(null);
+    setBulkMode(false);
+    setBulkText("");
+    setBulkError("");
+    if (data.questions) {
+      if (data.episode_type === "practice-fill") {
+        setFillQuestions(data.questions);
+      } else if (data.episode_type === "practice-dictation") {
+        setDictationQuestions(data.questions);
+      } else {
+        setMcqQuestions(data.questions.map((q: MCQQuestion) => ({
+          ...q,
+          explanations: q.explanations || { A: "", B: "", C: "", D: "", E: "" },
+        })));
+      }
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -311,7 +345,7 @@ export default function AdminScreen({ onBack }: Props) {
                       placeholder="Write your question..."
                       className="mt-3 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3" />
                     <div className="mt-4 flex flex-col gap-3">
-                      {(["A","B","C","D","E"] as const).map((letter) => (
+                      {(["A", "B", "C", "D", "E"] as const).map((letter) => (
                         <div key={letter} className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
                           <div className="flex items-center gap-3">
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ead7cc] text-sm font-bold">{letter}</span>
@@ -331,9 +365,9 @@ export default function AdminScreen({ onBack }: Props) {
                     <div className="mt-3">
                       <label className="mb-1 block text-sm font-semibold">Correct Answer</label>
                       <select value={item.correctAnswer}
-                        onChange={(e) => { const u = [...mcqQuestions]; u[index].correctAnswer = e.target.value as "A"|"B"|"C"|"D"|"E"; setMcqQuestions(u); }}
+                        onChange={(e) => { const u = [...mcqQuestions]; u[index].correctAnswer = e.target.value as "A" | "B" | "C" | "D" | "E"; setMcqQuestions(u); }}
                         className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
-                        {["A","B","C","D","E"].map(l => <option key={l}>{l}</option>)}
+                        {["A", "B", "C", "D", "E"].map(l => <option key={l}>{l}</option>)}
                       </select>
                     </div>
                   </div>
@@ -356,18 +390,13 @@ export default function AdminScreen({ onBack }: Props) {
             </div>
 
             <label className="mt-5 flex items-center gap-3 text-sm font-semibold">
-              <input
-                type="checkbox"
-                checked={showNotes}
-                onChange={(e) => setShowNotes(e.target.checked)}
-                className="h-4 w-4"
-              />
+              <input type="checkbox" checked={showNotes} onChange={(e) => setShowNotes(e.target.checked)} className="h-4 w-4" />
               Show notes field (Advanced episodes için önerilir)
             </label>
 
             <div className="mt-5 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
               <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
-             <pre className="text-xs leading-6">{`TEXT) The meeting was ___ at 3pm in the ___ room.\nANS1) scheduled\nANS2) conference room|boardroom\n\nTEXT) She ___ to work every day by ___.\nANS1) commutes\nANS2) bus`}</pre>
+              <pre className="text-xs leading-6">{`TEXT) The meeting was ___ at 3pm in the ___ room.\nANS1) scheduled\nANS2) conference room|boardroom\n\nTEXT) She ___ to work every day by ___.\nANS1) commutes\nANS2) bus`}</pre>
             </div>
 
             <div className="mt-4">
@@ -384,10 +413,7 @@ export default function AdminScreen({ onBack }: Props) {
                     if (!textLine) continue;
                     const text = textLine.replace(/^TEXT\)\s*/i, "");
                     const answerLines = lines.filter(l => /^ANS\d+\)/i.test(l));
-                    const blanks = answerLines.map((l, idx) => ({
-                      index: idx,
-                      answer: l.replace(/^ANS\d+\)\s*/i, "").trim()
-                    }));
+                    const blanks = answerLines.map((l, idx) => ({ index: idx, answer: l.replace(/^ANS\d+\)\s*/i, "").trim() }));
                     parsed.push({ text, blanks });
                   }
                   if (parsed.length) setFillQuestions(parsed);
@@ -425,7 +451,7 @@ export default function AdminScreen({ onBack }: Props) {
 
             <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
               <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
-             <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
+              <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
             </div>
 
             <div className="mt-4">
@@ -468,26 +494,8 @@ export default function AdminScreen({ onBack }: Props) {
                   <p className="font-bold">{ep.title}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={async () => {
-                    const { data, error } = await supabase.from("episodes").select("*").eq("id", ep.id).single();
-                    if (error || !data) return;
-                    setEditingEpisodeId(data.id);
-                    setEpisodeType(data.episode_type || "practice-mcq");
-                    setLevel(data.level || "Beginner");
-                    setTitle(data.title);
-                    setExistingAudioUrl(data.audio_url || "");
-                    setShowNotes(data.show_notes || false);
-                    setAudioFile(null);
-                    if (data.questions) {
-                      if (data.episode_type === "practice-fill") setFillQuestions(data.questions);
-                      else if (data.episode_type === "practice-dictation") setDictationQuestions(data.questions);
-                      else setMcqQuestions(data.questions.map((q: MCQQuestion) => ({
-                        ...q,
-                        explanations: q.explanations || { A: "", B: "", C: "", D: "", E: "" }
-                      })));
-                    }
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
+                  <button onClick={() => handleEdit(ep.id)}
+                    className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
                   <button onClick={async () => {
                     if (!confirm("Delete this episode?")) return;
                     await supabase.from("episodes").delete().eq("id", ep.id);
