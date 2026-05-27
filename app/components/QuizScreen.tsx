@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 
 type Props = {
   episodeId: string;
-  practiceMode: "mcq" | "fill-blank" | "dictation" | "mixed" | null;
+  practiceMode: "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | null;
   isQuizMode: boolean;
   onBack: () => void;
   onNextEpisode: (nextEpisodeId: string) => void;
