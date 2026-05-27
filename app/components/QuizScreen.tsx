@@ -28,6 +28,16 @@ type DictationQuestion = {
   sentence: string;
 };
 
+type ShortAnswerQuestion = {
+  question: string;
+  answer: string;
+  hint?: string;
+};
+
+type MatchingQuestion = {
+  pairs: { left: string; right: string }[];
+};
+
 type Episode = {
   id: string;
   title: string;
@@ -35,7 +45,7 @@ type Episode = {
   audio_url: string;
   episode_type: string;
   show_notes: boolean;
-  questions: (MCQQuestion | FillQuestion | DictationQuestion)[];
+  questions: (MCQQuestion | FillQuestion | DictationQuestion | ShortAnswerQuestion | MatchingQuestion)[];
 };
 
 function normalize(str: string) {
@@ -75,8 +85,7 @@ function AudioPlayer({ isPlaying, progress, duration, audioRef, onToggle, title,
           <p className="text-sm text-[#7a6258]">{level}</p>
         </div>
         <div className="w-full">
-          <div
-            className="relative h-2 w-full cursor-pointer rounded-full bg-[#ead7cc]"
+          <div className="relative h-2 w-full cursor-pointer rounded-full bg-[#ead7cc]"
             onClick={(e) => {
               const audio = audioRef.current;
               if (!audio) return;
@@ -191,9 +200,7 @@ function FillQuestionView({ question, answers, feedback, onCheck, onUpdate }: {
         </div>
       )}
       {!checked && (
-        <button onClick={() => onCheck(answers)} className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">
-          Check Answers
-        </button>
+        <button onClick={() => onCheck(answers)} className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check Answers</button>
       )}
     </div>
   );
@@ -222,24 +229,17 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
         <span className="text-sm text-[#7a6258]">{playsUsed}/{maxPlays} plays</span>
       </div>
       <button onClick={onPlay} disabled={!canPlay || isPlaying}
-        className={`mt-4 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${
-          canPlay && !isPlaying ? "bg-[#3b2f2f] text-white hover:bg-[#2f2424]" : "cursor-not-allowed bg-[#e0c7bb] text-[#7a6258]"
-        }`}
-      >
+        className={`mt-4 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${canPlay && !isPlaying ? "bg-[#3b2f2f] text-white hover:bg-[#2f2424]" : "cursor-not-allowed bg-[#e0c7bb] text-[#7a6258]"}`}>
         {isPlaying ? "🔊 Playing..." : canPlay ? `▶ Play${playsUsed > 0 ? " Again" : ""}` : "No plays left"}
       </button>
       {hasPlayed && (
         <>
           <textarea value={answer} onChange={(e) => onChange(e.target.value)} disabled={feedback !== null}
             placeholder="Type exactly what you heard..."
-            className={`mt-4 min-h-[100px] w-full rounded-2xl border p-4 ${
-              feedback === true ? "border-green-400 bg-green-50" :
-              feedback === false ? "border-red-400 bg-red-50" :
-              "border-[#e0c7bb] bg-white"
-            }`}
+            className={`mt-4 min-h-[100px] w-full rounded-2xl border p-4 ${feedback === true ? "border-green-400 bg-green-50" : feedback === false ? "border-red-400 bg-red-50" : "border-[#e0c7bb] bg-white"}`}
           />
           {feedback === null && <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check</button>}
-          {feedback === true && <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Perfect! Exactly right.</div>}
+          {feedback === true && <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Perfect!</div>}
           {feedback === false && !revealed && (
             <div className="mt-3 flex flex-col gap-2">
               <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">✗ Not quite right.</div>
@@ -261,6 +261,137 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
   );
 }
 
+function ShortAnswerView({ question, answer, feedback, revealed, onChange, onCheck, onReveal, onRetry }: {
+  question: ShortAnswerQuestion;
+  answer: string;
+  feedback: boolean | null;
+  revealed: boolean;
+  onChange: (v: string) => void;
+  onCheck: () => void;
+  onReveal: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+      <p className="text-xl font-bold">{question.question}</p>
+      {question.hint && feedback === null && (
+        <p className="mt-2 text-sm text-[#7a6258]">💡 Hint: {question.hint}</p>
+      )}
+      <input
+        type="text"
+        value={answer}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={feedback !== null}
+        placeholder="Your answer (max 3 words)..."
+        onKeyDown={(e) => { if (e.key === "Enter" && feedback === null) onCheck(); }}
+        className={`mt-4 w-full rounded-2xl border p-4 text-lg ${
+          feedback === true ? "border-green-400 bg-green-50" :
+          feedback === false ? "border-red-400 bg-red-50" :
+          "border-[#e0c7bb] bg-white"
+        }`}
+      />
+      {feedback === null && (
+        <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check Answer</button>
+      )}
+      {feedback === true && (
+        <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Correct!</div>
+      )}
+      {feedback === false && !revealed && (
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">✗ Not quite right.</div>
+          <div className="flex gap-3">
+            <button onClick={onRetry} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold">Try Again</button>
+            <button onClick={onReveal} className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white">Show Answer</button>
+          </div>
+        </div>
+      )}
+      {revealed && (
+        <div className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+          <p className="text-sm text-[#7a6258]">Correct answer:</p>
+          <p className="mt-1 font-semibold">{question.answer.split("|")[0]}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MatchingView({ question, userMatches, checked, onMatch, onCheck }: {
+  question: MatchingQuestion;
+  userMatches: Record<number, number>;
+  checked: boolean;
+  onMatch: (leftIdx: number, rightIdx: number) => void;
+  onCheck: () => void;
+}) {
+  const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
+  const shuffledRight = question.pairs.map((p, i) => ({ text: p.right, originalIdx: i }))
+    .sort((a, b) => a.originalIdx - b.originalIdx);
+
+  const isCorrect = (leftIdx: number) => userMatches[leftIdx] === leftIdx;
+
+  return (
+    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+      <p className="mb-4 text-sm font-semibold text-[#7a6258]">Match each item on the left with the correct description on the right:</p>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-bold text-[#7a6258] uppercase">Items</p>
+          {question.pairs.map((pair, i) => (
+            <button key={i} onClick={() => { if (!checked) setSelectedLeft(i); }}
+              className={`rounded-2xl border p-3 text-left text-sm font-semibold transition ${
+                checked ? (isCorrect(i) ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50") :
+                selectedLeft === i ? "border-[#3b2f2f] bg-[#ead7cc]" :
+                userMatches[i] !== undefined ? "border-[#c9a99a] bg-[#f7eee8]" :
+                "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"
+              }`}>
+              {pair.left}
+              {userMatches[i] !== undefined && !checked && (
+                <span className="ml-2 text-xs text-[#7a6258]">→ {shuffledRight[userMatches[i]]?.text}</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-bold text-[#7a6258] uppercase">Matches</p>
+          {shuffledRight.map((item, i) => {
+            const isMatched = Object.values(userMatches).includes(i);
+            return (
+              <button key={i} onClick={() => {
+                if (!checked && selectedLeft !== null) {
+                  onMatch(selectedLeft, i);
+                  setSelectedLeft(null);
+                }
+              }}
+                className={`rounded-2xl border p-3 text-left text-sm transition ${
+                  checked ? (Object.entries(userMatches).some(([l, r]) => Number(r) === i && Number(l) === item.originalIdx) ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50") :
+                  isMatched ? "border-[#c9a99a] bg-[#f7eee8]" :
+                  selectedLeft !== null ? "border-[#3b2f2f] bg-white hover:bg-[#ead7cc] cursor-pointer" :
+                  "border-[#e0c7bb] bg-white"
+                }`}>
+                {item.text}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {checked && (
+        <div className="mt-4 flex flex-col gap-1">
+          {question.pairs.map((pair, i) => (
+            <p key={i} className={`text-sm font-semibold ${isCorrect(i) ? "text-green-600" : "text-red-600"}`}>
+              {isCorrect(i) ? `✓ ${pair.left} → ${pair.right}` : `✗ ${pair.left} → correct: ${pair.right}`}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {!checked && (
+        <button onClick={onCheck} className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">
+          Check Matches
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack, onNextEpisode }: Props) {
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [nextEpisode, setNextEpisode] = useState<Episode | null>(null);
@@ -274,6 +405,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const [mcqAnswers, setMcqAnswers] = useState<Record<number, string>>({});
   const [mcqFeedback, setMcqFeedback] = useState<Record<number, boolean>>({});
   const [fillAnswers, setFillAnswers] = useState<Record<number, Record<number, string>>>({});
@@ -284,6 +416,14 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
   const [dictationPlays, setDictationPlays] = useState<Record<number, number>>({});
   const dictationAudioRef = useRef<HTMLAudioElement | null>(null);
   const [dictationPlaying, setDictationPlaying] = useState(false);
+
+  const [shortAnswers, setShortAnswers] = useState<Record<number, string>>({});
+  const [shortFeedback, setShortFeedback] = useState<Record<number, boolean | null>>({});
+  const [shortRevealed, setShortRevealed] = useState<Record<number, boolean>>({});
+
+  const [matchingAnswers, setMatchingAnswers] = useState<Record<number, Record<number, number>>>({});
+  const [matchingChecked, setMatchingChecked] = useState<Record<number, boolean>>({});
+
   const [showResults, setShowResults] = useState(false);
   const [resultSaved, setResultSaved] = useState(false);
 
@@ -321,13 +461,16 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
     episode.questions.forEach((q, i) => {
       const type = episode.episode_type;
       if (type === "practice-mcq" || type?.startsWith("quiz-")) {
-        total++;
-        if (mcqAnswers[i] === (q as MCQQuestion).correctAnswer) correct++;
+        total++; if (mcqAnswers[i] === (q as MCQQuestion).correctAnswer) correct++;
       } else if (type === "practice-fill") {
         (q as FillQuestion).blanks.forEach((_, bi) => { total++; if (fillFeedback[i]?.[bi] === true) correct++; });
       } else if (type === "practice-dictation") {
-        total++;
-        if (dictationFeedback[i] === true) correct++;
+        total++; if (dictationFeedback[i] === true) correct++;
+      } else if (type === "practice-short") {
+        total++; if (shortFeedback[i] === true) correct++;
+      } else if (type === "practice-matching") {
+        const mq = q as MatchingQuestion;
+        mq.pairs.forEach((_, pi) => { total++; if (matchingAnswers[i]?.[pi] === pi) correct++; });
       }
     });
     return { correct, total };
@@ -339,12 +482,8 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
     if (!user?.email) return;
     const { correct, total } = calculateScore();
     await supabase.from("user_results").insert([{
-      user_email: user.email,
-      episode_id: episode.id,
-      episode_title: episode.title,
-      level: episode.level,
-      score: correct,
-      total_questions: total,
+      user_email: user.email, episode_id: episode.id, episode_title: episode.title,
+      level: episode.level, score: correct, total_questions: total,
     }]);
     setResultSaved(true);
   }
@@ -358,6 +497,8 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
   const isFill = episodeType === "practice-fill";
   const isDictation = episodeType === "practice-dictation";
   const isMCQ = episodeType === "practice-mcq" || episodeType?.startsWith("quiz-");
+  const isShort = episodeType === "practice-short";
+  const isMatching = episodeType === "practice-matching";
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
@@ -371,7 +512,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           <button onClick={onBack} className="shrink-0 rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
         </div>
 
-        {/* MCQ — dinle sonra sorular */}
+        {/* MCQ */}
         {isMCQ && !testStarted && (
           <div className="mt-8">
             <audio ref={audioRef} src={episode.audio_url}
@@ -381,9 +522,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
             />
             <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
             {!showStartWarning ? (
-              <button onClick={() => setShowStartWarning(true)} className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
-                I have listened — Start Questions
-              </button>
+              <button onClick={() => setShowStartWarning(true)} className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">I have listened — Start Questions</button>
             ) : (
               <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
                 <p className="font-semibold">⚠️ Before you start</p>
@@ -425,24 +564,48 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
                     />
                   ))}
                 </div>
-                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
-                  Finish ✓
-                </button>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Finish ✓</button>
               </>
             )}
           </div>
         )}
 
-        {/* Dictation — giriş ekranı */}
+        {/* Dictation giriş */}
         {isDictation && !testStarted && (
           <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
             <p className="text-lg font-bold">🎙️ Dictation Practice</p>
-            <p className="mt-2 text-sm text-[#7a6258]">
-              Listen carefully and type exactly what you hear. You have <strong>2 plays</strong> per sentence.
-            </p>
-            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">
-              Start Dictation
-            </button>
+            <p className="mt-2 text-sm text-[#7a6258]">Listen carefully and type exactly what you hear. You have <strong>2 plays</strong> per sentence.</p>
+            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start Dictation</button>
+          </div>
+        )}
+
+        {/* Short Answer giriş */}
+        {isShort && !testStarted && (
+          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
+            <p className="text-lg font-bold">✍️ Short Answer Practice</p>
+            <p className="mt-2 text-sm text-[#7a6258]">Listen carefully, then answer each question in 1-3 words.</p>
+            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start</button>
+          </div>
+        )}
+
+        {/* Matching giriş */}
+        {isMatching && !testStarted && (
+          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
+            <p className="text-lg font-bold">🔗 Matching Practice</p>
+            <p className="mt-2 text-sm text-[#7a6258]">Listen carefully, then match each item on the left with the correct description on the right.</p>
+            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start Matching</button>
+          </div>
+        )}
+
+        {/* Short Answer + Matching için audio */}
+        {(isShort || isMatching) && !testStarted && (
+          <div className="mt-4">
+            <audio ref={audioRef} src={episode.audio_url}
+              onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioProgress((a.currentTime / a.duration) * 100); }}
+              onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
+              onEnded={() => setIsPlaying(false)}
+            />
+            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
           </div>
         )}
 
@@ -451,11 +614,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm font-semibold text-[#7a6258]">Sentence {currentQuestion + 1} of {questions.length}</p>
-              <div className="flex gap-1">
-                {questions.map((_, i) => (
-                  <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />
-                ))}
-              </div>
+              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />)}</div>
             </div>
             <audio ref={dictationAudioRef} src={episode.audio_url} onEnded={() => setDictationPlaying(false)} />
             <DictationQuestionView
@@ -464,8 +623,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
               feedback={dictationFeedback[currentQuestion] ?? null}
               revealed={dictationRevealed[currentQuestion] || false}
               playsUsed={dictationPlays[currentQuestion] || 0}
-              maxPlays={2}
-              isPlaying={dictationPlaying}
+              maxPlays={2} isPlaying={dictationPlaying}
               onChange={(v) => setDictationAnswers({ ...dictationAnswers, [currentQuestion]: v })}
               onPlay={() => {
                 const audio = dictationAudioRef.current;
@@ -473,32 +631,65 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
                 const plays = dictationPlays[currentQuestion] || 0;
                 if (plays >= 2) return;
                 setDictationPlays({ ...dictationPlays, [currentQuestion]: plays + 1 });
-                audio.currentTime = 0;
-                audio.play();
-                setDictationPlaying(true);
+                audio.currentTime = 0; audio.play(); setDictationPlaying(true);
               }}
-              onCheck={() => {
-                const isCorrect = checkAnswer(dictationAnswers[currentQuestion] || "", (question as DictationQuestion).sentence);
-                setDictationFeedback({ ...dictationFeedback, [currentQuestion]: isCorrect });
-              }}
+              onCheck={() => setDictationFeedback({ ...dictationFeedback, [currentQuestion]: checkAnswer(dictationAnswers[currentQuestion] || "", (question as DictationQuestion).sentence) })}
               onReveal={() => setDictationRevealed({ ...dictationRevealed, [currentQuestion]: true })}
-              onRetry={() => {
-                setDictationAnswers({ ...dictationAnswers, [currentQuestion]: "" });
-                setDictationFeedback({ ...dictationFeedback, [currentQuestion]: null });
-              }}
+              onRetry={() => { setDictationAnswers({ ...dictationAnswers, [currentQuestion]: "" }); setDictationFeedback({ ...dictationFeedback, [currentQuestion]: null }); }}
             />
             <div className="mt-6 flex justify-between gap-4">
-              <button disabled={currentQuestion === 0}
-                onClick={() => { setCurrentQuestion(currentQuestion - 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }}
-                className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
+              <button disabled={currentQuestion === 0} onClick={() => { setCurrentQuestion(currentQuestion - 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }} className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
               {currentQuestion < questions.length - 1 ? (
-                <button onClick={() => { setCurrentQuestion(currentQuestion + 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }}
-                  className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
+                <button onClick={() => { setCurrentQuestion(currentQuestion + 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
               ) : (
-                <button onClick={async () => { setShowResults(true); await saveResult(); }}
-                  className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Short Answer sorular */}
+        {isShort && testStarted && !showResults && question && (
+          <div className="mt-8">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm font-semibold text-[#7a6258]">Question {currentQuestion + 1} of {questions.length}</p>
+              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />)}</div>
+            </div>
+            <ShortAnswerView
+              question={question as ShortAnswerQuestion}
+              answer={shortAnswers[currentQuestion] || ""}
+              feedback={shortFeedback[currentQuestion] ?? null}
+              revealed={shortRevealed[currentQuestion] || false}
+              onChange={(v) => setShortAnswers({ ...shortAnswers, [currentQuestion]: v })}
+              onCheck={() => setShortFeedback({ ...shortFeedback, [currentQuestion]: checkAnswer(shortAnswers[currentQuestion] || "", (question as ShortAnswerQuestion).answer) })}
+              onReveal={() => setShortRevealed({ ...shortRevealed, [currentQuestion]: true })}
+              onRetry={() => { setShortAnswers({ ...shortAnswers, [currentQuestion]: "" }); setShortFeedback({ ...shortFeedback, [currentQuestion]: null }); }}
+            />
+            <div className="mt-6 flex justify-between gap-4">
+              <button disabled={currentQuestion === 0} onClick={() => setCurrentQuestion(currentQuestion - 1)} className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
+              {currentQuestion < questions.length - 1 ? (
+                <button onClick={() => setCurrentQuestion(currentQuestion + 1)} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
+              ) : (
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Matching sorular */}
+        {isMatching && testStarted && !showResults && (
+          <div className="mt-8 flex flex-col gap-6">
+            {questions.map((q, i) => (
+              <MatchingView
+                key={i}
+                question={q as MatchingQuestion}
+                userMatches={matchingAnswers[i] || {}}
+                checked={matchingChecked[i] || false}
+                onMatch={(leftIdx, rightIdx) => setMatchingAnswers({ ...matchingAnswers, [i]: { ...(matchingAnswers[i] || {}), [leftIdx]: rightIdx } })}
+                onCheck={() => setMatchingChecked({ ...matchingChecked, [i]: true })}
+              />
+            ))}
+            <button onClick={async () => { setShowResults(true); await saveResult(); }} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Finish ✓</button>
           </div>
         )}
 
@@ -507,16 +698,9 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm font-semibold text-[#7a6258]">Question {currentQuestion + 1} of {questions.length}</p>
-              <div className="flex gap-1">
-                {questions.map((_, i) => (
-                  <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />
-                ))}
-              </div>
+              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />)}</div>
             </div>
-            <MCQQuestionView
-              question={question as MCQQuestion}
-              answer={mcqAnswers[currentQuestion]}
-              feedback={mcqFeedback[currentQuestion]}
+            <MCQQuestionView question={question as MCQQuestion} answer={mcqAnswers[currentQuestion]} feedback={mcqFeedback[currentQuestion]}
               onAnswer={(letter) => {
                 if (mcqFeedback[currentQuestion] !== undefined) return;
                 const isCorrect = letter === (question as MCQQuestion).correctAnswer;
@@ -525,8 +709,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
               }}
             />
             <div className="mt-6 flex justify-between gap-4">
-              <button disabled={currentQuestion === 0} onClick={() => setCurrentQuestion(currentQuestion - 1)}
-                className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
+              <button disabled={currentQuestion === 0} onClick={() => setCurrentQuestion(currentQuestion - 1)} className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
               {currentQuestion < questions.length - 1 ? (
                 <button onClick={() => setCurrentQuestion(currentQuestion + 1)} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
               ) : (
@@ -547,28 +730,20 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
                   <h2 className="text-4xl font-bold">Well done!</h2>
                   <p className="mt-4 text-6xl font-bold">{correct} / {total}</p>
                   <p className="mt-2 text-lg text-[#7a6258]">{pct}% accuracy</p>
-                  <p className="mt-3 text-sm text-[#7a6258]">
-                    {pct >= 80 ? "🎯 Excellent work!" : pct >= 60 ? "📈 Good job, keep practicing!" : "💪 Keep going, you'll improve!"}
-                  </p>
+                  <p className="mt-3 text-sm text-[#7a6258]">{pct >= 80 ? "🎯 Excellent work!" : pct >= 60 ? "📈 Good job!" : "💪 Keep going!"}</p>
                 </div>
               );
             })()}
             <div className="mt-8 flex flex-col gap-3">
-              {nextEpisode && (
-                <button onClick={() => onNextEpisode(nextEpisode.id)} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
-                  Next Episode →
-                </button>
-              )}
-              <button onClick={onBack} className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">
-                Back to Episodes
-              </button>
+              {nextEpisode && <button onClick={() => onNextEpisode(nextEpisode.id)} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Next Episode →</button>}
+              <button onClick={onBack} className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">Back to Episodes</button>
             </div>
           </div>
         )}
 
       </section>
 
-      {/* Floating Notes Button */}
+      {/* Floating Notes */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
         {showNotesPanel && (
           <div className="w-80 rounded-[2rem] border border-[#e0c7bb] bg-white shadow-2xl">
@@ -577,28 +752,15 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
               <button onClick={() => setShowNotesPanel(false)} className="text-[#7a6258] hover:text-[#3b2f2f]">✕</button>
             </div>
             <div className="p-4">
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Write your notes here..."
-                className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm"
-              />
-              {notes && (
-                <p className="mt-2 text-right text-xs text-[#7a6258]">{notes.length} chars</p>
-              )}
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Write your notes here..." className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
+              {notes && <p className="mt-2 text-right text-xs text-[#7a6258]">{notes.length} chars</p>}
             </div>
           </div>
         )}
-        <button
-          onClick={() => setShowNotesPanel(!showNotesPanel)}
-          className={`flex items-center gap-2 rounded-full px-5 py-3 font-bold shadow-xl transition ${
-            showNotesPanel ? "bg-[#ead7cc] text-[#3b2f2f]" : "bg-[#3b2f2f] text-white hover:bg-[#2f2424]"
-          }`}
-        >
+        <button onClick={() => setShowNotesPanel(!showNotesPanel)}
+          className={`flex items-center gap-2 rounded-full px-5 py-3 font-bold shadow-xl transition ${showNotesPanel ? "bg-[#ead7cc] text-[#3b2f2f]" : "bg-[#3b2f2f] text-white hover:bg-[#2f2424]"}`}>
           📝 {showNotesPanel ? "Close" : "Notes"}
-          {notes && !showNotesPanel && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#c9a99a] text-xs text-white">✓</span>
-          )}
+          {notes && !showNotesPanel && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#c9a99a] text-xs text-white">✓</span>}
         </button>
       </div>
 
