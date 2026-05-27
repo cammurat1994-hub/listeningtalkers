@@ -130,9 +130,19 @@ export default function AdminScreen({ onBack }: Props) {
       const audioUrl = audioFile ? await uploadAudioFile(audioFile, "episode") : existingAudioUrl;
 
       let questions = null;
-      if (episodeType === "practice-mcq" || episodeType.startsWith("quiz-")) {
-        questions = mcqQuestions.filter(q => q.question.trim());
-      } else if (episodeType === "practice-fill") {
+     if (episodeType === "practice-mcq" || episodeType.startsWith("quiz-")) {
+  if (bulkMode && bulkText.trim()) {
+    const parsed = parseBulkMCQ(bulkText);
+    if (!parsed.length) {
+      alert("No questions found in bulk text. Check the format.");
+      setUploading(false);
+      return;
+    }
+    questions = parsed;
+  } else {
+    questions = mcqQuestions.filter(q => q.question.trim());
+  }
+} else if (episodeType === "practice-fill") {
         questions = fillQuestions.filter(q => q.text.trim());
       } else if (episodeType === "practice-dictation") {
         questions = dictationQuestions.filter(q => q.sentence.trim());
