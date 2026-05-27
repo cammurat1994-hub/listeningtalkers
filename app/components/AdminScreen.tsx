@@ -448,10 +448,33 @@ export default function AdminScreen({ onBack }: Props) {
               <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
                 <h2 className="text-2xl font-bold">Dictation</h2>
                 <p className="mt-1 text-sm text-[#7a6258]">Kullanıcının duyup yazacağı cümle.</p>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-                  <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
-                  <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
-                </div>
+            <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
+  <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
+  <pre className="text-xs leading-6">{`L) Monday\nR) The first day of the week\n\nL) Tuesday\nR) The second day of the week`}</pre>
+  <p className="mt-2 text-xs">Her çift arasına boş satır bırak. L) sol taraf, R) sağ taraf.</p>
+</div>
+
+<div className="mt-4">
+  <textarea
+    placeholder={`L) Monday\nR) The first day of the week\n\nL) Tuesday\nR) The second day of the week`}
+    className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
+    onChange={(e) => {
+      const blocks = e.target.value.trim().split(/\n{2,}/);
+      const pairs: { left: string; right: string }[] = [];
+      for (const block of blocks) {
+        const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
+        const lLine = lines.find(l => /^L\)/i.test(l));
+        const rLine = lines.find(l => /^R\)/i.test(l));
+        if (!lLine || !rLine) continue;
+        pairs.push({
+          left: lLine.replace(/^L\)\s*/i, "").trim(),
+          right: rLine.replace(/^R\)\s*/i, "").trim(),
+        });
+      }
+      if (pairs.length) setMatchingQuestions([{ pairs }]);
+    }}
+  />
+</div>
                 <div className="mt-4">
                   <textarea placeholder={`S) The conference will be held next Monday.`}
                     className="min-h-[150px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
