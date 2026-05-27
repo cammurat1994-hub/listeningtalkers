@@ -101,10 +101,7 @@ export default function Home() {
     async function getUser() {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setUserEmail(user.email);
-        setScreen("home");
-      }
+      if (user?.email) { setUserEmail(user.email); setScreen("home"); }
       setLoading(false);
     }
     getUser();
@@ -118,18 +115,12 @@ export default function Home() {
 
   function goTo(s: Screen) {
     setLoading(true);
-    setTimeout(() => {
-      setScreen(s);
-      setLoading(false);
-    }, 500);
+    setTimeout(() => { setScreen(s); setLoading(false); }, 500);
   }
 
   function navigateTo(s: Screen) {
     setLoading(true);
-    setTimeout(() => {
-      setScreen(s);
-      setLoading(false);
-    }, 500);
+    setTimeout(() => { setScreen(s); setLoading(false); }, 500);
   }
 
   if (loading) return <LoadingScreen />;
@@ -154,10 +145,7 @@ export default function Home() {
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <MyProgressScreen
           onBack={() => goTo("home")}
-          onSelectEpisode={(episodeId) => {
-            setSelectedEpisodeId(episodeId);
-            goTo("practice");
-          }}
+          onSelectEpisode={(episodeId) => { setSelectedEpisodeId(episodeId); goTo("practice"); }}
         />
       </>
     );
@@ -176,14 +164,14 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-     <ModeSelectionScreen
-  onSelectMCQ={() => { setPracticeMode("mcq"); goTo("episodes"); }}
-  onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("episodes"); }}
-  onSelectDictation={() => { setPracticeMode("dictation"); goTo("episodes"); }}
-  onSelectShortAnswer={() => { setPracticeMode("short-answer"); goTo("episodes"); }}
-  onSelectMatching={() => { setPracticeMode("matching"); goTo("episodes"); }}
-  onBack={() => goTo("levels")}
-/>
+        <ModeSelectionScreen
+          onSelectMCQ={() => { setPracticeMode("mcq"); goTo("episodes"); }}
+          onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("episodes"); }}
+          onSelectDictation={() => { setPracticeMode("dictation"); goTo("episodes"); }}
+          onSelectShortAnswer={() => { setPracticeMode("short-answer"); goTo("episodes"); }}
+          onSelectMatching={() => { setPracticeMode("matching"); goTo("episodes"); }}
+          onBack={() => goTo("levels")}
+        />
       </>
     );
   }
@@ -197,10 +185,7 @@ export default function Home() {
           practiceMode={practiceMode}
           isQuizMode={false}
           onBack={() => goTo("episodes")}
-          onNextEpisode={(nextId) => {
-            setSelectedEpisodeId(nextId);
-            goTo("practice");
-          }}
+          onNextEpisode={(nextId) => { setSelectedEpisodeId(nextId); goTo("practice"); }}
           onStudyVocabulary={() => {}}
         />
       </>
@@ -216,10 +201,7 @@ export default function Home() {
           practiceMode={null}
           isQuizMode={true}
           onBack={() => goTo("episodes")}
-          onNextEpisode={(nextId) => {
-            setSelectedEpisodeId(nextId);
-            goTo("quiz");
-          }}
+          onNextEpisode={(nextId) => { setSelectedEpisodeId(nextId); goTo("quiz"); }}
           onStudyVocabulary={() => {}}
         />
       </>
@@ -264,14 +246,8 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <HomeScreen
-          onSelectPractice={() => {
-            setIsQuizMode(false);
-            goTo("levels");
-          }}
-          onSelectQuiz={() => {
-            setIsQuizMode(true);
-            goTo("levels");
-          }}
+          onSelectPractice={() => { setIsQuizMode(false); goTo("levels"); }}
+          onSelectQuiz={() => { setIsQuizMode(true); goTo("levels"); }}
         />
       </>
     );
