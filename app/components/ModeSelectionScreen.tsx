@@ -2,6 +2,8 @@ type Props = {
   onSelectMCQ: () => void;
   onSelectFillBlank: () => void;
   onSelectDictation: () => void;
+  onSelectShortAnswer: () => void;
+  onSelectMatching: () => void;
   onBack: () => void;
 };
 
@@ -10,7 +12,7 @@ const modes = [
     id: "mcq",
     emoji: "🔤",
     title: "Multiple Choice",
-    description: "Choose the correct answer from options. Used in IELTS, TOEFL and TOEIC.",
+    description: "Choose the correct answer from options A to E.",
     warning: "⚠️ Take notes while listening — you will need them to answer the questions.",
     exams: ["IELTS", "TOEFL", "TOEIC"],
   },
@@ -30,18 +32,38 @@ const modes = [
     warning: null,
     exams: ["PTE", "Cambridge", "IELTS"],
   },
+  {
+    id: "short",
+    emoji: "✍️",
+    title: "Short Answer",
+    description: "Answer each question in 1-3 words based on what you hear.",
+    warning: "⚠️ Take notes while listening — you will need them to answer the questions.",
+    exams: ["IELTS", "TOEFL"],
+  },
+  {
+    id: "matching",
+    emoji: "🔗",
+    title: "Matching",
+    description: "Match each item on the left with the correct description on the right.",
+    warning: "⚠️ Take notes while listening — you will need them to answer the questions.",
+    exams: ["IELTS", "TOEIC"],
+  },
 ];
 
 export default function ModeSelectionScreen({
   onSelectMCQ,
   onSelectFillBlank,
   onSelectDictation,
+  onSelectShortAnswer,
+  onSelectMatching,
   onBack,
 }: Props) {
   const handlers: Record<string, () => void> = {
     mcq: onSelectMCQ,
     fill: onSelectFillBlank,
     dictation: onSelectDictation,
+    short: onSelectShortAnswer,
+    matching: onSelectMatching,
   };
 
   return (
@@ -62,19 +84,14 @@ export default function ModeSelectionScreen({
               <div className="text-5xl">{mode.emoji}</div>
               <h2 className="mt-5 text-2xl font-bold">{mode.title}</h2>
               <p className="mt-3 text-sm text-[#7a6258]">{mode.description}</p>
-
               {mode.warning && (
                 <p className="mt-3 rounded-2xl bg-[#ead7cc] px-4 py-2 text-xs font-semibold text-[#3b2f2f]">
                   {mode.warning}
                 </p>
               )}
-
               <div className="mt-4 flex flex-wrap gap-2">
                 {mode.exams.map((exam) => (
-                  <span
-                    key={exam}
-                    className="rounded-full bg-[#3b2f2f] px-3 py-1 text-xs font-bold text-white"
-                  >
+                  <span key={exam} className="rounded-full bg-[#3b2f2f] px-3 py-1 text-xs font-bold text-white">
                     {exam}
                   </span>
                 ))}
@@ -83,10 +100,7 @@ export default function ModeSelectionScreen({
           ))}
         </div>
 
-        <button
-          onClick={onBack}
-          className="mt-10 text-sm font-semibold text-[#7a6258] underline"
-        >
+        <button onClick={onBack} className="mt-10 text-sm font-semibold text-[#7a6258] underline">
           Back
         </button>
       </section>

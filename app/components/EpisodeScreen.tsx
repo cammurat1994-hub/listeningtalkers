@@ -44,9 +44,13 @@ export default function EpisodeScreen({
           query = query.eq("episode_type", "practice-mcq");
         } else if (practiceMode === "fill-blank") {
           query = query.eq("episode_type", "practice-fill");
-        } else if (practiceMode === "dictation") {
-          query = query.eq("episode_type", "practice-dictation");
-        } else if (practiceMode === "mixed") {
+       } else if (practiceMode === "dictation") {
+  query = query.eq("episode_type", "practice-dictation");
+} else if (practiceMode === "short-answer") {
+  query = query.eq("episode_type", "practice-short");
+} else if (practiceMode === "matching") {
+  query = query.eq("episode_type", "practice-matching");
+} else if (practiceMode === "mixed") {
           query = query.in("episode_type", ["practice-mcq", "practice-fill", "practice-dictation"]);
         }
       }
