@@ -3,45 +3,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-type Props = {
-  onBack: () => void;
-};
+type Props = { onBack: () => void; };
 
 type EpisodeType = "practice-mcq" | "practice-fill" | "practice-dictation" | "practice-short" | "practice-matching" | "quiz-ielts" | "quiz-toefl" | "quiz-toeic" | "quiz-celpip";
-
-type MCQQuestion = {
-  question: string;
-  options: { A: string; B: string; C: string; D: string; E: string };
-  correctAnswer: "A" | "B" | "C" | "D" | "E";
-  explanations: { A: string; B: string; C: string; D: string; E: string };
-};
-
-type FillQuestion = {
-  text: string;
-  blanks: { index: number; answer: string }[];
-};
-
-type DictationQuestion = {
-  sentence: string;
-};
-
-type ShortAnswerQuestion = {
-  question: string;
-  answer: string;
-  hint?: string;
-};
-
-type MatchingQuestion = {
-  pairs: { left: string; right: string }[];
-};
-
-type PublishedEpisode = {
-  id: string;
-  title: string;
-  level: string;
-  episode_type: EpisodeType;
-};
-
+type MCQQuestion = { question: string; options: { A: string; B: string; C: string; D: string; E: string }; correctAnswer: "A"|"B"|"C"|"D"|"E"; explanations: { A: string; B: string; C: string; D: string; E: string }; };
+type FillQuestion = { text: string; blanks: { index: number; answer: string }[]; };
+type DictationQuestion = { sentence: string; };
+type ShortAnswerQuestion = { question: string; answer: string; hint?: string; };
+type MatchingQuestion = { pairs: { left: string; right: string }[]; };
+type PublishedEpisode = { id: string; title: string; level: string; episode_type: EpisodeType; };
 type AdminTab = "new" | "manage" | "users";
 
 const PRACTICE_TYPES = [
@@ -51,24 +21,16 @@ const PRACTICE_TYPES = [
   { id: "practice-short", label: "Short Answer", emoji: "✍️" },
   { id: "practice-matching", label: "Matching", emoji: "🔗" },
 ];
-
 const QUIZ_TYPES = [
   { id: "quiz-ielts", label: "IELTS Style", emoji: "📝" },
   { id: "quiz-toefl", label: "TOEFL Style", emoji: "📝" },
   { id: "quiz-toeic", label: "TOEIC Style", emoji: "📝" },
   { id: "quiz-celpip", label: "CELPIP Style", emoji: "📝" },
 ];
-
 const ALL_TYPES = [...PRACTICE_TYPES, ...QUIZ_TYPES];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
-const createEmptyMCQ = (): MCQQuestion => ({
-  question: "",
-  options: { A: "", B: "", C: "", D: "", E: "" },
-  correctAnswer: "A",
-  explanations: { A: "", B: "", C: "", D: "", E: "" },
-});
-
+const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: "", C: "", D: "", E: "" }, correctAnswer: "A", explanations: { A: "", B: "", C: "", D: "", E: "" } });
 const createEmptyFill = (): FillQuestion => ({ text: "", blanks: [] });
 const createEmptyDictation = (): DictationQuestion => ({ sentence: "" });
 const createEmptyShort = (): ShortAnswerQuestion => ({ question: "", answer: "", hint: "" });
@@ -122,8 +84,8 @@ export default function AdminScreen({ onBack }: Props) {
   const [shortQuestions, setShortQuestions] = useState<ShortAnswerQuestion[]>([createEmptyShort()]);
   const [matchingQuestions, setMatchingQuestions] = useState<MatchingQuestion[]>([createEmptyMatching()]);
   const [publishedEpisodes, setPublishedEpisodes] = useState<PublishedEpisode[]>([]);
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [filterType, setFilterType] = useState("all");
+  const [filterLevel, setFilterLevel] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<{ email: string; created_at: string }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -186,12 +148,9 @@ export default function AdminScreen({ onBack }: Props) {
 
       const payload = {
         level: isPractice ? level : null,
-        title,
-        audio_url: audioUrl,
-        episode_type: episodeType,
+        title, audio_url: audioUrl, episode_type: episodeType,
         show_notes: episodeType === "practice-fill" ? showNotes : false,
-        questions,
-        vocabulary: [],
+        questions, vocabulary: [],
       };
 
       let dbError = null;
@@ -216,10 +175,8 @@ export default function AdminScreen({ onBack }: Props) {
   function resetForm() {
     setTitle(""); setEditingEpisodeId(null); setAudioFile(null); setExistingAudioUrl("");
     setShowNotes(false);
-    setMcqQuestions([createEmptyMCQ()]);
-    setFillQuestions([createEmptyFill()]);
-    setDictationQuestions([createEmptyDictation()]);
-    setShortQuestions([createEmptyShort()]);
+    setMcqQuestions([createEmptyMCQ()]); setFillQuestions([createEmptyFill()]);
+    setDictationQuestions([createEmptyDictation()]); setShortQuestions([createEmptyShort()]);
     setMatchingQuestions([createEmptyMatching()]);
     setBulkMode(false); setBulkText(""); setBulkError("");
   }
@@ -448,33 +405,10 @@ export default function AdminScreen({ onBack }: Props) {
               <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
                 <h2 className="text-2xl font-bold">Dictation</h2>
                 <p className="mt-1 text-sm text-[#7a6258]">Kullanıcının duyup yazacağı cümle.</p>
-            <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-  <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
-  <pre className="text-xs leading-6">{`L) Monday\nR) The first day of the week\n\nL) Tuesday\nR) The second day of the week`}</pre>
-  <p className="mt-2 text-xs">Her çift arasına boş satır bırak. L) sol taraf, R) sağ taraf.</p>
-</div>
-
-<div className="mt-4">
-  <textarea
-    placeholder={`L) Monday\nR) The first day of the week\n\nL) Tuesday\nR) The second day of the week`}
-    className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
-    onChange={(e) => {
-      const blocks = e.target.value.trim().split(/\n{2,}/);
-      const pairs: { left: string; right: string }[] = [];
-      for (const block of blocks) {
-        const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
-        const lLine = lines.find(l => /^L\)/i.test(l));
-        const rLine = lines.find(l => /^R\)/i.test(l));
-        if (!lLine || !rLine) continue;
-        pairs.push({
-          left: lLine.replace(/^L\)\s*/i, "").trim(),
-          right: rLine.replace(/^R\)\s*/i, "").trim(),
-        });
-      }
-      if (pairs.length) setMatchingQuestions([{ pairs }]);
-    }}
-  />
-</div>
+                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
+                  <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
+                  <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
+                </div>
                 <div className="mt-4">
                   <textarea placeholder={`S) The conference will be held next Monday.`}
                     className="min-h-[150px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
@@ -509,7 +443,7 @@ export default function AdminScreen({ onBack }: Props) {
                 <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
                   <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
                   <pre className="text-xs leading-6">{`Q) What time does the library close on Fridays?\nA) 9pm|nine o'clock\nH) Think about closing times\n\nQ) Where does the meeting take place?\nA) conference room`}</pre>
-                  <p className="mt-2 text-xs">H) satırı opsiyonel ipucu. A) için | ile alternatif cevap ekleyebilirsin.</p>
+                  <p className="mt-2 text-xs">H) opsiyonel ipucu. A) için | ile alternatif cevap ekle.</p>
                 </div>
                 <div className="mt-4">
                   <textarea placeholder={`Q) What time does the library close?\nA) 9pm|nine\nH) Think about closing times`}
@@ -541,7 +475,7 @@ export default function AdminScreen({ onBack }: Props) {
                         <button onClick={() => shortQuestions.length > 1 && setShortQuestions(shortQuestions.filter((_, j) => j !== i))} disabled={shortQuestions.length <= 1} className="text-sm text-red-600 disabled:opacity-30">Remove</button>
                       </div>
                       <input type="text" value={item.question} onChange={(e) => { const u = [...shortQuestions]; u[i].question = e.target.value; setShortQuestions(u); }} placeholder="What time does the library close on Fridays?" className="mt-3 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
-                      <input type="text" value={item.answer} onChange={(e) => { const u = [...shortQuestions]; u[i].answer = e.target.value; setShortQuestions(u); }} placeholder="Doğru cevap — alternatif için | kullan: 9pm|nine" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
+                      <input type="text" value={item.answer} onChange={(e) => { const u = [...shortQuestions]; u[i].answer = e.target.value; setShortQuestions(u); }} placeholder="Doğru cevap — | ile alternatif: 9pm|nine" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
                       <input type="text" value={item.hint || ""} onChange={(e) => { const u = [...shortQuestions]; u[i].hint = e.target.value; setShortQuestions(u); }} placeholder="İpucu (opsiyonel)" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
                     </div>
                   ))}
@@ -560,8 +494,29 @@ export default function AdminScreen({ onBack }: Props) {
                   <button onClick={() => setMatchingQuestions([...matchingQuestions, createEmptyMatching()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Set</button>
                 </div>
                 <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-                  <p className="font-semibold mb-1">Nasıl çalışır:</p>
-                  <p className="text-xs">Sol sütuna konu/isim, sağ sütuna açıklama/özellik yaz. Kullanıcı sol taraftaki her öğeyi sağ tarafla eşleştirir.</p>
+                  <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
+                  <pre className="text-xs leading-6">{`L) Monday\nR) The first day of the week\n\nL) Tuesday\nR) The second day of the week`}</pre>
+                  <p className="mt-2 text-xs">L) sol taraf, R) sağ taraf. Her çift arasına boş satır bırak.</p>
+                </div>
+                <div className="mt-4">
+                  <textarea placeholder={`L) Monday\nR) The first day of the week\n\nL) Tuesday\nR) The second day of the week`}
+                    className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
+                    onChange={(e) => {
+                      const blocks = e.target.value.trim().split(/\n{2,}/);
+                      const pairs: { left: string; right: string }[] = [];
+                      for (const block of blocks) {
+                        const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
+                        const lLine = lines.find(l => /^L\)/i.test(l));
+                        const rLine = lines.find(l => /^R\)/i.test(l));
+                        if (!lLine || !rLine) continue;
+                        pairs.push({
+                          left: lLine.replace(/^L\)\s*/i, "").trim(),
+                          right: rLine.replace(/^R\)\s*/i, "").trim(),
+                        });
+                      }
+                      if (pairs.length) setMatchingQuestions([{ pairs }]);
+                    }}
+                  />
                 </div>
                 <div className="mt-4 flex flex-col gap-6">
                   {matchingQuestions.map((mq, mi) => (
