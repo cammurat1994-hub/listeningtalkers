@@ -18,13 +18,54 @@ type Episode = {
   episode_type: string;
 };
 
+type CompletedEpisode = {
+  episode_id: string;
+  score: number;
+  total_questions: number;
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  "practice-mcq": "Multiple Choice",
+  "practice-fill": "Fill in the Blank",
+  "practice-dictation": "Dictation",
+  "practice-short": "Short Answer",
+  "practice-matching": "Matching",
+  "quiz-ielts": "IELTS Style",
+  "quiz-toefl": "TOEFL Style",
+  "quiz-toeic": "TOEIC Style",
+  "quiz-celpip": "CELPIP Style",
+};
+
+const TYPE_EMOJI: Record<string, string> = {
+  "practice-mcq": "🔤",
+  "practice-fill": "✏️",
+  "practice-dictation": "🎙️",
+  "practice-short": "✍️",
+  "practice-matching": "🔗",
+  "quiz-ielts": "📝",
+  "quiz-toefl": "📝",
+  "quiz-toeic": "📝",
+  "quiz-celpip": "📝",
+};
+
+const LEVEL_COLORS: Record<string, string> = {
+  "Beginner": "bg-green-100 text-green-700",
+  "Intermediate": "bg-yellow-100 text-yellow-700",
+  "Advanced": "bg-red-100 text-red-700",
+};
+
 export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode, onSelectEpisode, onBack }: Props) {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [completed, setCompleted] = useState<CompletedEpisode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    async function fetchEpisodes() {
-      let query = supabase.from("episodes").select("id, title, level, episode_type").order("created_at", { ascending: true });
+    async function fetchData() {
+      let query = supabase
+        .from("episodes")
+        .select("id, title, level, episode_type")
+        .order("created_at", { ascending: true });
 
       if (isQuizMode) {
         query = query.in("episode_type", ["quiz-ielts", "quiz-toefl", "quiz-toeic", "quiz-celpip"]);
@@ -39,65 +80,164 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
 
       const { data, error } = await query;
       if (!error && data) setEpisodes(data);
+
+      // Tamamlanan episodeları çek
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        const { data: results } = await supabase
+          .from("user_results")
+          .select("episode_id, score, total_questions")
+          .eq("user_email", user.email);
+        if (results) setCompleted(results);
+      }
+
       setLoading(false);
     }
-    fetchEpisodes();
+    fetchData();
   }, [selectedLevel, practiceMode, isQuizMode]);
 
-  function getTypeLabel(type: string) {
-    switch (type) {
-      case "practice-mcq": return "Multiple Choice";
-      case "practice-fill": return "Fill in the Blank";
-      case "practice-dictation": return "Dictation";
-      case "practice-short": return "Short Answer";
-      case "practice-matching": return "Matching";
-      case "quiz-ielts": return "IELTS Style";
-      case "quiz-toefl": return "TOEFL Style";
-      case "quiz-toeic": return "TOEIC Style";
-      case "quiz-celpip": return "CELPIP Style";
-      default: return type;
-    }
-  }
-
   function getModeTitle() {
-    if (isQuizMode) return "Exam Quiz Episodes";
-    const modeLabels: Record<string, string> = {
+    if (isQuizMode) return "Exam Quiz";
+    const labels: Record<string, string> = {
       "mcq": "Multiple Choice",
       "fill-blank": "Fill in the Blank",
       "dictation": "Dictation",
       "short-answer": "Short Answer",
       "matching": "Matching",
     };
-    return `${selectedLevel} — ${modeLabels[practiceMode || ""] || "Practice"}`;
+    return `${selectedLevel} — ${labels[practiceMode || ""] || "Practice"}`;
   }
+
+  function getCompletionData(episodeId: string) {
+    const result = completed.find(c => c.episode_id === episodeId);
+    if (!result) return null;
+    const pct = result.total_questions > 0 ? Math.round((result.score / result.total_questions) * 100) : 0;
+    return { score: result.score, total: result.total_questions, pct };
+  }
+
+  const filteredEpisodes = episodes.filter(ep =>
+    ep.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const completedCount = episodes.filter(ep => completed.some(c => c.episode_id === ep.id)).length;
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
-      <section className="mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-4xl font-bold md:text-5xl">{getModeTitle()}</h1>
+      <section className="mx-auto max-w-4xl px-6 py-12">
 
-        {loading ? (
-          <p className="mt-10 text-lg">Loading episodes...</p>
-        ) : episodes.length === 0 ? (
-          <div className="mt-10">
-            <p className="text-lg text-[#7a6258]">No episodes found yet.</p>
-            <p className="mt-2 text-sm text-[#7a6258]">Check back soon — new content is being added!</p>
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <button onClick={onBack} className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+              ← Back
+            </button>
+            <h1 className="text-4xl font-bold">{getModeTitle()}</h1>
+            <p className="mt-2 text-[#7a6258]">
+              {episodes.length} episodes
+              {completedCount > 0 && (
+                <span className="ml-2 rounded-full bg-green-100 px-3 py-0.5 text-xs font-semibold text-green-700">
+                  {completedCount} completed
+                </span>
+              )}
+            </p>
           </div>
-        ) : (
-          <div className="mt-10 flex w-full max-w-2xl flex-col gap-4">
-            {episodes.map((episode, index) => (
-              <button key={episode.id} onClick={() => onSelectEpisode(episode.id)}
-                className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 text-left shadow-sm transition hover:-translate-y-1 hover:bg-[#f1ded5]">
-                <p className="text-xs font-semibold text-[#c9a99a]">
-                  Episode {index + 1} — {getTypeLabel(episode.episode_type)}
-                </p>
-                <p className="mt-1 text-xl font-bold">{episode.title}</p>
-              </button>
-            ))}
+
+          {/* Progress ring */}
+          {episodes.length > 0 && completedCount > 0 && (
+            <div className="shrink-0 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] px-6 py-4 text-center shadow-sm">
+              <p className="text-3xl font-bold">{Math.round((completedCount / episodes.length) * 100)}%</p>
+              <p className="text-xs text-[#7a6258]">completed</p>
+            </div>
+          )}
+        </div>
+
+        {/* Search */}
+        {episodes.length > 5 && (
+          <div className="mt-6">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="🔍 Search episodes..."
+              className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 text-sm shadow-sm"
+            />
           </div>
         )}
 
-        <button onClick={onBack} className="mt-8 text-sm font-semibold text-[#7a6258] underline">Back</button>
+        {/* Episode list */}
+        {loading ? (
+          <div className="mt-12 flex flex-col items-center gap-3">
+            {[1,2,3].map(i => (
+              <div key={i} className="h-20 w-full animate-pulse rounded-[2rem] bg-[#ead7cc]" />
+            ))}
+          </div>
+        ) : filteredEpisodes.length === 0 ? (
+          <div className="mt-16 text-center">
+            <p className="text-5xl">🎧</p>
+            <p className="mt-4 text-lg font-semibold">No episodes found</p>
+            <p className="mt-2 text-sm text-[#7a6258]">Check back soon — new content is being added regularly!</p>
+          </div>
+        ) : (
+          <div className="mt-6 flex flex-col gap-3">
+            {filteredEpisodes.map((episode, index) => {
+              const completion = getCompletionData(episode.id);
+              const isCompleted = !!completion;
+
+              return (
+                <button
+                  key={episode.id}
+                  onClick={() => onSelectEpisode(episode.id)}
+                  className={`group flex items-center gap-5 rounded-[2rem] border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                    isCompleted
+                      ? "border-green-200 bg-green-50 hover:bg-green-100"
+                      : "border-[#e0c7bb] bg-[#fffaf7] hover:bg-white"
+                  }`}
+                >
+                  {/* Number / Check */}
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
+                    isCompleted ? "bg-green-500 text-white" : "bg-[#ead7cc] text-[#3b2f2f]"
+                  }`}>
+                    {isCompleted ? "✓" : index + 1}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-[#7a6258]">
+                        {TYPE_EMOJI[episode.episode_type]} {TYPE_LABELS[episode.episode_type]}
+                      </span>
+                      {episode.level && (
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LEVEL_COLORS[episode.level] || "bg-[#ead7cc] text-[#3b2f2f]"}`}>
+                          {episode.level}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 font-bold truncate">{episode.title}</p>
+
+                    {/* Score bar */}
+                    {completion && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="h-1.5 flex-1 rounded-full bg-green-200">
+                          <div
+                            className="h-1.5 rounded-full bg-green-500 transition-all"
+                            style={{ width: `${completion.pct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-semibold text-green-700">{completion.pct}%</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="shrink-0 text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">
+                    →
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
       </section>
     </main>
   );
