@@ -20,16 +20,22 @@ type Result = {
 
 const levels = ["Beginner", "Intermediate", "Advanced"];
 
+const TYPE_LABELS: Record<string, string> = {
+  "practice-mcq": "Multiple Choice",
+  "practice-fill": "Fill in the Blank",
+  "practice-dictation": "Dictation",
+  "practice-short": "Short Answer",
+  "practice-matching": "Matching",
+};
+
 function calculateStreak(results: Result[]): number {
   if (!results.length) return 0;
   const uniqueDays = Array.from(
     new Set(results.map((r) => new Date(r.created_at).toISOString().split("T")[0]))
   ).sort((a, b) => (a > b ? -1 : 1));
-
   const today = new Date().toISOString().split("T")[0];
   const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
   if (uniqueDays[0] !== today && uniqueDays[0] !== yesterday) return 0;
-
   let streak = 0;
   for (let i = 0; i < uniqueDays.length; i++) {
     const expected = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
@@ -47,6 +53,14 @@ function getMotivationMessage(streak: number, accuracy: number, completed: numbe
   if (accuracy >= 80) return "🎯 Excellent accuracy! Your listening is sharp.";
   if (accuracy >= 60) return "📈 Good work! Keep practicing to improve.";
   return "💪 Every session counts. Keep going!";
+}
+
+function AccuracyBar({ pct, color = "bg-[#3b2f2f]" }: { pct: number; color?: string }) {
+  return (
+    <div className="h-2 w-full rounded-full bg-[#f1e3da]">
+      <div className={`h-2 rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+    </div>
+  );
 }
 
 export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
@@ -90,31 +104,51 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
     return `${diff} days ago`;
   })() : null;
 
+  // Zayıf alan analizi
+  const weakAreas = useMemo(() => {
+    const typeMap: Record<string, { correct: number; total: number }> = {};
+    results.forEach((r) => {
+      const key = r.level;
+      if (!typeMap[key]) typeMap[key] = { correct: 0, total: 0 };
+      typeMap[key].correct += r.score;
+      typeMap[key].total += r.total_questions;
+    });
+    return Object.entries(typeMap)
+      .map(([label, { correct, total }]) => ({
+        label,
+        pct: total > 0 ? Math.round((correct / total) * 100) : 0,
+        total,
+      }))
+      .filter(a => a.total > 0)
+      .sort((a, b) => a.pct - b.pct);
+  }, [results]);
+
   const levelResults = results.filter((r) => r.level === selectedLevel);
-  const levelCorrect = levelResults.reduce((s, r) => s + r.score, 0);
-  const levelQuestions = levelResults.reduce((s, r) => s + r.total_questions, 0);
-  const levelAccuracy = levelQuestions > 0 ? Math.round((levelCorrect / levelQuestions) * 100) : 0;
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f7eee8] p-10 text-[#3b2f2f]">
-        Loading progress...
+      <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#e0c7bb] border-t-[#3b2f2f]" />
+          <p className="text-[#7a6258]">Loading your progress...</p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] px-6 py-10 text-[#3b2f2f]">
-      <section className="mx-auto max-w-4xl">
+    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+      <section className="mx-auto max-w-4xl px-6 py-12">
 
-        <div className="flex items-center justify-between gap-4">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
           <div>
+            <button onClick={onBack} className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+              ← Back
+            </button>
             <h1 className="text-4xl font-bold md:text-5xl">My Progress</h1>
             <p className="mt-2 text-[#7a6258]">Track your listening journey.</p>
           </div>
-          <button onClick={onBack} className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold shadow-sm">
-            Back
-          </button>
         </div>
 
         {/* Motivasyon kartı */}
@@ -126,17 +160,25 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
               {results[0] && ` — ${results[0].episode_title}`}
             </p>
           )}
+          {streak > 0 && (
+            <div className="mt-4 flex items-center gap-2">
+              {Array.from({ length: Math.min(streak, 7) }).map((_, i) => (
+                <div key={i} className="h-2 w-8 rounded-full bg-orange-400" />
+              ))}
+              {streak > 7 && <span className="text-xs text-orange-300">+{streak - 7} more</span>}
+            </div>
+          )}
         </div>
 
         {/* Özet kartlar */}
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { emoji: "🔥", label: "Streak", value: `${streak}`, sub: "days" },
-            { emoji: "🎧", label: "Episodes", value: `${completedCount}`, sub: "completed" },
-            { emoji: "🎯", label: "Accuracy", value: `${overallAccuracy}%`, sub: "overall" },
-            { emoji: "✅", label: "Correct", value: `${totalCorrect}`, sub: "answers" },
+            { emoji: "🔥", label: "Streak", value: `${streak}`, sub: streak === 1 ? "day" : "days", color: streak >= 3 ? "border-orange-200 bg-orange-50" : "" },
+            { emoji: "🎧", label: "Episodes", value: `${completedCount}`, sub: "completed", color: "" },
+            { emoji: "🎯", label: "Accuracy", value: `${overallAccuracy}%`, sub: "overall", color: overallAccuracy >= 80 ? "border-green-200 bg-green-50" : "" },
+            { emoji: "✅", label: "Correct", value: `${totalCorrect}`, sub: `of ${totalQuestions}`, color: "" },
           ].map((card) => (
-            <div key={card.label} className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
+            <div key={card.label} className={`rounded-[2rem] border p-6 shadow-sm ${card.color || "border-[#e0c7bb] bg-white"}`}>
               <p className="text-sm text-[#7a6258]">{card.emoji} {card.label}</p>
               <h2 className="mt-2 text-4xl font-bold">{card.value}</h2>
               <p className="mt-1 text-xs text-[#7a6258]">{card.sub}</p>
@@ -144,70 +186,118 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
           ))}
         </div>
 
-        {/* Seviye bazlı istatistik */}
-        <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-bold">Progress by Level</h2>
+        {/* Zayıf alan analizi */}
+        {weakAreas.length > 0 && (
+          <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-bold">Performance by Level</h2>
+            <p className="mt-1 text-sm text-[#7a6258]">Focus on your weakest areas first.</p>
+            <div className="mt-5 flex flex-col gap-4">
+              {weakAreas.map((area) => (
+                <div key={area.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold">{area.label}</span>
+                    <span className={`text-sm font-bold ${
+                      area.pct >= 80 ? "text-green-600" :
+                      area.pct >= 60 ? "text-yellow-600" : "text-red-600"
+                    }`}>{area.pct}%</span>
+                  </div>
+                  <AccuracyBar
+                    pct={area.pct}
+                    color={area.pct >= 80 ? "bg-green-500" : area.pct >= 60 ? "bg-yellow-500" : "bg-red-400"}
+                  />
+                  {area.pct < 60 && (
+                    <p className="mt-1 text-xs text-red-500">⚠️ Needs more practice</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-          <div className="mt-6 flex gap-3">
+        {/* Seviye bazlı istatistik */}
+        <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-bold">Progress by Level</h2>
+          <div className="mt-5 flex gap-3">
             {levels.map((level) => {
               const lvlResults = results.filter((r) => r.level === level);
               const lvlQ = lvlResults.reduce((s, r) => s + r.total_questions, 0);
               const lvlC = lvlResults.reduce((s, r) => s + r.score, 0);
               const acc = lvlQ > 0 ? Math.round((lvlC / lvlQ) * 100) : 0;
               const episodes = new Set(lvlResults.map((r) => r.episode_id)).size;
-
               return (
-                <button
-                  key={level}
-                  onClick={() => setSelectedLevel(level)}
-                  className={`flex-1 rounded-2xl border p-4 text-left transition ${selectedLevel === level ? "border-[#3b2f2f] bg-[#f7eee8]" : "border-[#e0c7bb] hover:bg-[#fffaf7]"}`}
-                >
-                  <p className="font-bold">{level}</p>
+                <button key={level} onClick={() => setSelectedLevel(level)}
+                  className={`flex-1 rounded-2xl border p-4 text-left transition ${selectedLevel === level ? "border-[#3b2f2f] bg-[#f7eee8]" : "border-[#e0c7bb] hover:bg-[#fffaf7]"}`}>
+                  <p className="font-bold text-sm">{level}</p>
                   <p className="mt-1 text-2xl font-bold">{acc > 0 ? `${acc}%` : "—"}</p>
                   <p className="mt-1 text-xs text-[#7a6258]">{episodes} episodes</p>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-[#f1e3da]">
-                    <div className="h-1.5 rounded-full bg-[#3b2f2f]" style={{ width: `${acc}%` }} />
+                  <div className="mt-2">
+                    <AccuracyBar pct={acc} />
                   </div>
                 </button>
               );
             })}
           </div>
-        </div>
 
-        {/* Son aktiviteler */}
-        {results.length > 0 && (
-          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-white p-8 shadow-sm">
-            <h2 className="text-2xl font-bold">Recent Activity</h2>
-            <div className="mt-6 flex flex-col gap-3">
-              {results.slice(0, 8).map((result) => {
-                const acc = Math.round((result.score / result.total_questions) * 100);
-                const date = new Date(result.created_at);
-                const diff = Math.floor((Date.now() - date.getTime()) / 86400000);
-                const dateLabel = diff === 0 ? "Today" : diff === 1 ? "Yesterday" : `${diff}d ago`;
-
+          {/* Seçilen seviye detayı */}
+          {levelResults.length > 0 && (
+            <div className="mt-5 flex flex-col gap-2">
+              <p className="text-sm font-semibold text-[#7a6258]">{selectedLevel} — recent episodes</p>
+              {Array.from(new Map(levelResults.map(r => [r.episode_id, r])).values()).slice(0, 5).map((r) => {
+                const acc = Math.round((r.score / r.total_questions) * 100);
                 return (
-                  <button
-                    key={result.id}
-                    onClick={() => onSelectEpisode(result.episode_id)}
-                    className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 text-left transition hover:bg-[#f1ded5]"
-                  >
-                    <div>
-                      <p className="font-bold">{result.episode_title}</p>
-                      <p className="mt-0.5 text-xs text-[#7a6258]">
-                        {result.level} · {dateLabel}
-                      </p>
-                    </div>
-                    <div className={`rounded-2xl px-3 py-1.5 text-sm font-bold ${
+                  <button key={r.id} onClick={() => onSelectEpisode(r.episode_id)}
+                    className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] px-4 py-3 text-left text-sm hover:bg-[#f1ded5]">
+                    <span className="font-semibold truncate">{r.episode_title}</span>
+                    <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
                       acc >= 80 ? "bg-green-100 text-green-700" :
                       acc >= 60 ? "bg-yellow-100 text-yellow-700" :
                       "bg-red-100 text-red-700"
-                    }`}>
-                      {acc}%
-                    </div>
+                    }`}>{acc}%</span>
                   </button>
                 );
               })}
             </div>
+          )}
+        </div>
+
+        {/* Son aktiviteler */}
+        {results.length > 0 && (
+          <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-bold">Recent Activity</h2>
+            <div className="mt-5 flex flex-col gap-3">
+              {results.slice(0, 10).map((result) => {
+                const acc = result.total_questions > 0 ? Math.round((result.score / result.total_questions) * 100) : 0;
+                const diff = Math.floor((Date.now() - new Date(result.created_at).getTime()) / 86400000);
+                const dateLabel = diff === 0 ? "Today" : diff === 1 ? "Yesterday" : `${diff}d ago`;
+                return (
+                  <button key={result.id} onClick={() => onSelectEpisode(result.episode_id)}
+                    className="flex items-center gap-4 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 text-left transition hover:bg-[#f1ded5]">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
+                      acc >= 80 ? "bg-green-100 text-green-700" :
+                      acc >= 60 ? "bg-yellow-100 text-yellow-700" :
+                      "bg-red-100 text-red-700"
+                    }`}>{acc}%</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold truncate">{result.episode_title}</p>
+                      <p className="mt-0.5 text-xs text-[#7a6258]">{result.level} · {dateLabel} · {result.score}/{result.total_questions} correct</p>
+                    </div>
+                    <span className="shrink-0 text-[#c9a99a]">→</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Boş durum */}
+        {results.length === 0 && (
+          <div className="mt-12 rounded-[2rem] border border-[#e0c7bb] bg-white p-12 text-center shadow-sm">
+            <p className="text-5xl">🎧</p>
+            <h2 className="mt-4 text-2xl font-bold">No activity yet</h2>
+            <p className="mt-2 text-[#7a6258]">Complete your first episode to start tracking progress.</p>
+            <button onClick={onBack} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-3 font-semibold text-white hover:bg-[#2f2424]">
+              Start Practicing →
+            </button>
           </div>
         )}
 
