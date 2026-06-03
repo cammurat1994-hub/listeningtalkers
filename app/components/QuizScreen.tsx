@@ -48,6 +48,15 @@ type Episode = {
   questions: (MCQQuestion | FillQuestion | DictationQuestion | ShortAnswerQuestion | MatchingQuestion)[];
 };
 
+type Comment = {
+  id: string;
+  episode_id: string;
+  user_email: string;
+  content: string;
+  created_at: string;
+  parent_id: string | null;
+};
+
 function normalize(str: string) {
   return str.toLowerCase().trim().replace(/[.,!?;:'"]/g, "");
 }
@@ -63,6 +72,11 @@ function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function AudioPlayer({ isPlaying, progress, duration, audioRef, onToggle, title, level }: {
@@ -104,6 +118,163 @@ function AudioPlayer({ isPlaying, progress, duration, audioRef, onToggle, title,
           {isPlaying ? <><span>⏸</span> Pause</> : <><span>▶</span> Start Listening</>}
         </button>
       </div>
+    </div>
+  );
+}
+
+function CommentsPanel({ episodeId, userEmail }: { episodeId: string; userEmail: string }) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchComments();
+  }, [episodeId]);
+
+  async function fetchComments() {
+    const { data, error } = await supabase
+      .from("comments")
+      .select("*")
+      .eq("episode_id", episodeId)
+      .order("created_at", { ascending: true });
+    if (!error && data) setComments(data);
+    setLoading(false);
+  }
+
+  async function submitComment() {
+    if (!newComment.trim()) return;
+    setSubmitting(true);
+    await supabase.from("comments").insert([{
+      episode_id: episodeId,
+      user_email: userEmail,
+      content: newComment.trim(),
+      parent_id: null,
+    }]);
+    setNewComment("");
+    await fetchComments();
+    setSubmitting(false);
+  }
+
+  async function submitReply(parentId: string) {
+    if (!replyText.trim()) return;
+    setSubmitting(true);
+    await supabase.from("comments").insert([{
+      episode_id: episodeId,
+      user_email: userEmail,
+      content: replyText.trim(),
+      parent_id: parentId,
+    }]);
+    setReplyText("");
+    setReplyTo(null);
+    await fetchComments();
+    setSubmitting(false);
+  }
+
+  const topLevel = comments.filter(c => !c.parent_id);
+  const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId);
+
+  const getInitial = (email: string) => email.charAt(0).toUpperCase();
+  const getDisplayName = (email: string) => email.split("@")[0];
+
+  return (
+    <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+      <h3 className="text-lg font-bold">💬 Discussion</h3>
+      <p className="mt-1 text-sm text-[#7a6258]">Ask questions or share tips about this episode.</p>
+
+      {/* New comment */}
+      <div className="mt-5">
+        <textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Write a comment..."
+          className="min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm"
+        />
+        <button
+          onClick={submitComment}
+          disabled={submitting || !newComment.trim()}
+          className="mt-2 rounded-2xl bg-[#3b2f2f] px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
+        >
+          {submitting ? "Posting..." : "Post Comment"}
+        </button>
+      </div>
+
+      {/* Comments list */}
+      {loading ? (
+        <p className="mt-4 text-sm text-[#7a6258]">Loading comments...</p>
+      ) : topLevel.length === 0 ? (
+        <p className="mt-4 text-sm text-[#7a6258]">No comments yet. Be the first!</p>
+      ) : (
+        <div className="mt-6 flex flex-col gap-4">
+          {topLevel.map((comment) => (
+            <div key={comment.id}>
+              <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">
+                    {getInitial(comment.user_email)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold">{getDisplayName(comment.user_email)}</p>
+                      <p className="text-xs text-[#7a6258]">{formatDate(comment.created_at)}</p>
+                    </div>
+                    <p className="mt-1 text-sm text-[#3b2f2f]">{comment.content}</p>
+                    <button
+                      onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
+                      className="mt-2 text-xs font-semibold text-[#7a6258] hover:text-[#3b2f2f]"
+                    >
+                      {replyTo === comment.id ? "Cancel" : "Reply"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Reply input */}
+                {replyTo === comment.id && (
+                  <div className="mt-3 ml-11">
+                    <textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Write a reply..."
+                      className="min-h-[60px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm"
+                    />
+                    <button
+                      onClick={() => submitReply(comment.id)}
+                      disabled={submitting || !replyText.trim()}
+                      className="mt-2 rounded-2xl bg-[#3b2f2f] px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+                    >
+                      {submitting ? "Posting..." : "Post Reply"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Replies */}
+                {getReplies(comment.id).length > 0 && (
+                  <div className="mt-3 ml-11 flex flex-col gap-3">
+                    {getReplies(comment.id).map((reply) => (
+                      <div key={reply.id} className="rounded-2xl border border-[#e0c7bb] bg-[#f7eee8] p-3">
+                        <div className="flex items-start gap-2">
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c9a99a] text-xs font-bold text-white">
+                            {getInitial(reply.user_email)}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-bold">{getDisplayName(reply.user_email)}</p>
+                              <p className="text-xs text-[#7a6258]">{formatDate(reply.created_at)}</p>
+                            </div>
+                            <p className="mt-1 text-sm text-[#3b2f2f]">{reply.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -391,6 +562,8 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
   const [showStartWarning, setShowStartWarning] = useState(false);
   const [notes, setNotes] = useState("");
   const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -432,7 +605,14 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
       }
       setLoading(false);
     }
+
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) setUserEmail(user.email);
+    }
+
     fetchEpisode();
+    getUser();
   }, [episodeId]);
 
   function toggleMainAudio() {
@@ -725,6 +905,25 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
             </div>
           </div>
         )}
+
+        {/* Comments — her zaman altta görünür */}
+        <div className="mt-8">
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className={`flex w-full items-center justify-between rounded-2xl border px-5 py-4 font-semibold transition ${showComments ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}
+          >
+            <span>💬 Discussion</span>
+            <span className="text-sm">{showComments ? "Hide ▲" : "Show ▼"}</span>
+          </button>
+          {showComments && userEmail && (
+            <CommentsPanel episodeId={episodeId} userEmail={userEmail} />
+          )}
+          {showComments && !userEmail && (
+            <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-center text-sm text-[#7a6258]">
+              Please log in to view and post comments.
+            </div>
+          )}
+        </div>
 
       </section>
 
