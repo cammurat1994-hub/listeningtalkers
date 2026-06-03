@@ -92,9 +92,13 @@ export default function AdminScreen({ onBack }: Props) {
   useEffect(() => { fetchEpisodes(); }, []);
 
   async function fetchEpisodes() {
-    const { data, error } = await supabase.from("episodes").select("id, title, level, episode_type").order("created_at", { ascending: false });
-    if (!error && data) setPublishedEpisodes(data);
-  }
+  const { data, error } = await supabase
+    .from("episodes")
+    .select("id, title, level, episode_type")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (!error && data) setPublishedEpisodes(data);
+}
 
   async function fetchUsers() {
     setLoadingUsers(true);
@@ -120,6 +124,11 @@ export default function AdminScreen({ onBack }: Props) {
     if (!audioFile && !existingAudioUrl) { alert("Please upload main audio."); return; }
     setUploading(true);
     try {
+      if (audioFile && audioFile.size > 50 * 1024 * 1024) {
+  alert("Audio file is too large. Please use files under 50MB.");
+  setUploading(false);
+  return;
+}
       const audioUrl = audioFile ? await uploadAudioFile(audioFile, "episode") : existingAudioUrl;
       let questions: unknown = null;
 
