@@ -16,7 +16,7 @@ type MCQQuestion = {
   question: string;
   options: { A: string; B: string; C: string; D: string; E: string };
   correctAnswer: "A" | "B" | "C" | "D" | "E";
-  explanations: { A: string; B: string; C: string; D: string; E: string };
+  explanation?: string;
 };
 
 type FillQuestion = {
@@ -139,9 +139,6 @@ function MCQQuestionView({ question, answer, feedback, onAnswer }: {
                 {showCorrect && <span className="ml-auto font-bold text-green-600">✓</span>}
                 {showWrong && <span className="ml-auto font-bold text-red-600">✗</span>}
               </div>
-              {answered && (showCorrect || showWrong) && question.explanations?.[letter] && (
-                <p className="mt-2 text-sm text-[#7a6258]">💡 {question.explanations[letter]}</p>
-              )}
             </button>
           );
         })}
@@ -149,6 +146,12 @@ function MCQQuestionView({ question, answer, feedback, onAnswer }: {
       {answered && (
         <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold ${feedback ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
           {feedback ? "✓ Correct!" : `✗ Wrong. Correct answer: ${question.correctAnswer}`}
+        </div>
+      )}
+      {answered && question.explanation && (
+        <div className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#7a6258] mb-1">💡 Explanation</p>
+          <p className="text-sm text-[#3b2f2f]">{question.explanation}</p>
         </div>
       )}
     </div>
@@ -277,11 +280,7 @@ function ShortAnswerView({ question, answer, feedback, revealed, onChange, onChe
       {question.hint && feedback === null && (
         <p className="mt-2 text-sm text-[#7a6258]">💡 Hint: {question.hint}</p>
       )}
-      <input
-        type="text"
-        value={answer}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={feedback !== null}
+      <input type="text" value={answer} onChange={(e) => onChange(e.target.value)} disabled={feedback !== null}
         placeholder="Your answer (max 3 words)..."
         onKeyDown={(e) => { if (e.key === "Enter" && feedback === null) onCheck(); }}
         className={`mt-4 w-full rounded-2xl border p-4 text-lg ${
@@ -290,12 +289,8 @@ function ShortAnswerView({ question, answer, feedback, revealed, onChange, onChe
           "border-[#e0c7bb] bg-white"
         }`}
       />
-      {feedback === null && (
-        <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check Answer</button>
-      )}
-      {feedback === true && (
-        <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Correct!</div>
-      )}
+      {feedback === null && <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check Answer</button>}
+      {feedback === true && <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Correct!</div>}
       {feedback === false && !revealed && (
         <div className="mt-3 flex flex-col gap-2">
           <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">✗ Not quite right.</div>
@@ -325,7 +320,6 @@ function MatchingView({ question, userMatches, checked, onMatch, onCheck }: {
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
   const shuffledRight = question.pairs.map((p, i) => ({ text: p.right, originalIdx: i }))
     .sort((a, b) => a.originalIdx - b.originalIdx);
-
   const isCorrect = (leftIdx: number) => userMatches[leftIdx] === leftIdx;
 
   return (
@@ -372,7 +366,6 @@ function MatchingView({ question, userMatches, checked, onMatch, onCheck }: {
           })}
         </div>
       </div>
-
       {checked && (
         <div className="mt-4 flex flex-col gap-1">
           {question.pairs.map((pair, i) => (
@@ -382,11 +375,8 @@ function MatchingView({ question, userMatches, checked, onMatch, onCheck }: {
           ))}
         </div>
       )}
-
       {!checked && (
-        <button onClick={onCheck} className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">
-          Check Matches
-        </button>
+        <button onClick={onCheck} className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check Matches</button>
       )}
     </div>
   );
@@ -416,14 +406,11 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
   const [dictationPlays, setDictationPlays] = useState<Record<number, number>>({});
   const dictationAudioRef = useRef<HTMLAudioElement | null>(null);
   const [dictationPlaying, setDictationPlaying] = useState(false);
-
   const [shortAnswers, setShortAnswers] = useState<Record<number, string>>({});
   const [shortFeedback, setShortFeedback] = useState<Record<number, boolean | null>>({});
   const [shortRevealed, setShortRevealed] = useState<Record<number, boolean>>({});
-
   const [matchingAnswers, setMatchingAnswers] = useState<Record<number, Record<number, number>>>({});
   const [matchingChecked, setMatchingChecked] = useState<Record<number, boolean>>({});
-
   const [showResults, setShowResults] = useState(false);
   const [resultSaved, setResultSaved] = useState(false);
 
@@ -512,7 +499,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           <button onClick={onBack} className="shrink-0 rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
         </div>
 
-        {/* MCQ */}
+        {/* MCQ dinleme */}
         {isMCQ && !testStarted && (
           <div className="mt-8">
             <audio ref={audioRef} src={episode.audio_url}
@@ -597,7 +584,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           </div>
         )}
 
-        {/* Short Answer + Matching için audio */}
+        {/* Short + Matching audio */}
         {(isShort || isMatching) && !testStarted && (
           <div className="mt-4">
             <audio ref={audioRef} src={episode.audio_url}
@@ -680,9 +667,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
         {isMatching && testStarted && !showResults && (
           <div className="mt-8 flex flex-col gap-6">
             {questions.map((q, i) => (
-              <MatchingView
-                key={i}
-                question={q as MatchingQuestion}
+              <MatchingView key={i} question={q as MatchingQuestion}
                 userMatches={matchingAnswers[i] || {}}
                 checked={matchingChecked[i] || false}
                 onMatch={(leftIdx, rightIdx) => setMatchingAnswers({ ...matchingAnswers, [i]: { ...(matchingAnswers[i] || {}), [leftIdx]: rightIdx } })}
