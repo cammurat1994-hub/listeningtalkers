@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 type Props = { onBack: () => void; };
 
 type EpisodeType = "practice-mcq" | "practice-fill" | "practice-dictation" | "practice-short" | "practice-matching" | "quiz-ielts" | "quiz-toefl" | "quiz-toeic" | "quiz-celpip";
-type MCQQuestion = { question: string; options: { A: string; B: string; C: string; D: string; E: string }; correctAnswer: "A"|"B"|"C"|"D"|"E"; explanations: { A: string; B: string; C: string; D: string; E: string }; };
+type MCQQuestion = { question: string; options: { A: string; B: string; C: string; D: string; E: string }; correctAnswer: "A"|"B"|"C"|"D"|"E"; explanation?: string; };
 type FillQuestion = { text: string; blanks: { index: number; answer: string }[]; };
 type DictationQuestion = { sentence: string; };
 type ShortAnswerQuestion = { question: string; answer: string; hint?: string; };
@@ -30,7 +30,7 @@ const QUIZ_TYPES = [
 const ALL_TYPES = [...PRACTICE_TYPES, ...QUIZ_TYPES];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
-const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: "", C: "", D: "", E: "" }, correctAnswer: "A", explanations: { A: "", B: "", C: "", D: "", E: "" } });
+const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: "", C: "", D: "", E: "" }, correctAnswer: "A", explanation: "" });
 const createEmptyFill = (): FillQuestion => ({ text: "", blanks: [] });
 const createEmptyDictation = (): DictationQuestion => ({ sentence: "" });
 const createEmptyShort = (): ShortAnswerQuestion => ({ question: "", answer: "", hint: "" });
@@ -54,11 +54,7 @@ function parseBulkMCQ(raw: string): MCQQuestion[] {
         const ans = line.replace(/^correct[):.\s]+/i, "").trim().toUpperCase();
         if (["A","B","C","D","E"].includes(ans)) q.correctAnswer = ans as "A"|"B"|"C"|"D"|"E";
       }
-      else if (/^EA[):.\s]/i.test(line)) q.explanations.A = line.replace(/^EA[):.\s]+/i, "").trim();
-      else if (/^EB[):.\s]/i.test(line)) q.explanations.B = line.replace(/^EB[):.\s]+/i, "").trim();
-      else if (/^EC[):.\s]/i.test(line)) q.explanations.C = line.replace(/^EC[):.\s]+/i, "").trim();
-      else if (/^ED[):.\s]/i.test(line)) q.explanations.D = line.replace(/^ED[):.\s]+/i, "").trim();
-      else if (/^EE[):.\s]/i.test(line)) q.explanations.E = line.replace(/^EE[):.\s]+/i, "").trim();
+      else if (/^explanation[):.\s]/i.test(line)) q.explanation = line.replace(/^explanation[):.\s]+/i, "").trim();
     }
     if (q.question) parsed.push(q);
   }
@@ -197,7 +193,12 @@ export default function AdminScreen({ onBack }: Props) {
       else if (data.episode_type === "practice-dictation") setDictationQuestions(data.questions);
       else if (data.episode_type === "practice-short") setShortQuestions(data.questions);
       else if (data.episode_type === "practice-matching") setMatchingQuestions(data.questions);
-      else setMcqQuestions(data.questions.map((q: MCQQuestion) => ({ ...q, explanations: q.explanations || { A: "", B: "", C: "", D: "", E: "" } })));
+      else setMcqQuestions(data.questions.map((q: MCQQuestion) => ({
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation || "",
+      })));
     }
     setActiveTab("new");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -235,7 +236,6 @@ export default function AdminScreen({ onBack }: Props) {
           ))}
         </div>
 
-        {/* NEW EPISODE TAB */}
         {activeTab === "new" && (
           <div className="mt-8">
             <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
@@ -298,10 +298,11 @@ export default function AdminScreen({ onBack }: Props) {
                     {!bulkMode && <button onClick={() => setMcqQuestions([...mcqQuestions, createEmptyMCQ()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Question</button>}
                   </div>
                 </div>
+
                 {bulkMode && (
                   <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
                     <p className="text-sm font-semibold">Format:</p>
-                    <pre className="mt-2 rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258]">{`Q) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nD) Şık D\nE) Şık E\nCorrect) A\nEA) A neden yanlış\n\nQ) Sonraki soru...`}</pre>
+                    <pre className="mt-2 rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258]">{`Q) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nD) Şık D\nE) Şık E\nCorrect) C\nExplanation) Doğru cevap neden doğru...\n\nQ) Sonraki soru...`}</pre>
                     <textarea value={bulkText} onChange={(e) => setBulkText(e.target.value)} placeholder="Soruları yapıştır..." className="mt-3 min-h-[280px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 font-mono text-sm" />
                     {bulkError && <p className="mt-2 text-sm text-red-600">{bulkError}</p>}
                     <button onClick={() => {
@@ -312,6 +313,7 @@ export default function AdminScreen({ onBack }: Props) {
                     }} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Apply</button>
                   </div>
                 )}
+
                 {!bulkMode && (
                   <div className="mt-6 flex flex-col gap-6">
                     {mcqQuestions.map((item, index) => (
@@ -321,16 +323,11 @@ export default function AdminScreen({ onBack }: Props) {
                           <button onClick={() => setMcqQuestions(mcqQuestions.filter((_, i) => i !== index))} className="text-sm text-red-600">Remove</button>
                         </div>
                         <textarea value={item.question} onChange={(e) => { const u = [...mcqQuestions]; u[index].question = e.target.value; setMcqQuestions(u); }} placeholder="Write your question..." className="mt-3 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3" />
-                        <div className="mt-4 flex flex-col gap-3">
+                        <div className="mt-4 flex flex-col gap-2">
                           {(["A","B","C","D","E"] as const).map((letter) => (
-                            <div key={letter} className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
-                              <div className="flex items-center gap-3">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ead7cc] text-sm font-bold">{letter}</span>
-                                <input type="text" value={item.options[letter]} onChange={(e) => { const u = [...mcqQuestions]; u[index].options[letter] = e.target.value; setMcqQuestions(u); }} placeholder={`Option ${letter}`} className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-sm" />
-                              </div>
-                              {item.correctAnswer !== letter && (
-                                <textarea value={item.explanations[letter]} onChange={(e) => { const u = [...mcqQuestions]; u[index].explanations[letter] = e.target.value; setMcqQuestions(u); }} placeholder={`Why is ${letter} wrong?`} className="mt-2 min-h-[60px] w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
-                              )}
+                            <div key={letter} className="flex items-center gap-3 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
+                              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${item.correctAnswer === letter ? "bg-green-200 text-green-800" : "bg-[#ead7cc]"}`}>{letter}</span>
+                              <input type="text" value={item.options[letter]} onChange={(e) => { const u = [...mcqQuestions]; u[index].options[letter] = e.target.value; setMcqQuestions(u); }} placeholder={`Option ${letter}`} className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-sm" />
                             </div>
                           ))}
                         </div>
@@ -339,6 +336,10 @@ export default function AdminScreen({ onBack }: Props) {
                           <select value={item.correctAnswer} onChange={(e) => { const u = [...mcqQuestions]; u[index].correctAnswer = e.target.value as "A"|"B"|"C"|"D"|"E"; setMcqQuestions(u); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
                             {["A","B","C","D","E"].map(l => <option key={l}>{l}</option>)}
                           </select>
+                        </div>
+                        <div className="mt-3">
+                          <label className="mb-1 block text-sm font-semibold">Explanation <span className="text-[#7a6258] font-normal">(doğru cevap neden doğru?)</span></label>
+                          <textarea value={item.explanation || ""} onChange={(e) => { const u = [...mcqQuestions]; u[index].explanation = e.target.value; setMcqQuestions(u); }} placeholder="The speaker said '...' which means the correct answer is C because..." className="min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
                         </div>
                       </div>
                     ))}
