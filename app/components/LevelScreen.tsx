@@ -7,63 +7,93 @@ const levels = [
   {
     id: "Beginner",
     label: "Beginner",
-    description: "A1 – A2",
+    cefr: "A1 – A2",
     emoji: "🌱",
+    desc: "Simple conversations, everyday topics, slow speech.",
+    exams: ["IELTS 4.0–5.0", "TOEFL 31–45"],
+    color: "border-green-200 hover:border-green-400 hover:bg-green-50",
+    badge: "bg-green-100 text-green-700",
   },
   {
     id: "Intermediate",
     label: "Intermediate",
-    description: "B1 – B2",
+    cefr: "B1 – B2",
     emoji: "📚",
+    desc: "Academic topics, natural speed, varied accents.",
+    exams: ["IELTS 5.5–6.5", "TOEFL 46–79"],
+    color: "border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50",
+    badge: "bg-yellow-100 text-yellow-700",
   },
   {
     id: "Advanced",
     label: "Advanced",
-    description: "C1 – C2",
+    cefr: "C1 – C2",
     emoji: "🎯",
+    desc: "Complex arguments, fast native speech, nuanced vocabulary.",
+    exams: ["IELTS 7.0–9.0", "TOEFL 80+"],
+    color: "border-red-200 hover:border-red-400 hover:bg-red-50",
+    badge: "bg-red-100 text-red-700",
   },
 ];
 
 export default function LevelScreen({ onSelectLevel, onBack }: Props) {
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
-      <section className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 text-center">
-        <img
-          src="/cat-logo.svg"
-          alt="ListeningTalkers Logo"
-          width={280}
-          height={360}
-          className="mb-2"
-        />
+      <section className="mx-auto max-w-5xl px-6 py-16">
 
-        <h1 className="text-4xl font-bold md:text-6xl">Choose your level</h1>
+        {/* Header */}
+        <div className="text-center">
+          <button onClick={onBack} className="mb-6 flex items-center gap-2 mx-auto text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+            ← Back
+          </button>
+          <h1 className="text-4xl font-bold md:text-6xl">Choose your level</h1>
+          <p className="mt-4 text-lg text-[#7a6258]">
+            Select the level that matches your current English proficiency.
+          </p>
+        </div>
 
-        <p className="mt-4 max-w-xl text-[#7a6258]">
-          Select the level that matches your English proficiency.
-        </p>
-
-        <div className="mt-10 grid w-full max-w-3xl gap-6 md:grid-cols-3">
+        {/* Level cards */}
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
           {levels.map((level) => (
             <button
               key={level.id}
               onClick={() => onSelectLevel(level.id)}
-              className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:bg-[#f1ded5]"
+              className={`group rounded-[2rem] border-2 bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md ${level.color}`}
             >
-              <div className="text-5xl">{level.emoji}</div>
+              <div className="flex items-start justify-between">
+                <div className="text-5xl">{level.emoji}</div>
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${level.badge}`}>
+                  {level.cefr}
+                </span>
+              </div>
+
               <h2 className="mt-5 text-2xl font-bold">{level.label}</h2>
-              <p className="mt-2 text-sm font-semibold text-[#c9a99a]">
-                {level.description}
-              </p>
+              <p className="mt-2 text-sm text-[#7a6258]">{level.desc}</p>
+
+              <div className="mt-5 flex flex-col gap-1">
+                {level.exams.map((exam) => (
+                  <p key={exam} className="text-xs font-semibold text-[#c9a99a]">
+                    📊 {exam}
+                  </p>
+                ))}
+              </div>
+
+              <div className="mt-6 flex items-center justify-between">
+                <span className="text-sm font-bold text-[#3b2f2f]">Select level</span>
+                <span className="text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</span>
+              </div>
             </button>
           ))}
         </div>
 
-        <button
-          onClick={onBack}
-          className="mt-10 text-sm font-semibold text-[#7a6258] underline"
-        >
-          Back
-        </button>
+        {/* Info */}
+        <div className="mt-10 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 text-center shadow-sm">
+          <p className="text-sm text-[#7a6258]">
+            💡 <strong>Not sure which level?</strong> Start with Beginner and work your way up. 
+            You can always switch levels from the home screen.
+          </p>
+        </div>
+
       </section>
     </main>
   );
