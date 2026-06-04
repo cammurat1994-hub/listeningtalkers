@@ -5,6 +5,7 @@ type Props = {
   onSelectShortAnswer: () => void;
   onSelectMatching: () => void;
   onSelectMap: () => void;
+  onSelectCompletions: () => void;
   onBack: () => void;
 };
 
@@ -69,6 +70,16 @@ const modes = [
     difficulty: "Hard",
     diffColor: "bg-red-100 text-red-700",
   },
+  {
+    id: "completions",
+    emoji: "📋",
+    title: "Completions",
+    description: "Complete notes, forms, tables, flow charts or sentences based on what you hear.",
+    tip: "Read the incomplete text carefully before listening.",
+    exams: ["IELTS", "TOEFL", "PTE"],
+    difficulty: "Medium",
+    diffColor: "bg-yellow-100 text-yellow-700",
+  },
 ];
 
 export default function ModeSelectionScreen({
@@ -78,6 +89,7 @@ export default function ModeSelectionScreen({
   onSelectShortAnswer,
   onSelectMatching,
   onSelectMap,
+  onSelectCompletions,
   onBack,
 }: Props) {
   const handlers: Record<string, () => void> = {
@@ -87,6 +99,7 @@ export default function ModeSelectionScreen({
     short: onSelectShortAnswer,
     matching: onSelectMatching,
     map: onSelectMap,
+    completions: onSelectCompletions,
   };
 
   return (
@@ -147,7 +160,7 @@ export default function ModeSelectionScreen({
 
         <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 text-center shadow-sm">
           <p className="text-sm text-[#7a6258]">
-            🎯 <strong>Pro tip:</strong> IELTS Listening tests all 6 question types.
+            🎯 <strong>Pro tip:</strong> IELTS Listening tests all question types.
             Practice each one to maximize your score.
           </p>
         </div>

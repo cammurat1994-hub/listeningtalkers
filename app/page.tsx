@@ -10,15 +10,19 @@ import EpisodeScreen from "./components/EpisodeScreen";
 import QuizScreen from "./components/QuizScreen";
 import AdminScreen from "./components/AdminScreen";
 import ModeSelectionScreen from "./components/ModeSelectionScreen";
+import CompletionTypeScreen from "./components/CompletionTypeScreen";
 import MyProgressScreen from "./components/MyProgressScreen";
 import LoadingScreen from "./components/LoadingScreen";
 
 type Screen =
   | "login" | "home" | "levels" | "episodes"
-  | "mode-selection" | "practice" | "quiz"
+  | "mode-selection" | "completion-type" | "practice" | "quiz"
   | "progress" | "admin";
 
-type PracticeMode = "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | "map" | null;
+type PracticeMode =
+  | "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | "map"
+  | "completion-note" | "completion-form" | "completion-table" | "completion-flow" | "completion-sentence"
+  | null;
 
 const ADMIN_EMAIL = "cammurat1994@gmail.com";
 
@@ -45,7 +49,7 @@ function UserPanel({ userEmail, onNavigate, onLogout }: {
       </button>
 
       {isMenuOpen && (
-        <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-[1.5rem] border border-[#e0c7bb] bg-white shadow-2xl">
+        <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-[#e0c7bb] bg-white shadow-2xl">
           <div className="border-b border-[#e0c7bb] px-5 py-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-[#7a6258]">
               {isAdmin ? "Administrator" : "Signed in"}
@@ -53,23 +57,17 @@ function UserPanel({ userEmail, onNavigate, onLogout }: {
             <p className="mt-1 truncate text-sm font-bold text-[#3b2f2f]">{userEmail}</p>
           </div>
           {isAdmin && (
-            <button
-              onClick={() => { onNavigate("admin"); setIsMenuOpen(false); }}
-              className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
-            >
+            <button onClick={() => { onNavigate("admin"); setIsMenuOpen(false); }}
+              className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]">
               🛡️ Admin
             </button>
           )}
-          <button
-            onClick={() => { onNavigate("progress"); setIsMenuOpen(false); }}
-            className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
-          >
+          <button onClick={() => { onNavigate("progress"); setIsMenuOpen(false); }}
+            className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]">
             📊 My Progress
           </button>
-          <button
-            onClick={() => { onLogout(); setIsMenuOpen(false); }}
-            className="flex w-full items-center gap-3 px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
-          >
+          <button onClick={() => { onLogout(); setIsMenuOpen(false); }}
+            className="flex w-full items-center gap-3 px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]">
             🚪 Logout
           </button>
         </div>
@@ -83,13 +81,12 @@ export default function Home() {
   const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedEpisodeId, setSelectedEpisodeId] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [practiceMode, setPracticeMode] = useState<PracticeMode>(null);
   const [isQuizMode, setIsQuizMode] = useState(false);
 
   useEffect(() => {
     async function getUser() {
-      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) { setUserEmail(user.email); setScreen("home"); }
       setLoading(false);
@@ -103,13 +100,8 @@ export default function Home() {
     setScreen("login");
   }
 
-function goTo(s: Screen) {
-  setScreen(s);
-}
-
-function navigateTo(s: Screen) {
-  setScreen(s);
-}
+  function goTo(s: Screen) { setScreen(s); }
+  function navigateTo(s: Screen) { setScreen(s); }
 
   if (loading) return <LoadingScreen />;
 
@@ -118,11 +110,20 @@ function navigateTo(s: Screen) {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
-          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-10 text-center shadow-sm">
+          <div className="rounded-3xl border border-[#e0c7bb] bg-white p-10 text-center shadow-sm">
             <h1 className="text-3xl font-bold text-red-600">Access Denied</h1>
-            <p className="mt-4 text-[#7a6258]">You are not authorized to access admin panel.</p>
+            <p className="mt-4 text-[#7a6258]">You are not authorized to access the admin panel.</p>
           </div>
         </main>
+      </>
+    );
+  }
+
+  if (screen === "admin") {
+    return (
+      <>
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
+        <AdminScreen onBack={() => goTo("home")} />
       </>
     );
   }
@@ -139,11 +140,18 @@ function navigateTo(s: Screen) {
     );
   }
 
-  if (screen === "admin") {
+  if (screen === "completion-type") {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <AdminScreen onBack={() => goTo("home")} />
+        <CompletionTypeScreen
+          onSelectNote={() => { setPracticeMode("completion-note"); goTo("episodes"); }}
+          onSelectForm={() => { setPracticeMode("completion-form"); goTo("episodes"); }}
+          onSelectTable={() => { setPracticeMode("completion-table"); goTo("episodes"); }}
+          onSelectFlow={() => { setPracticeMode("completion-flow"); goTo("episodes"); }}
+          onSelectSentence={() => { setPracticeMode("completion-sentence"); goTo("episodes"); }}
+          onBack={() => goTo("mode-selection")}
+        />
       </>
     );
   }
@@ -159,6 +167,7 @@ function navigateTo(s: Screen) {
           onSelectShortAnswer={() => { setPracticeMode("short-answer"); goTo("episodes"); }}
           onSelectMatching={() => { setPracticeMode("matching"); goTo("episodes"); }}
           onSelectMap={() => { setPracticeMode("map"); goTo("episodes"); }}
+          onSelectCompletions={() => goTo("completion-type")}
           onBack={() => goTo("levels")}
         />
       </>
@@ -209,7 +218,11 @@ function navigateTo(s: Screen) {
             setSelectedEpisodeId(episodeId);
             isQuizMode ? goTo("quiz") : goTo("practice");
           }}
-          onBack={() => isQuizMode ? goTo("levels") : goTo("mode-selection")}
+          onBack={() => {
+            if (isQuizMode) return goTo("levels");
+            if (practiceMode?.startsWith("completion-")) return goTo("completion-type");
+            return goTo("mode-selection");
+          }}
         />
       </>
     );

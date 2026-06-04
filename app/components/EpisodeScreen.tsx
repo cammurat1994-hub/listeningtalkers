@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 
 type Props = {
   selectedLevel: string;
-  practiceMode?: "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | "map" | null;
+  practiceMode?: "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | "map" | "completion-note" | "completion-form" | "completion-table" | "completion-flow" | "completion-sentence" | null;
   isQuizMode?: boolean;
   onSelectEpisode: (episode: string) => void;
   onBack: () => void;
@@ -129,6 +129,7 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
       "dictation": "Dictation",
       "short-answer": "Short Answer",
       "matching": "Matching",
+      "map": "Map Labelling",
     };
     return `${selectedLevel} — ${labels[practiceMode || ""] || "Practice"}`;
   }
