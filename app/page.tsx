@@ -103,15 +103,13 @@ export default function Home() {
     setScreen("login");
   }
 
-  function goTo(s: Screen) {
-    setLoading(true);
-    setTimeout(() => { setScreen(s); setLoading(false); }, 500);
-  }
+function goTo(s: Screen) {
+  setScreen(s);
+}
 
-  function navigateTo(s: Screen) {
-    setLoading(true);
-    setTimeout(() => { setScreen(s); setLoading(false); }, 500);
-  }
+function navigateTo(s: Screen) {
+  setScreen(s);
+}
 
   if (loading) return <LoadingScreen />;
 
