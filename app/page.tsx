@@ -14,25 +14,15 @@ import MyProgressScreen from "./components/MyProgressScreen";
 import LoadingScreen from "./components/LoadingScreen";
 
 type Screen =
-  | "login"
-  | "home"
-  | "levels"
-  | "episodes"
-  | "mode-selection"
-  | "practice"
-  | "quiz"
-  | "progress"
-  | "admin";
+  | "login" | "home" | "levels" | "episodes"
+  | "mode-selection" | "practice" | "quiz"
+  | "progress" | "admin";
 
-type PracticeMode = "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | null;
+type PracticeMode = "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | "map" | null;
 
 const ADMIN_EMAIL = "cammurat1994@gmail.com";
 
-function UserPanel({
-  userEmail,
-  onNavigate,
-  onLogout,
-}: {
+function UserPanel({ userEmail, onNavigate, onLogout }: {
   userEmail: string;
   onNavigate: (screen: Screen) => void;
   onLogout: () => void;
@@ -170,6 +160,7 @@ export default function Home() {
           onSelectDictation={() => { setPracticeMode("dictation"); goTo("episodes"); }}
           onSelectShortAnswer={() => { setPracticeMode("short-answer"); goTo("episodes"); }}
           onSelectMatching={() => { setPracticeMode("matching"); goTo("episodes"); }}
+          onSelectMap={() => { setPracticeMode("map"); goTo("episodes"); }}
           onBack={() => goTo("levels")}
         />
       </>

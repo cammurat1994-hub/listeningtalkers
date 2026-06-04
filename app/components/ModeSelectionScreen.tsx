@@ -4,6 +4,7 @@ type Props = {
   onSelectDictation: () => void;
   onSelectShortAnswer: () => void;
   onSelectMatching: () => void;
+  onSelectMap: () => void;
   onBack: () => void;
 };
 
@@ -13,40 +14,60 @@ const modes = [
     emoji: "🔤",
     title: "Multiple Choice",
     description: "Choose the correct answer from options A to E.",
-    warning: "⚠️ Take notes while listening — you will need them to answer the questions.",
+    tip: "Take notes while listening — you'll need them for questions.",
     exams: ["IELTS", "TOEFL", "TOEIC"],
+    difficulty: "Medium",
+    diffColor: "bg-yellow-100 text-yellow-700",
   },
   {
     id: "fill",
     emoji: "✏️",
     title: "Fill in the Blank",
-    description: "Listen and fill in the missing words in the text.",
-    warning: null,
+    description: "Listen and fill in the missing words in the text as you hear them.",
+    tip: null,
     exams: ["IELTS", "PTE", "CELPIP"],
+    difficulty: "Medium",
+    diffColor: "bg-yellow-100 text-yellow-700",
   },
   {
     id: "dictation",
     emoji: "🎙️",
     title: "Dictation",
-    description: "Listen carefully and type exactly what you hear.",
-    warning: null,
+    description: "Listen carefully and type exactly what you hear, word for word.",
+    tip: null,
     exams: ["PTE", "Cambridge", "IELTS"],
+    difficulty: "Hard",
+    diffColor: "bg-red-100 text-red-700",
   },
   {
     id: "short",
     emoji: "✍️",
     title: "Short Answer",
-    description: "Answer each question in 1-3 words based on what you hear.",
-    warning: "⚠️ Take notes while listening — you will need them to answer the questions.",
+    description: "Answer each question in 1–3 words based on what you hear.",
+    tip: "Take notes while listening — you'll need them for questions.",
     exams: ["IELTS", "TOEFL"],
+    difficulty: "Medium",
+    diffColor: "bg-yellow-100 text-yellow-700",
   },
   {
     id: "matching",
     emoji: "🔗",
     title: "Matching",
     description: "Match each item on the left with the correct description on the right.",
-    warning: "⚠️ Take notes while listening — you will need them to answer the questions.",
+    tip: "Take notes while listening — you'll need them for questions.",
     exams: ["IELTS", "TOEIC"],
+    difficulty: "Easy",
+    diffColor: "bg-green-100 text-green-700",
+  },
+  {
+    id: "map",
+    emoji: "🗺️",
+    title: "Map Labelling",
+    description: "Listen to directions and label the correct locations on a map.",
+    tip: "Study the map before listening — identify key reference points first.",
+    exams: ["IELTS", "TOEFL"],
+    difficulty: "Hard",
+    diffColor: "bg-red-100 text-red-700",
   },
 ];
 
@@ -56,6 +77,7 @@ export default function ModeSelectionScreen({
   onSelectDictation,
   onSelectShortAnswer,
   onSelectMatching,
+  onSelectMap,
   onBack,
 }: Props) {
   const handlers: Record<string, () => void> = {
@@ -64,31 +86,49 @@ export default function ModeSelectionScreen({
     dictation: onSelectDictation,
     short: onSelectShortAnswer,
     matching: onSelectMatching,
+    map: onSelectMap,
   };
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
-      <section className="mx-auto max-w-5xl px-6 py-16 text-center">
-        <h1 className="text-4xl font-bold md:text-5xl">Choose Practice Type</h1>
-        <p className="mt-4 text-lg text-[#7a6258]">
-          Select how you want to practice your listening skills.
-        </p>
+      <section className="mx-auto max-w-5xl px-6 py-16">
 
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
+        <div className="text-center">
+          <button onClick={onBack} className="mb-6 flex items-center gap-2 mx-auto text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+            ← Back
+          </button>
+          <h1 className="text-4xl font-bold md:text-5xl">Choose Practice Type</h1>
+          <p className="mt-4 text-lg text-[#7a6258]">
+            Each type trains a different listening skill. Master them all.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {modes.map((mode) => (
             <button
               key={mode.id}
               onClick={handlers[mode.id]}
-              className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:bg-[#f1ded5]"
+              className="group rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#3b2f2f] hover:bg-white hover:shadow-md"
             >
-              <div className="text-5xl">{mode.emoji}</div>
-              <h2 className="mt-5 text-2xl font-bold">{mode.title}</h2>
-              <p className="mt-3 text-sm text-[#7a6258]">{mode.description}</p>
-              {mode.warning && (
-                <p className="mt-3 rounded-2xl bg-[#ead7cc] px-4 py-2 text-xs font-semibold text-[#3b2f2f]">
-                  {mode.warning}
-                </p>
+              <div className="flex items-start justify-between">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">
+                  {mode.emoji}
+                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${mode.diffColor}`}>
+                  {mode.difficulty}
+                </span>
+              </div>
+
+              <h2 className="mt-4 text-xl font-bold">{mode.title}</h2>
+              <p className="mt-2 text-sm text-[#7a6258]">{mode.description}</p>
+
+              {mode.tip && (
+                <div className="mt-3 flex items-start gap-2 rounded-2xl bg-[#ead7cc] px-3 py-2">
+                  <span className="text-xs">💡</span>
+                  <p className="text-xs font-semibold text-[#3b2f2f]">{mode.tip}</p>
+                </div>
               )}
+
               <div className="mt-4 flex flex-wrap gap-2">
                 {mode.exams.map((exam) => (
                   <span key={exam} className="rounded-full bg-[#3b2f2f] px-3 py-1 text-xs font-bold text-white">
@@ -96,13 +136,22 @@ export default function ModeSelectionScreen({
                   </span>
                 ))}
               </div>
+
+              <div className="mt-5 flex items-center justify-between border-t border-[#e0c7bb] pt-4">
+                <span className="text-sm font-bold">Start practicing</span>
+                <span className="text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</span>
+              </div>
             </button>
           ))}
         </div>
 
-        <button onClick={onBack} className="mt-10 text-sm font-semibold text-[#7a6258] underline">
-          Back
-        </button>
+        <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 text-center shadow-sm">
+          <p className="text-sm text-[#7a6258]">
+            🎯 <strong>Pro tip:</strong> IELTS Listening tests all 6 question types.
+            Practice each one to maximize your score.
+          </p>
+        </div>
+
       </section>
     </main>
   );

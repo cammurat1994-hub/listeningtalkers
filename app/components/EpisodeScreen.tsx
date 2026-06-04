@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 
 type Props = {
   selectedLevel: string;
-  practiceMode?: "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | null;
+  practiceMode?: "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | "map" | null;
   isQuizMode?: boolean;
   onSelectEpisode: (episode: string) => void;
   onBack: () => void;
@@ -54,47 +54,72 @@ const LEVEL_COLORS: Record<string, string> = {
   "Advanced": "bg-red-100 text-red-700",
 };
 
+const PAGE_SIZE = 20;
+
 export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode, onSelectEpisode, onBack }: Props) {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [completed, setCompleted] = useState<CompletedEpisode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    async function fetchData() {
-      let query = supabase
-        .from("episodes")
-        .select("id, title, level, episode_type")
-        .order("created_at", { ascending: true });
-
-      if (isQuizMode) {
-        query = query.in("episode_type", ["quiz-ielts", "quiz-toefl", "quiz-toeic", "quiz-celpip"]);
-      } else {
-        query = query.eq("level", selectedLevel);
-        if (practiceMode === "mcq") query = query.eq("episode_type", "practice-mcq");
-        else if (practiceMode === "fill-blank") query = query.eq("episode_type", "practice-fill");
-        else if (practiceMode === "dictation") query = query.eq("episode_type", "practice-dictation");
-        else if (practiceMode === "short-answer") query = query.eq("episode_type", "practice-short");
-        else if (practiceMode === "matching") query = query.eq("episode_type", "practice-matching");
-      }
-
-      const { data, error } = await query;
-      if (!error && data) setEpisodes(data);
-
-      // Tamamlanan episodeları çek
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        const { data: results } = await supabase
-          .from("user_results")
-          .select("episode_id, score, total_questions")
-          .eq("user_email", user.email);
-        if (results) setCompleted(results);
-      }
-
-      setLoading(false);
-    }
-    fetchData();
+    setEpisodes([]);
+    setPage(0);
+    setHasMore(true);
+    fetchEpisodes(0, true);
+    fetchCompleted();
   }, [selectedLevel, practiceMode, isQuizMode]);
+
+  async function buildQuery(from: number, to: number) {
+    let query = supabase
+      .from("episodes")
+      .select("id, title, level, episode_type", { count: "exact" })
+      .order("created_at", { ascending: true })
+      .range(from, to);
+
+    if (isQuizMode) {
+      query = query.in("episode_type", ["quiz-ielts", "quiz-toefl", "quiz-toeic", "quiz-celpip"]);
+    } else {
+      query = query.eq("level", selectedLevel);
+      if (practiceMode === "mcq") query = query.eq("episode_type", "practice-mcq");
+      else if (practiceMode === "fill-blank") query = query.eq("episode_type", "practice-fill");
+      else if (practiceMode === "dictation") query = query.eq("episode_type", "practice-dictation");
+      else if (practiceMode === "short-answer") query = query.eq("episode_type", "practice-short");
+      else if (practiceMode === "matching") query = query.eq("episode_type", "practice-matching");
+      else if (practiceMode === "map") query = query.eq("episode_type", "practice-map");
+    }
+    return query;
+  }
+
+  async function fetchEpisodes(pageNum: number, reset = false) {
+    if (reset) setLoading(true); else setLoadingMore(true);
+    const from = pageNum * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const query = await buildQuery(from, to);
+    const { data, error, count } = await query;
+    if (!error && data) {
+      setEpisodes(prev => reset ? data : [...prev, ...data]);
+      if (count !== null) setTotalCount(count);
+      setHasMore(data.length === PAGE_SIZE);
+      setPage(pageNum);
+    }
+    if (reset) setLoading(false); else setLoadingMore(false);
+  }
+
+  async function fetchCompleted() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email) {
+      const { data } = await supabase
+        .from("user_results")
+        .select("episode_id, score, total_questions")
+        .eq("user_email", user.email);
+      if (data) setCompleted(data);
+    }
+  }
 
   function getModeTitle() {
     if (isQuizMode) return "Exam Quiz";
@@ -115,9 +140,9 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
     return { score: result.score, total: result.total_questions, pct };
   }
 
-  const filteredEpisodes = episodes.filter(ep =>
-    ep.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredEpisodes = searchQuery.trim()
+    ? episodes.filter(ep => ep.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : episodes;
 
   const completedCount = episodes.filter(ep => completed.some(c => c.episode_id === ep.id)).length;
 
@@ -132,110 +157,148 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
               ← Back
             </button>
             <h1 className="text-4xl font-bold">{getModeTitle()}</h1>
-            <p className="mt-2 text-[#7a6258]">
-              {episodes.length} episodes
+            <div className="mt-2 flex items-center gap-3 flex-wrap">
+              <p className="text-[#7a6258]">{totalCount} episodes</p>
               {completedCount > 0 && (
-                <span className="ml-2 rounded-full bg-green-100 px-3 py-0.5 text-xs font-semibold text-green-700">
-                  {completedCount} completed
+                <span className="rounded-full bg-green-100 px-3 py-0.5 text-xs font-semibold text-green-700">
+                  ✓ {completedCount} completed
                 </span>
               )}
-            </p>
+              {completedCount > 0 && totalCount > 0 && (
+                <span className="rounded-full bg-[#ead7cc] px-3 py-0.5 text-xs font-semibold text-[#3b2f2f]">
+                  {Math.round((completedCount / totalCount) * 100)}% done
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Progress ring */}
-          {episodes.length > 0 && completedCount > 0 && (
-            <div className="shrink-0 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] px-6 py-4 text-center shadow-sm">
-              <p className="text-3xl font-bold">{Math.round((completedCount / episodes.length) * 100)}%</p>
+          {/* Progress indicator */}
+          {totalCount > 0 && completedCount > 0 && (
+            <div className="shrink-0 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] px-5 py-4 text-center shadow-sm">
+              <p className="text-2xl font-bold">{completedCount}<span className="text-base text-[#7a6258]">/{totalCount}</span></p>
               <p className="text-xs text-[#7a6258]">completed</p>
+              <div className="mt-2 h-1.5 w-20 rounded-full bg-[#ead7cc]">
+                <div className="h-1.5 rounded-full bg-green-500 transition-all" style={{ width: `${Math.round((completedCount / totalCount) * 100)}%` }} />
+              </div>
             </div>
           )}
         </div>
 
         {/* Search */}
-        {episodes.length > 5 && (
-          <div className="mt-6">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="🔍 Search episodes..."
-              className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 text-sm shadow-sm"
-            />
-          </div>
-        )}
+        <div className="mt-6">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="🔍 Search episodes..."
+            className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 text-sm shadow-sm focus:border-[#3b2f2f] focus:outline-none"
+          />
+        </div>
 
-        {/* Episode list */}
+        {/* List */}
         {loading ? (
-          <div className="mt-12 flex flex-col items-center gap-3">
-            {[1,2,3].map(i => (
+          <div className="mt-6 flex flex-col gap-3">
+            {[1,2,3,4,5].map(i => (
               <div key={i} className="h-20 w-full animate-pulse rounded-[2rem] bg-[#ead7cc]" />
             ))}
           </div>
         ) : filteredEpisodes.length === 0 ? (
           <div className="mt-16 text-center">
             <p className="text-5xl">🎧</p>
-            <p className="mt-4 text-lg font-semibold">No episodes found</p>
-            <p className="mt-2 text-sm text-[#7a6258]">Check back soon — new content is being added regularly!</p>
+            <p className="mt-4 text-lg font-semibold">
+              {searchQuery ? "No episodes match your search" : "No episodes yet"}
+            </p>
+            <p className="mt-2 text-sm text-[#7a6258]">
+              {searchQuery ? "Try a different keyword." : "Check back soon — new content is being added regularly!"}
+            </p>
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="mt-4 text-sm font-semibold text-[#7a6258] underline">
+                Clear search
+              </button>
+            )}
           </div>
         ) : (
-          <div className="mt-6 flex flex-col gap-3">
-            {filteredEpisodes.map((episode, index) => {
-              const completion = getCompletionData(episode.id);
-              const isCompleted = !!completion;
+          <>
+            <div className="mt-6 flex flex-col gap-3">
+              {filteredEpisodes.map((episode, index) => {
+                const completion = getCompletionData(episode.id);
+                const isCompleted = !!completion;
 
-              return (
-                <button
-                  key={episode.id}
-                  onClick={() => onSelectEpisode(episode.id)}
-                  className={`group flex items-center gap-5 rounded-[2rem] border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                    isCompleted
-                      ? "border-green-200 bg-green-50 hover:bg-green-100"
-                      : "border-[#e0c7bb] bg-[#fffaf7] hover:bg-white"
-                  }`}
-                >
-                  {/* Number / Check */}
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
-                    isCompleted ? "bg-green-500 text-white" : "bg-[#ead7cc] text-[#3b2f2f]"
-                  }`}>
-                    {isCompleted ? "✓" : index + 1}
-                  </div>
+                return (
+                  <button
+                    key={episode.id}
+                    onClick={() => onSelectEpisode(episode.id)}
+                    className={`group flex items-center gap-4 rounded-[2rem] border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                      isCompleted
+                        ? "border-green-200 bg-green-50 hover:bg-green-100"
+                        : "border-[#e0c7bb] bg-[#fffaf7] hover:bg-white"
+                    }`}
+                  >
+                    {/* Number / Check */}
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
+                      isCompleted ? "bg-green-500 text-white" : "bg-[#ead7cc] text-[#3b2f2f]"
+                    }`}>
+                      {isCompleted ? "✓" : index + 1}
+                    </div>
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-semibold text-[#7a6258]">
-                        {TYPE_EMOJI[episode.episode_type]} {TYPE_LABELS[episode.episode_type]}
-                      </span>
-                      {episode.level && (
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LEVEL_COLORS[episode.level] || "bg-[#ead7cc] text-[#3b2f2f]"}`}>
-                          {episode.level}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-semibold text-[#7a6258]">
+                          {TYPE_EMOJI[episode.episode_type]} {TYPE_LABELS[episode.episode_type]}
                         </span>
+                        {episode.level && (
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LEVEL_COLORS[episode.level] || "bg-[#ead7cc] text-[#3b2f2f]"}`}>
+                            {episode.level}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 font-bold truncate">{episode.title}</p>
+
+                      {/* Score bar */}
+                      {completion && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="h-1.5 flex-1 rounded-full bg-green-200">
+                            <div
+                              className={`h-1.5 rounded-full transition-all ${
+                                completion.pct >= 80 ? "bg-green-500" :
+                                completion.pct >= 60 ? "bg-yellow-400" : "bg-red-400"
+                              }`}
+                              style={{ width: `${completion.pct}%` }}
+                            />
+                          </div>
+                          <span className={`text-xs font-semibold ${
+                            completion.pct >= 80 ? "text-green-600" :
+                            completion.pct >= 60 ? "text-yellow-600" : "text-red-600"
+                          }`}>{completion.pct}%</span>
+                        </div>
                       )}
                     </div>
-                    <p className="mt-1 font-bold truncate">{episode.title}</p>
 
-                    {/* Score bar */}
-                    {completion && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="h-1.5 flex-1 rounded-full bg-green-200">
-                          <div
-                            className="h-1.5 rounded-full bg-green-500 transition-all"
-                            style={{ width: `${completion.pct}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-semibold text-green-700">{completion.pct}%</span>
-                      </div>
-                    )}
-                  </div>
+                    {/* Arrow */}
+                    <div className="shrink-0 text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</div>
+                  </button>
+                );
+              })}
+            </div>
 
-                  {/* Arrow */}
-                  <div className="shrink-0 text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">
-                    →
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+            {/* Load more */}
+            {!searchQuery && hasMore && (
+              <button
+                onClick={() => fetchEpisodes(page + 1)}
+                disabled={loadingMore}
+                className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white py-4 font-semibold text-[#3b2f2f] transition hover:bg-[#f1ded5] disabled:opacity-50"
+              >
+                {loadingMore ? "Loading..." : `Load more episodes`}
+              </button>
+            )}
+
+            {!searchQuery && !hasMore && episodes.length > PAGE_SIZE && (
+              <p className="mt-6 text-center text-sm text-[#7a6258]">
+                All {totalCount} episodes loaded ✓
+              </p>
+            )}
+          </>
         )}
 
       </section>
