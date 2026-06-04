@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type Props = { onBack: () => void; };
 
-type EpisodeType = "practice-mcq" | "practice-fill" | "practice-dictation" | "practice-short" | "practice-matching" | "quiz-ielts" | "quiz-toefl" | "quiz-toeic" | "quiz-celpip";
+type EpisodeType = "practice-mcq" | "practice-fill" | "practice-dictation" | "practice-short" | "practice-matching" | "practice-map" | "quiz-ielts" | "quiz-toefl" | "quiz-toeic" | "quiz-celpip";
 type MCQQuestion = { question: string; options: { A: string; B: string; C: string; D: string; E: string }; correctAnswer: "A"|"B"|"C"|"D"|"E"; explanation?: string; };
 type FillQuestion = { text: string; blanks: { index: number; answer: string }[]; };
 type DictationQuestion = { sentence: string; };
 type ShortAnswerQuestion = { question: string; answer: string; hint?: string; };
 type MatchingQuestion = { pairs: { left: string; right: string }[]; };
+type MapPoint = { id: number; x: number; y: number; answer: string; explanation: string; };
+type MapOption = { key: string; label: string; };
+type MapQuestion = { points: MapPoint[]; options: MapOption[]; };
 type PublishedEpisode = { id: string; title: string; level: string; episode_type: EpisodeType; };
 type AdminTab = "new" | "manage" | "users";
 
@@ -20,6 +23,7 @@ const PRACTICE_TYPES = [
   { id: "practice-dictation", label: "Dictation", emoji: "🎙️" },
   { id: "practice-short", label: "Short Answer", emoji: "✍️" },
   { id: "practice-matching", label: "Matching", emoji: "🔗" },
+  { id: "practice-map", label: "Map Labelling", emoji: "🗺️" },
 ];
 const QUIZ_TYPES = [
   { id: "quiz-ielts", label: "IELTS Style", emoji: "📝" },
@@ -29,12 +33,17 @@ const QUIZ_TYPES = [
 ];
 const ALL_TYPES = [...PRACTICE_TYPES, ...QUIZ_TYPES];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
+const OPTION_KEYS = ["A","B","C","D","E","F","G","H"];
 
 const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: "", C: "", D: "", E: "" }, correctAnswer: "A", explanation: "" });
 const createEmptyFill = (): FillQuestion => ({ text: "", blanks: [] });
 const createEmptyDictation = (): DictationQuestion => ({ sentence: "" });
 const createEmptyShort = (): ShortAnswerQuestion => ({ question: "", answer: "", hint: "" });
 const createEmptyMatching = (): MatchingQuestion => ({ pairs: [{ left: "", right: "" }, { left: "", right: "" }, { left: "", right: "" }] });
+const createEmptyMap = (): MapQuestion => ({
+  points: [],
+  options: OPTION_KEYS.slice(0, 6).map(k => ({ key: k, label: "" })),
+});
 
 function parseBulkMCQ(raw: string): MCQQuestion[] {
   const blocks = raw.trim().split(/\n{2,}/);
@@ -79,6 +88,12 @@ export default function AdminScreen({ onBack }: Props) {
   const [dictationQuestions, setDictationQuestions] = useState<DictationQuestion[]>([createEmptyDictation()]);
   const [shortQuestions, setShortQuestions] = useState<ShortAnswerQuestion[]>([createEmptyShort()]);
   const [matchingQuestions, setMatchingQuestions] = useState<MatchingQuestion[]>([createEmptyMatching()]);
+  const [mapQuestion, setMapQuestion] = useState<MapQuestion>(createEmptyMap());
+  const [mapImageFile, setMapImageFile] = useState<File | null>(null);
+  const [mapImageUrl, setMapImageUrl] = useState("");
+  const [mapImagePreview, setMapImagePreview] = useState("");
+  const [addingPoint, setAddingPoint] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const [publishedEpisodes, setPublishedEpisodes] = useState<PublishedEpisode[]>([]);
   const [filterType, setFilterType] = useState("all");
   const [filterLevel, setFilterLevel] = useState("all");
@@ -92,13 +107,13 @@ export default function AdminScreen({ onBack }: Props) {
   useEffect(() => { fetchEpisodes(); }, []);
 
   async function fetchEpisodes() {
-  const { data, error } = await supabase
-    .from("episodes")
-    .select("id, title, level, episode_type")
-    .order("created_at", { ascending: false })
-    .limit(500);
-  if (!error && data) setPublishedEpisodes(data);
-}
+    const { data, error } = await supabase
+      .from("episodes")
+      .select("id, title, level, episode_type")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (!error && data) setPublishedEpisodes(data);
+  }
 
   async function fetchUsers() {
     setLoadingUsers(true);
@@ -119,16 +134,48 @@ export default function AdminScreen({ onBack }: Props) {
     return data.publicUrl;
   }
 
+  async function uploadMapImage(file: File) {
+    const ext = file.name.split(".").pop();
+    const name = `map-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("audio-files").upload(name, file, { cacheControl: "3600", upsert: false });
+    if (error) throw new Error(error.message);
+    const { data } = supabase.storage.from("audio-files").getPublicUrl(name);
+    return data.publicUrl;
+  }
+
+  function handleMapImageSelect(file: File) {
+    setMapImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setMapImagePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function handleMapClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!addingPoint) return;
+    const rect = mapContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const newId = mapQuestion.points.length + 1;
+    setMapQuestion(prev => ({
+      ...prev,
+      points: [...prev.points, { id: newId, x, y, answer: "", explanation: "" }],
+    }));
+    setAddingPoint(false);
+  }
+
   async function publishEpisode() {
     if (!title) { alert("Please enter episode title."); return; }
     if (!audioFile && !existingAudioUrl) { alert("Please upload main audio."); return; }
+    if (episodeType === "practice-map" && !mapImageFile && !mapImageUrl) {
+      alert("Please upload a map image."); return;
+    }
     setUploading(true);
     try {
       if (audioFile && audioFile.size > 50 * 1024 * 1024) {
-  alert("Audio file is too large. Please use files under 50MB.");
-  setUploading(false);
-  return;
-}
+        alert("Audio file is too large. Please use files under 50MB.");
+        setUploading(false); return;
+      }
       const audioUrl = audioFile ? await uploadAudioFile(audioFile, "episode") : existingAudioUrl;
       let questions: unknown = null;
 
@@ -149,6 +196,9 @@ export default function AdminScreen({ onBack }: Props) {
         questions = shortQuestions.filter(q => q.question.trim() && q.answer.trim());
       } else if (episodeType === "practice-matching") {
         questions = matchingQuestions;
+      } else if (episodeType === "practice-map") {
+        const finalMapImageUrl = mapImageFile ? await uploadMapImage(mapImageFile) : mapImageUrl;
+        questions = [{ ...mapQuestion, imageUrl: finalMapImageUrl }];
       }
 
       const payload = {
@@ -183,6 +233,8 @@ export default function AdminScreen({ onBack }: Props) {
     setMcqQuestions([createEmptyMCQ()]); setFillQuestions([createEmptyFill()]);
     setDictationQuestions([createEmptyDictation()]); setShortQuestions([createEmptyShort()]);
     setMatchingQuestions([createEmptyMatching()]);
+    setMapQuestion(createEmptyMap()); setMapImageFile(null); setMapImageUrl(""); setMapImagePreview("");
+    setAddingPoint(false);
     setBulkMode(false); setBulkText(""); setBulkError("");
   }
 
@@ -202,11 +254,15 @@ export default function AdminScreen({ onBack }: Props) {
       else if (data.episode_type === "practice-dictation") setDictationQuestions(data.questions);
       else if (data.episode_type === "practice-short") setShortQuestions(data.questions);
       else if (data.episode_type === "practice-matching") setMatchingQuestions(data.questions);
+      else if (data.episode_type === "practice-map") {
+        const mq = data.questions[0];
+        setMapQuestion({ points: mq.points || [], options: mq.options || [] });
+        setMapImageUrl(mq.imageUrl || "");
+        setMapImagePreview(mq.imageUrl || "");
+      }
       else setMcqQuestions(data.questions.map((q: MCQQuestion) => ({
-        question: q.question,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-        explanation: q.explanation || "",
+        question: q.question, options: q.options,
+        correctAnswer: q.correctAnswer, explanation: q.explanation || "",
       })));
     }
     setActiveTab("new");
@@ -307,7 +363,6 @@ export default function AdminScreen({ onBack }: Props) {
                     {!bulkMode && <button onClick={() => setMcqQuestions([...mcqQuestions, createEmptyMCQ()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Question</button>}
                   </div>
                 </div>
-
                 {bulkMode && (
                   <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
                     <p className="text-sm font-semibold">Format:</p>
@@ -322,7 +377,6 @@ export default function AdminScreen({ onBack }: Props) {
                     }} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Apply</button>
                   </div>
                 )}
-
                 {!bulkMode && (
                   <div className="mt-6 flex flex-col gap-6">
                     {mcqQuestions.map((item, index) => (
@@ -347,7 +401,7 @@ export default function AdminScreen({ onBack }: Props) {
                           </select>
                         </div>
                         <div className="mt-3">
-                          <label className="mb-1 block text-sm font-semibold">Explanation <span className="text-[#7a6258] font-normal">(doğru cevap neden doğru?)</span></label>
+                          <label className="mb-1 block text-sm font-semibold">Explanation <span className="font-normal text-[#7a6258]">(doğru cevap neden doğru?)</span></label>
                           <textarea value={item.explanation || ""} onChange={(e) => { const u = [...mcqQuestions]; u[index].explanation = e.target.value; setMcqQuestions(u); }} placeholder="The speaker said '...' which means the correct answer is C because..." className="min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
                         </div>
                       </div>
@@ -361,15 +415,12 @@ export default function AdminScreen({ onBack }: Props) {
             {episodeType === "practice-fill" && (
               <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold">Fill in the Blank</h2>
-                    <p className="mt-1 text-sm text-[#7a6258]">Boşlukları ___ ile işaretle.</p>
-                  </div>
+                  <div><h2 className="text-2xl font-bold">Fill in the Blank</h2><p className="mt-1 text-sm text-[#7a6258]">Boşlukları ___ ile işaretle.</p></div>
                   <button onClick={() => setFillQuestions([...fillQuestions, createEmptyFill()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Paragraph</button>
                 </div>
                 <label className="mt-5 flex items-center gap-3 text-sm font-semibold">
                   <input type="checkbox" checked={showNotes} onChange={(e) => setShowNotes(e.target.checked)} className="h-4 w-4" />
-                  Show notes field (Advanced episodes için önerilir)
+                  Show notes field
                 </label>
                 <div className="mt-5 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
                   <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
@@ -414,13 +465,12 @@ export default function AdminScreen({ onBack }: Props) {
             {episodeType === "practice-dictation" && (
               <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
                 <h2 className="text-2xl font-bold">Dictation</h2>
-                <p className="mt-1 text-sm text-[#7a6258]">Kullanıcının duyup yazacağı cümle.</p>
                 <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
                   <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
                   <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
                 </div>
                 <div className="mt-4">
-                  <textarea placeholder={`S) The conference will be held next Monday.`}
+                  <textarea placeholder="S) The conference will be held next Monday."
                     className="min-h-[150px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
                     onChange={(e) => {
                       const lines = e.target.value.split("\n").map(l => l.trim()).filter(l => /^S\)/i.test(l));
@@ -444,16 +494,12 @@ export default function AdminScreen({ onBack }: Props) {
             {episodeType === "practice-short" && (
               <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold">Short Answer</h2>
-                    <p className="mt-1 text-sm text-[#7a6258]">Kullanıcı 1-3 kelimeyle yanıtlar.</p>
-                  </div>
+                  <div><h2 className="text-2xl font-bold">Short Answer</h2><p className="mt-1 text-sm text-[#7a6258]">Kullanıcı 1-3 kelimeyle yanıtlar.</p></div>
                   <button onClick={() => setShortQuestions([...shortQuestions, createEmptyShort()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Question</button>
                 </div>
                 <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
                   <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
-                  <pre className="text-xs leading-6">{`Q) What time does the library close on Fridays?\nA) 9pm|nine o'clock\nH) Think about closing times\n\nQ) Where does the meeting take place?\nA) conference room`}</pre>
-                  <p className="mt-2 text-xs">H) opsiyonel ipucu. A) için | ile alternatif cevap ekle.</p>
+                  <pre className="text-xs leading-6">{`Q) What time does the library close?\nA) 9pm|nine o'clock\nH) Think about closing times`}</pre>
                 </div>
                 <div className="mt-4">
                   <textarea placeholder={`Q) What time does the library close?\nA) 9pm|nine\nH) Think about closing times`}
@@ -467,11 +513,7 @@ export default function AdminScreen({ onBack }: Props) {
                         const aLine = lines.find(l => /^A\)/i.test(l));
                         const hLine = lines.find(l => /^H\)/i.test(l));
                         if (!qLine || !aLine) continue;
-                        parsed.push({
-                          question: qLine.replace(/^Q\)\s*/i, "").trim(),
-                          answer: aLine.replace(/^A\)\s*/i, "").trim(),
-                          hint: hLine ? hLine.replace(/^H\)\s*/i, "").trim() : "",
-                        });
+                        parsed.push({ question: qLine.replace(/^Q\)\s*/i, "").trim(), answer: aLine.replace(/^A\)\s*/i, "").trim(), hint: hLine ? hLine.replace(/^H\)\s*/i, "").trim() : "" });
                       }
                       if (parsed.length) setShortQuestions(parsed);
                     }}
@@ -484,9 +526,9 @@ export default function AdminScreen({ onBack }: Props) {
                         <span className="font-bold">Question {i + 1}</span>
                         <button onClick={() => shortQuestions.length > 1 && setShortQuestions(shortQuestions.filter((_, j) => j !== i))} disabled={shortQuestions.length <= 1} className="text-sm text-red-600 disabled:opacity-30">Remove</button>
                       </div>
-                      <input type="text" value={item.question} onChange={(e) => { const u = [...shortQuestions]; u[i].question = e.target.value; setShortQuestions(u); }} placeholder="What time does the library close on Fridays?" className="mt-3 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
-                      <input type="text" value={item.answer} onChange={(e) => { const u = [...shortQuestions]; u[i].answer = e.target.value; setShortQuestions(u); }} placeholder="Doğru cevap — | ile alternatif: 9pm|nine" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
-                      <input type="text" value={item.hint || ""} onChange={(e) => { const u = [...shortQuestions]; u[i].hint = e.target.value; setShortQuestions(u); }} placeholder="İpucu (opsiyonel)" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
+                      <input type="text" value={item.question} onChange={(e) => { const u = [...shortQuestions]; u[i].question = e.target.value; setShortQuestions(u); }} placeholder="Question text" className="mt-3 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
+                      <input type="text" value={item.answer} onChange={(e) => { const u = [...shortQuestions]; u[i].answer = e.target.value; setShortQuestions(u); }} placeholder="Answer | alternative" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
+                      <input type="text" value={item.hint || ""} onChange={(e) => { const u = [...shortQuestions]; u[i].hint = e.target.value; setShortQuestions(u); }} placeholder="Hint (optional)" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
                     </div>
                   ))}
                 </div>
@@ -497,19 +539,15 @@ export default function AdminScreen({ onBack }: Props) {
             {episodeType === "practice-matching" && (
               <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold">Matching</h2>
-                    <p className="mt-1 text-sm text-[#7a6258]">Sol listeyi sağ listeyle eşleştir.</p>
-                  </div>
+                  <div><h2 className="text-2xl font-bold">Matching</h2></div>
                   <button onClick={() => setMatchingQuestions([...matchingQuestions, createEmptyMatching()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Set</button>
                 </div>
                 <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
                   <p className="font-semibold mb-1">Bulk Paste Formatı:</p>
                   <pre className="text-xs leading-6">{`L) Monday\nR) The first day of the week\n\nL) Tuesday\nR) The second day of the week`}</pre>
-                  <p className="mt-2 text-xs">L) sol taraf, R) sağ taraf. Her çift arasına boş satır bırak.</p>
                 </div>
                 <div className="mt-4">
-                  <textarea placeholder={`L) Monday\nR) The first day of the week\n\nL) Tuesday\nR) The second day of the week`}
+                  <textarea placeholder={`L) Monday\nR) The first day of the week`}
                     className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
                     onChange={(e) => {
                       const blocks = e.target.value.trim().split(/\n{2,}/);
@@ -519,10 +557,7 @@ export default function AdminScreen({ onBack }: Props) {
                         const lLine = lines.find(l => /^L\)/i.test(l));
                         const rLine = lines.find(l => /^R\)/i.test(l));
                         if (!lLine || !rLine) continue;
-                        pairs.push({
-                          left: lLine.replace(/^L\)\s*/i, "").trim(),
-                          right: rLine.replace(/^R\)\s*/i, "").trim(),
-                        });
+                        pairs.push({ left: lLine.replace(/^L\)\s*/i, "").trim(), right: rLine.replace(/^R\)\s*/i, "").trim() });
                       }
                       if (pairs.length) setMatchingQuestions([{ pairs }]);
                     }}
@@ -551,6 +586,149 @@ export default function AdminScreen({ onBack }: Props) {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* MAP LABELLING */}
+            {episodeType === "practice-map" && (
+              <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+                <h2 className="text-2xl font-bold">🗺️ Map Labelling</h2>
+                <p className="mt-1 text-sm text-[#7a6258]">Haritayı yükle, noktalara tıkla, her noktanın cevabını ve açıklamasını gir.</p>
+
+                {/* Harita yükleme */}
+                <div className="mt-6">
+                  <label className="mb-2 block text-sm font-semibold">Map Image (PNG, JPG, SVG)</label>
+                  <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMapImageSelect(f); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
+                </div>
+
+                {/* Options (A-H) */}
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm font-semibold">Answer Options (A–H)</label>
+                    <div className="flex gap-2">
+                      <button onClick={() => {
+                        const next = OPTION_KEYS[mapQuestion.options.length];
+                        if (next) setMapQuestion(prev => ({ ...prev, options: [...prev.options, { key: next, label: "" }] }));
+                      }} disabled={mapQuestion.options.length >= 8} className="rounded-xl bg-[#3b2f2f] px-3 py-1 text-xs font-semibold text-white disabled:opacity-40">+ Add Option</button>
+                      <button onClick={() => {
+                        if (mapQuestion.options.length > 2) setMapQuestion(prev => ({ ...prev, options: prev.options.slice(0, -1) }));
+                      }} disabled={mapQuestion.options.length <= 2} className="rounded-xl border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold disabled:opacity-40">- Remove</button>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {mapQuestion.options.map((opt, i) => (
+                      <div key={opt.key} className="flex items-center gap-2 rounded-2xl border border-[#e0c7bb] bg-white p-3">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{opt.key}</span>
+                        <input type="text" value={opt.label} onChange={(e) => {
+                          const u = [...mapQuestion.options];
+                          u[i].label = e.target.value;
+                          setMapQuestion(prev => ({ ...prev, options: u }));
+                        }} placeholder={`e.g. Library`} className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Harita + nokta koyma */}
+                {mapImagePreview && (
+                  <div className="mt-6">
+                    <div className="mb-3 flex items-center justify-between">
+                      <label className="text-sm font-semibold">Map — Click to add points</label>
+                      <button
+                        onClick={() => setAddingPoint(!addingPoint)}
+                        className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${addingPoint ? "bg-blue-600 text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}
+                      >
+                        {addingPoint ? "🎯 Click on map..." : "➕ Add Point"}
+                      </button>
+                    </div>
+
+                    {addingPoint && (
+                      <div className="mb-3 rounded-2xl bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700 font-semibold">
+                        Click anywhere on the map to place a numbered point.
+                      </div>
+                    )}
+
+                    <div
+                      ref={mapContainerRef}
+                      onClick={handleMapClick}
+                      className={`relative w-full overflow-hidden rounded-[2rem] border-2 ${addingPoint ? "border-blue-400 cursor-crosshair" : "border-[#e0c7bb]"}`}
+                      style={{ paddingBottom: "60%" }}
+                    >
+                      <img
+                        src={mapImagePreview}
+                        alt="Map"
+                        className="absolute inset-0 h-full w-full object-contain bg-white"
+                        draggable={false}
+                      />
+                      {mapQuestion.points.map((point) => (
+                        <div
+                          key={point.id}
+                          className="absolute flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#3b2f2f] text-xs font-bold text-white shadow-lg cursor-pointer hover:bg-red-600 transition"
+                          style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!addingPoint) {
+                              setMapQuestion(prev => ({ ...prev, points: prev.points.filter(p => p.id !== point.id).map((p, i) => ({ ...p, id: i + 1 })) }));
+                            }
+                          }}
+                          title="Click to remove"
+                        >
+                          {point.id}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs text-[#7a6258]">💡 Click a point to remove it. Points are numbered automatically.</p>
+                  </div>
+                )}
+
+                {/* Her nokta için cevap + açıklama */}
+                {mapQuestion.points.length > 0 && (
+                  <div className="mt-6">
+                    <label className="mb-3 block text-sm font-semibold">Point Answers & Explanations</label>
+                    <div className="flex flex-col gap-4">
+                      {mapQuestion.points.map((point, i) => (
+                        <div key={point.id} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{point.id}</div>
+                            <span className="font-semibold text-sm">Point {point.id}</span>
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div>
+                              <label className="mb-1 block text-xs font-semibold text-[#7a6258]">Correct Answer</label>
+                              <select
+                                value={point.answer}
+                                onChange={(e) => {
+                                  const u = [...mapQuestion.points];
+                                  u[i].answer = e.target.value;
+                                  setMapQuestion(prev => ({ ...prev, points: u }));
+                                }}
+                                className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm"
+                              >
+                                <option value="">Select answer...</option>
+                                {mapQuestion.options.map(opt => (
+                                  <option key={opt.key} value={opt.key}>{opt.key}) {opt.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-semibold text-[#7a6258]">Explanation</label>
+                              <textarea
+                                value={point.explanation}
+                                onChange={(e) => {
+                                  const u = [...mapQuestion.points];
+                                  u[i].explanation = e.target.value;
+                                  setMapQuestion(prev => ({ ...prev, points: u }));
+                                }}
+                                placeholder='The speaker said "turn left..." placing this at point 1.'
+                                className="min-h-[70px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
