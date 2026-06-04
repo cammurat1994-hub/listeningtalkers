@@ -91,6 +91,11 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
       else if (practiceMode === "short-answer") query = query.eq("episode_type", "practice-short");
       else if (practiceMode === "matching") query = query.eq("episode_type", "practice-matching");
       else if (practiceMode === "map") query = query.eq("episode_type", "practice-map");
+      else if (practiceMode === "completion-note") query = query.eq("episode_type", "practice-completion-note");
+else if (practiceMode === "completion-form") query = query.eq("episode_type", "practice-completion-form");
+else if (practiceMode === "completion-table") query = query.eq("episode_type", "practice-completion-table");
+else if (practiceMode === "completion-flow") query = query.eq("episode_type", "practice-completion-flow");
+else if (practiceMode === "completion-sentence") query = query.eq("episode_type", "practice-completion-sentence");
     }
     return query;
   }
@@ -130,6 +135,11 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
       "short-answer": "Short Answer",
       "matching": "Matching",
       "map": "Map Labelling",
+      "completion-note": "Note Completion",
+"completion-form": "Form Completion",
+"completion-table": "Table Completion",
+"completion-flow": "Flow Chart Completion",
+"completion-sentence": "Sentence Completion",
     };
     return `${selectedLevel} — ${labels[practiceMode || ""] || "Practice"}`;
   }
