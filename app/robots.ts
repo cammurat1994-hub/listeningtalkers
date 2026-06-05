@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://listeningtalkers.vercel.app/sitemap.xml",
+    sitemap: "https://listeningtalkers.com/sitemap.xml",
   };
 }

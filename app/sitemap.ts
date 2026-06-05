@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://listeningtalkers.vercel.app";
+  const baseUrl = "https://listeningtalkers.com";
 
   const staticPages = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 1.0 },
@@ -32,9 +32,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }))
   );
 
-  const examPages = [
-    "ielts", "toefl", "toeic", "celpip"
-  ].map(exam => ({
+  const examPages = ["ielts", "toefl", "toeic", "celpip"].map(exam => ({
     url: `${baseUrl}/ielts-listening-exam/${exam}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
