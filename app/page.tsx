@@ -13,16 +13,34 @@ import ModeSelectionScreen from "./components/ModeSelectionScreen";
 import CompletionTypeScreen from "./components/CompletionTypeScreen";
 import MyProgressScreen from "./components/MyProgressScreen";
 import LoadingScreen from "./components/LoadingScreen";
+import ExamIntro from "./exam/ExamIntro";
+import IELTSExam from "./exam/IELTSExam";
+import ExamResults from "./exam/ExamResults";
 
 type Screen =
   | "login" | "home" | "levels" | "episodes"
   | "mode-selection" | "completion-type" | "practice" | "quiz"
-  | "progress" | "admin";
+  | "progress" | "admin"
+  | "exam-list" | "exam-intro" | "exam-running" | "exam-results";
 
 type PracticeMode =
   | "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | "map"
   | "completion-note" | "completion-form" | "completion-table" | "completion-flow" | "completion-sentence"
   | null;
+
+type ExamSection = {
+  number: number;
+  audioUrl: string;
+  questionGroups: { type: string; label: string; data: unknown }[];
+};
+
+type ExamEpisode = {
+  id: string;
+  title: string;
+  episode_type: string;
+  sections: ExamSection[];
+  pdf_url?: string;
+};
 
 const ADMIN_EMAIL = "cammurat1994@gmail.com";
 
@@ -37,10 +55,8 @@ function UserPanel({ userEmail, onNavigate, onLogout }: {
 
   return (
     <div className="fixed right-5 top-5 z-50">
-      <button
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="flex items-center gap-3 rounded-full bg-[#3b2f2f] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-[#2f2424]"
-      >
+      <button onClick={() => setIsMenuOpen(!isMenuOpen)}
+        className="flex items-center gap-3 rounded-full bg-[#3b2f2f] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-[#2f2424]">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#3b2f2f]">
           {isAdmin ? "A" : userEmail.charAt(0).toUpperCase()}
         </span>
@@ -51,9 +67,7 @@ function UserPanel({ userEmail, onNavigate, onLogout }: {
       {isMenuOpen && (
         <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-[#e0c7bb] bg-white shadow-2xl">
           <div className="border-b border-[#e0c7bb] px-5 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#7a6258]">
-              {isAdmin ? "Administrator" : "Signed in"}
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#7a6258]">{isAdmin ? "Administrator" : "Signed in"}</p>
             <p className="mt-1 truncate text-sm font-bold text-[#3b2f2f]">{userEmail}</p>
           </div>
           {isAdmin && (
@@ -84,6 +98,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [practiceMode, setPracticeMode] = useState<PracticeMode>(null);
   const [isQuizMode, setIsQuizMode] = useState(false);
+  const [currentExam, setCurrentExam] = useState<ExamEpisode | null>(null);
+  const [examAnswers, setExamAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function getUser() {
@@ -96,14 +112,94 @@ export default function Home() {
 
   async function logout() {
     await supabase.auth.signOut();
-    setUserEmail("");
-    setScreen("login");
+    setUserEmail(""); setScreen("login");
   }
 
   function goTo(s: Screen) { setScreen(s); }
   function navigateTo(s: Screen) { setScreen(s); }
 
+  async function loadExam(episodeId: string) {
+    const { data, error } = await supabase.from("episodes").select("*").eq("id", episodeId).single();
+    if (!error && data) {
+      setCurrentExam({
+        id: data.id,
+        title: data.title,
+        episode_type: data.episode_type,
+        sections: data.sections || [],
+        pdf_url: data.pdf_url || undefined,
+      });
+      setExamAnswers({});
+      goTo("exam-intro");
+    }
+  }
+
   if (loading) return <LoadingScreen />;
+
+  // EXAM SCREENS
+  if (screen === "exam-intro" && currentExam) {
+    const examTypeLabel = currentExam.episode_type.replace("exam-", "").toUpperCase();
+    return (
+      <>
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
+        <ExamIntro
+          title={currentExam.title}
+          examType={examTypeLabel}
+          sections={currentExam.sections}
+          pdfUrl={currentExam.pdf_url}
+          onStart={() => goTo("exam-running")}
+          onBack={() => goTo("exam-list")}
+        />
+      </>
+    );
+  }
+
+  if (screen === "exam-running" && currentExam) {
+    const examTypeLabel = currentExam.episode_type.replace("exam-", "").toUpperCase();
+    return (
+      <IELTSExam
+        title={currentExam.title}
+        examType={examTypeLabel}
+        sections={currentExam.sections}
+        answers={examAnswers}
+        onUpdateAnswers={setExamAnswers}
+        onFinish={() => goTo("exam-results")}
+        onBack={() => goTo("exam-intro")}
+      />
+    );
+  }
+
+  if (screen === "exam-results" && currentExam) {
+    const examTypeLabel = currentExam.episode_type.replace("exam-", "").toUpperCase();
+    return (
+      <>
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
+        <ExamResults
+          title={currentExam.title}
+          examType={examTypeLabel}
+          sections={currentExam.sections}
+          answers={examAnswers}
+          onBack={() => goTo("exam-list")}
+          onRetry={() => { setExamAnswers({}); goTo("exam-intro"); }}
+        />
+      </>
+    );
+  }
+
+  if (screen === "exam-list") {
+    return (
+      <>
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
+        <EpisodeScreen
+          selectedLevel={selectedLevel}
+          practiceMode={null}
+          isQuizMode={false}
+          isExamMode={true}
+          onSelectEpisode={(episodeId) => loadExam(episodeId)}
+          onBack={() => goTo("home")}
+        />
+      </>
+    );
+  }
 
   if (screen === "admin" && userEmail !== ADMIN_EMAIL) {
     return (
@@ -249,7 +345,7 @@ export default function Home() {
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <HomeScreen
           onSelectPractice={() => { setIsQuizMode(false); goTo("levels"); }}
-          onSelectQuiz={() => { setIsQuizMode(true); goTo("levels"); }}
+          onSelectQuiz={() => { setIsQuizMode(true); goTo("exam-list"); }}
         />
       </>
     );

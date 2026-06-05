@@ -107,27 +107,32 @@ export default function HomeScreen({ onSelectPractice, onSelectQuiz }: Props) {
             <p className="mt-5 font-bold text-[#3b2f2f] group-hover:underline">Start practicing →</p>
           </button>
 
-          <button
-            onClick={onSelectQuiz}
-            className="group rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#3b2f2f] hover:bg-white"
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">📝</div>
-              <div>
-                <h3 className="text-2xl font-bold">Exam Quiz</h3>
-                <p className="text-sm text-[#7a6258]">Exam format • Scored</p>
-              </div>
-            </div>
-            <p className="mt-5 text-[#7a6258]">
-              Simulate a real exam with IELTS, TOEFL, TOEIC or CELPIP style questions. Get a score and see where you stand.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {["IELTS", "TOEFL", "TOEIC", "CELPIP"].map(e => (
-                <span key={e} className="rounded-full bg-[#3b2f2f] px-3 py-1 text-xs font-bold text-white">{e}</span>
-              ))}
-            </div>
-            <p className="mt-5 font-bold text-[#3b2f2f] group-hover:underline">Take a quiz →</p>
-          </button>
+         <button
+  onClick={onSelectQuiz}
+  className="group rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#3b2f2f] hover:bg-white"
+>
+  <div className="flex items-center gap-4">
+    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">🎓</div>
+    <div>
+      <h3 className="text-2xl font-bold">Full Exam Simulation</h3>
+      <p className="text-sm text-[#7a6258]">Real format • Timed • Band score</p>
+    </div>
+  </div>
+  <p className="mt-5 text-[#7a6258]">
+    Simulate a full IELTS, TOEFL, TOEIC or CELPIP listening exam. 4 sections, 40 questions, real timing — just like exam day.
+  </p>
+  <div className="mt-5 flex flex-wrap gap-2">
+    {["IELTS", "TOEFL", "TOEIC", "CELPIP"].map(e => (
+      <span key={e} className="rounded-full bg-[#3b2f2f] px-3 py-1 text-xs font-bold text-white">{e}</span>
+    ))}
+  </div>
+  <div className="mt-5 flex items-center gap-2">
+    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">⏱ 40 min</span>
+    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">📊 Band score</span>
+    <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">📄 PDF download</span>
+  </div>
+  <p className="mt-5 font-bold text-[#3b2f2f] group-hover:underline">Start full exam →</p>
+</button>
         </div>
       </section>
 

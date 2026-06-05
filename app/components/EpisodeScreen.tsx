@@ -7,6 +7,7 @@ type Props = {
   selectedLevel: string;
   practiceMode?: "mcq" | "fill-blank" | "dictation" | "short-answer" | "matching" | "map" | "completion-note" | "completion-form" | "completion-table" | "completion-flow" | "completion-sentence" | null;
   isQuizMode?: boolean;
+  isExamMode?: boolean;
   onSelectEpisode: (episode: string) => void;
   onBack: () => void;
 };
@@ -73,7 +74,10 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
     fetchEpisodes(0, true);
     fetchCompleted();
   }, [selectedLevel, practiceMode, isQuizMode]);
-
+if (isExamMode) {
+  query = query.in("episode_type", ["exam-ielts", "exam-toefl", "exam-toeic", "exam-celpip"]);
+  return query;
+}
   async function buildQuery(from: number, to: number) {
     let query = supabase
       .from("episodes")
