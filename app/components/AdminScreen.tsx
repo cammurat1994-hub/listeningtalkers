@@ -95,7 +95,7 @@ const QUESTION_GROUP_TYPES: { id: QuestionGroupType; label: string; emoji: strin
 
 function createEmptyGroupData(type: QuestionGroupType): unknown {
   switch (type) {
-    case "mcq": return [];
+    case "mcq": return [] as MCQQuestion[];
     case "form-completion": return { title: "", fields: [{ label: "", answer: "" }] };
     case "note-completion": return { title: "", items: [{ label: "", answer: "" }] };
     case "table-completion": return { title: "", headers: ["", "", ""], rows: [{ cells: ["", "", ""], answerIndices: [], answers: [] }] };
@@ -212,11 +212,10 @@ function parseBulkSentence(raw: string): SentenceQuestion {
 
 // ─── Question Group Editor ───────────────────────────────────────────────────
 
-function QuestionGroupEditor({ group, onChange, onRemove, mapContainerRef }: {
+function QuestionGroupEditor({ group, onChange, onRemove }: {
   group: QuestionGroup;
   onChange: (data: unknown) => void;
   onRemove: () => void;
-  mapContainerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkText, setBulkText] = useState("");
@@ -524,7 +523,7 @@ function ExamSectionEditor({ section, onChange, onRemove, uploadAudio }: {
 }) {
   const [addingGroupType, setAddingGroupType] = useState<QuestionGroupType | "">("");
   const [groupLabel, setGroupLabel] = useState("");
-  const mapRef = useRef<HTMLDivElement>(null);
+ 
 
   function addGroup() {
     if (!addingGroupType) return;
@@ -560,10 +559,9 @@ function ExamSectionEditor({ section, onChange, onRemove, uploadAudio }: {
       <div className="flex flex-col gap-4">
         {section.questionGroups.map((group, gi) => (
           <QuestionGroupEditor
-            key={group.id}
-            group={group}
-            mapContainerRef={mapRef}
-            onChange={(newData) => {
+  key={group.id}
+  group={group}
+  onChange={(newData) => {
               const updated = [...section.questionGroups];
               updated[gi] = { ...group, data: newData };
               onChange({ ...section, questionGroups: updated });

@@ -13,9 +13,9 @@ import ModeSelectionScreen from "./components/ModeSelectionScreen";
 import CompletionTypeScreen from "./components/CompletionTypeScreen";
 import MyProgressScreen from "./components/MyProgressScreen";
 import LoadingScreen from "./components/LoadingScreen";
-import ExamIntro from "./exam/ExamIntro";
-import IELTSExam from "./exam/IELTSExam";
-import ExamResults from "./exam/ExamResults";
+import ExamIntro from "./Exam/ExamIntro";
+import IELTSExam from "./Exam/IELTSExam";
+import ExamResults from "./Exam/ExamResults";
 
 type Screen =
   | "login" | "home" | "levels" | "episodes"
