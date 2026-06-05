@@ -13,6 +13,7 @@ type Result = {
   level: string;
   episode_id: string;
   episode_title: string;
+  episode_type: string;
   score: number;
   total_questions: number;
   created_at: string;
@@ -156,8 +157,17 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
           <p className="text-lg font-semibold">{motivationMessage}</p>
           {lastActivity && (
             <p className="mt-1 text-sm text-[#c9a99a]">
-              Last activity: {lastActivity}
-              {results[0] && ` — ${results[0].episode_title}`}
+           Last activity: {lastActivity} — {results[0]?.level} · {(() => {
+  const t = results[0]?.episode_type;
+  if (t === "practice-mcq") return "Multiple Choice";
+  if (t === "practice-fill") return "Fill in the Blank";
+  if (t === "practice-dictation") return "Dictation";
+  if (t === "practice-short") return "Short Answer";
+  if (t === "practice-matching") return "Matching";
+  if (t === "practice-map") return "Map Labelling";
+  if (t?.includes("completion")) return "Completions";
+  return "Practice";
+})()}
             </p>
           )}
           {streak > 0 && (

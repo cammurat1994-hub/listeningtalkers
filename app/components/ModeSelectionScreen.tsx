@@ -123,14 +123,9 @@ export default function ModeSelectionScreen({
               onClick={handlers[mode.id]}
               className="group rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#3b2f2f] hover:bg-white hover:shadow-md"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">
-                  {mode.emoji}
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-bold ${mode.diffColor}`}>
-                  {mode.difficulty}
-                </span>
-              </div>
+         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">
+  {mode.emoji}
+</div>
 
               <h2 className="mt-4 text-xl font-bold">{mode.title}</h2>
               <p className="mt-2 text-sm text-[#7a6258]">{mode.description}</p>

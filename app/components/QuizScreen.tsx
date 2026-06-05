@@ -721,7 +721,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) return;
     const { correct, total } = calculateScore();
-    await supabase.from("user_results").insert([{ user_email: user.email, episode_id: episode.id, episode_title: episode.title, level: episode.level, score: correct, total_questions: total }]);
+    await supabase.from("user_results").insert([{ user_email: user.email, episode_id: episode.id, episode_title: episode.title, level: episode.level, episode_type: episode.episode_type, score: correct, total_questions: total }]);
     setResultSaved(true);
   }
 
@@ -964,7 +964,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
               );
             })()}
             <div className="mt-8 flex flex-col gap-3">
-              {nextEpisode && <button onClick={() => onNextEpisode(nextEpisode.id)} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Next Episode →</button>}
+            {nextEpisode && <button onClick={() => onNextEpisode(nextEpisode.id)} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Next Practice →</button>}
               <button onClick={onBack} className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">Back to Episodes</button>
             </div>
           </div>
