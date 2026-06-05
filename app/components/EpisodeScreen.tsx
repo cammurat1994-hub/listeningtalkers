@@ -74,10 +74,7 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
     fetchEpisodes(0, true);
     fetchCompleted();
   }, [selectedLevel, practiceMode, isQuizMode]);
-if (isExamMode) {
-  query = query.in("episode_type", ["exam-ielts", "exam-toefl", "exam-toeic", "exam-celpip"]);
-  return query;
-}
+
   async function buildQuery(from: number, to: number) {
     let query = supabase
       .from("episodes")
@@ -132,6 +129,7 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
 
   function getModeTitle() {
     if (isQuizMode) return "Exam Quiz";
+    
     const labels: Record<string, string> = {
       "mcq": "Multiple Choice",
       "fill-blank": "Fill in the Blank",
@@ -173,7 +171,8 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
             </button>
             <h1 className="text-4xl font-bold">{getModeTitle()}</h1>
             <div className="mt-2 flex items-center gap-3 flex-wrap">
-              <p className="text-[#7a6258]">{totalCount} episodes</p>
+              <p className="text-[#7a6258]">
+  {totalCount} practice tests</p>
               {completedCount > 0 && (
                 <span className="rounded-full bg-green-100 px-3 py-0.5 text-xs font-semibold text-green-700">
                   ✓ {completedCount} completed
@@ -221,7 +220,7 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
           <div className="mt-16 text-center">
             <p className="text-5xl">🎧</p>
             <p className="mt-4 text-lg font-semibold">
-              {searchQuery ? "No episodes match your search" : "No episodes yet"}
+              {searchQuery ? "No episodes match your search" : "Check back soon — new content is being added regularly!"}
             </p>
             <p className="mt-2 text-sm text-[#7a6258]">
               {searchQuery ? "Try a different keyword." : "Check back soon — new content is being added regularly!"}
