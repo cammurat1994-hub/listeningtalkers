@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 type Section = {
   number: number;
   audioUrl: string;
@@ -18,9 +20,7 @@ function normalize(str: string) {
 }
 
 function checkAnswer(userAnswer: string, correctAnswer: string): boolean {
-  const normalizedUser = normalize(userAnswer);
-  const variants = correctAnswer.split("|").map(normalize);
-  return variants.some((v) => v === normalizedUser);
+  return correctAnswer.split("|").map(normalize).some(v => v === normalize(userAnswer));
 }
 
 function bandScore(correct: number): string {
@@ -45,73 +45,88 @@ function bandColor(band: string): string {
   return "text-red-600";
 }
 
+type ResultItem = {
+  sectionNum: number;
+  groupLabel: string;
+  questionKey: string;
+  correct: boolean;
+  userAnswer: string;
+  correctAnswer: string;
+};
+
 export default function ExamResults({ title, examType, sections, answers, onBack, onRetry }: Props) {
-  // Calculate results
-  const results: { sectionNum: number; groupLabel: string; questionKey: string; correct: boolean; userAnswer: string; correctAnswer: string }[] = [];
+  const results: ResultItem[] = [];
 
   sections.forEach((section) => {
     section.questionGroups.forEach((group) => {
-      const data = group.data as Record<string, unknown>;
+      const data = group.data as any;
 
       if (group.type === "mcq") {
-        const qs = data as { question: string; correctAnswer: string }[];
-        qs.forEach((q, i) => {
+        const qs = (Array.isArray(data) ? data : []) as any[];
+        qs.forEach((q: any, i: number) => {
           const key = `${section.number}-${group.label}-mcq-${i}`;
           const userAns = answers[key] || "";
           results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: userAns === q.correctAnswer, userAnswer: userAns, correctAnswer: q.correctAnswer });
         });
+
       } else if (group.type === "note-completion" || group.type === "form-completion") {
-        const items = (data as { items?: { answer: string }[]; fields?: { answer: string }[] }).items || (data as { fields?: { answer: string }[] }).fields || [];
-        items.forEach((item, i) => {
+        const items: any[] = data?.items || data?.fields || [];
+        items.forEach((item: any, i: number) => {
           const key = `${section.number}-${group.label}-item-${i}`;
           const userAns = answers[key] || "";
           results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: checkAnswer(userAns, item.answer), userAnswer: userAns, correctAnswer: item.answer.split("|")[0] });
         });
+
       } else if (group.type === "sentence-completion") {
-        const items = (data as { items: { text: string; answer: string }[] }).items || [];
-        items.forEach((item, i) => {
+        const items: any[] = data?.items || [];
+        items.forEach((item: any, i: number) => {
           const key = `${section.number}-${group.label}-sent-${i}`;
           const userAns = answers[key] || "";
           results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: checkAnswer(userAns, item.answer), userAnswer: userAns, correctAnswer: item.answer.split("|")[0] });
         });
+
       } else if (group.type === "flow-completion") {
-        const steps = (data as { steps: { text: string; answer: string; hasBlank: boolean }[] }).steps || [];
-        steps.filter(s => s.hasBlank).forEach((step, i) => {
+        const steps: any[] = data?.steps || [];
+        steps.filter((s: any) => s.hasBlank).forEach((step: any, i: number) => {
           const key = `${section.number}-${group.label}-flow-${i}`;
           const userAns = answers[key] || "";
           results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: checkAnswer(userAns, step.answer), userAnswer: userAns, correctAnswer: step.answer.split("|")[0] });
         });
+
       } else if (group.type === "short-answer") {
-        const qs = data as { question: string; answer: string }[];
-        qs.forEach((q, i) => {
+        const qs = (Array.isArray(data) ? data : []) as any[];
+        qs.forEach((q: any, i: number) => {
           const key = `${section.number}-${group.label}-short-${i}`;
           const userAns = answers[key] || "";
           results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: checkAnswer(userAns, q.answer), userAnswer: userAns, correctAnswer: q.answer.split("|")[0] });
         });
+
       } else if (group.type === "matching") {
-        const pairs = (data as { pairs: { left: string; right: string }[] }).pairs || [];
-        pairs.forEach((pair, i) => {
+        const pairs: any[] = data?.pairs || [];
+        pairs.forEach((pair: any, i: number) => {
           const key = `${section.number}-${group.label}-match-${i}`;
           const userAns = answers[key] || "";
           results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: checkAnswer(userAns, pair.right), userAnswer: userAns, correctAnswer: pair.right });
         });
+
       } else if (group.type === "map") {
-        const points = (data as { points: { id: number; answer: string }[]; options: { key: string; label: string }[] }).points || [];
-        const options = (data as { options: { key: string; label: string }[] }).options || [];
-        points.forEach((point, i) => {
+        const points: any[] = data?.points || [];
+        const options: any[] = data?.options || [];
+        points.forEach((point: any) => {
           const key = `${section.number}-${group.label}-map-${point.id}`;
           const userAns = answers[key] || "";
-          const correctLabel = options.find(o => o.key === point.answer)?.label || point.answer;
+          const correctLabel = options.find((o: any) => o.key === point.answer)?.label || point.answer;
           results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: userAns === point.answer, userAnswer: userAns, correctAnswer: correctLabel });
         });
+
       } else if (group.type === "table-completion") {
-        const rows = (data as { rows: { cells: string[]; answerIndices: number[]; answers: string[] }[] }).rows || [];
+        const rows: any[] = data?.rows || [];
         let ansIdx = 0;
-        rows.forEach((row) => {
-          row.answerIndices.forEach((_, i) => {
+        rows.forEach((row: any) => {
+          (row.answerIndices || []).forEach((_: any, i: number) => {
             const key = `${section.number}-${group.label}-table-${ansIdx}`;
             const userAns = answers[key] || "";
-            results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: checkAnswer(userAns, row.answers[i] || ""), userAnswer: userAns, correctAnswer: (row.answers[i] || "").split("|")[0] });
+            results.push({ sectionNum: section.number, groupLabel: group.label, questionKey: key, correct: checkAnswer(userAns, row.answers?.[i] || ""), userAnswer: userAns, correctAnswer: (row.answers?.[i] || "").split("|")[0] });
             ansIdx++;
           });
         });
@@ -134,10 +149,10 @@ export default function ExamResults({ title, examType, sections, answers, onBack
       <section className="mx-auto max-w-3xl px-6 py-12">
 
         {/* Score card */}
-        <div className="rounded-[2rem] bg-[#3b2f2f] p-8 text-white text-center shadow-xl">
+        <div className="rounded-3xl bg-[#3b2f2f] p-8 text-white text-center shadow-xl">
           <p className="text-sm font-semibold text-[#c9a99a] uppercase tracking-wide">{examType} Listening Results</p>
           <h1 className="mt-2 text-2xl font-bold">{title}</h1>
-          <div className="mt-6 flex items-center justify-center gap-8">
+          <div className="mt-6 flex items-center justify-center gap-8 flex-wrap">
             <div>
               <p className="text-6xl font-bold">{totalCorrect}</p>
               <p className="text-sm text-[#c9a99a]">out of {total}</p>
@@ -167,7 +182,7 @@ export default function ExamResults({ title, examType, sections, answers, onBack
             const sTotal = s.results.length;
             const sPct = sTotal > 0 ? Math.round((sCorrect / sTotal) * 100) : 0;
             return (
-              <div key={s.number} className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+              <div key={s.number} className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold">Section {s.number}</h2>
                   <div className="flex items-center gap-3">
@@ -195,6 +210,9 @@ export default function ExamResults({ title, examType, sections, answers, onBack
                       </div>
                     </div>
                   ))}
+                  {s.results.length === 0 && (
+                    <p className="text-xs text-center text-[#7a6258] py-2">No questions in this section</p>
+                  )}
                 </div>
               </div>
             );

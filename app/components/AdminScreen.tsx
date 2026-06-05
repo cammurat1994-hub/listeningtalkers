@@ -223,7 +223,8 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
   const [mapPreview, setMapPreview] = useState("");
   const localMapRef = useRef<HTMLDivElement>(null);
 
-  const data = group.data as Record<string, unknown>;
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const data = group.data as any;
 
   function getBulkFormat() {
     switch (group.type) {
