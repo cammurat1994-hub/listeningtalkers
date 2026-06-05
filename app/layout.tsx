@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://listeningtalkers.vercel.app",
+    url: "https://listeningtalkers.com",
     siteName: "ListeningTalkers",
     title: "ListeningTalkers — Free IELTS Listening Practice",
     description: "Practice IELTS, TOEFL, TOEIC and CELPIP listening with thousands of free exercises.",
@@ -50,8 +50,11 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
+  verification: {
+    google: "nDeRBWUS8pMNx39yXF-6Nm631D3bqGFVMM3q_JOIJWA",
+  },
   alternates: {
-    canonical: "https://listeningtalkers.vercel.app",
+    canonical: "https://listeningtalkers.com",
   },
 };
 
