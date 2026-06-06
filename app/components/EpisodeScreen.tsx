@@ -204,7 +204,7 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="🔍 Search episodes..."
+            placeholder="🔍 Search practices..."
             className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 text-sm shadow-sm focus:border-[#3b2f2f] focus:outline-none"
           />
         </div>
@@ -220,7 +220,7 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
           <div className="mt-16 text-center">
             <p className="text-5xl">🎧</p>
             <p className="mt-4 text-lg font-semibold">
-              {searchQuery ? "No episodes match your search" : "Check back soon — new content is being added regularly!"}
+             {searchQuery ? "No practices match your search" : "Check back soon — new content is being added regularly!"}
             </p>
             <p className="mt-2 text-sm text-[#7a6258]">
               {searchQuery ? "Try a different keyword." : "Check back soon — new content is being added regularly!"}
@@ -303,13 +303,13 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
                 disabled={loadingMore}
                 className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white py-4 font-semibold text-[#3b2f2f] transition hover:bg-[#f1ded5] disabled:opacity-50"
               >
-                {loadingMore ? "Loading..." : `Load more episodes`}
+                {loadingMore ? "Loading..." : `Load more practices`}
               </button>
             )}
 
             {!searchQuery && !hasMore && episodes.length > PAGE_SIZE && (
               <p className="mt-6 text-center text-sm text-[#7a6258]">
-                All {totalCount} episodes loaded ✓
+               All {totalCount} practices loaded ✓
               </p>
             )}
           </>
