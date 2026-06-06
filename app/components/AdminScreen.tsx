@@ -612,13 +612,23 @@ async function fetchEpisodes() {
   }
 
   async function uploadFile(file: File, folder: string) {
-    const ext = file.name.split(".").pop();
-    const name = `${folder}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("audio-files").upload(name, file, { cacheControl: "3600", upsert: false });
-    if (error) throw new Error(error.message);
-    const { data } = supabase.storage.from("audio-files").getPublicUrl(name);
-    return data.publicUrl;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Upload failed");
   }
+
+  const { url } = await res.json();
+  return url;
+}
 
   function handleMapImageSelect(file: File) {
     setMapImageFile(file);
