@@ -31,6 +31,16 @@ const TYPE_LABELS: Record<string, string> = {
   "practice-dictation": "Dictation",
   "practice-short": "Short Answer",
   "practice-matching": "Matching",
+  "practice-map": "Map Labelling",
+  "practice-completion-note": "Note Completion",
+  "practice-completion-form": "Form Completion",
+  "practice-completion-table": "Table Completion",
+  "practice-completion-flow": "Flow Chart",
+  "practice-completion-sentence": "Sentence Completion",
+  "exam-ielts": "IELTS Full Exam",
+  "exam-toefl": "TOEFL Full Exam",
+  "exam-toeic": "TOEIC Full Exam",
+  "exam-celpip": "CELPIP Full Exam",
   "quiz-ielts": "IELTS Style",
   "quiz-toefl": "TOEFL Style",
   "quiz-toeic": "TOEIC Style",
@@ -43,6 +53,16 @@ const TYPE_EMOJI: Record<string, string> = {
   "practice-dictation": "🎙️",
   "practice-short": "✍️",
   "practice-matching": "🔗",
+  "practice-map": "🗺️",
+  "practice-completion-note": "📝",
+  "practice-completion-form": "📄",
+  "practice-completion-table": "📊",
+  "practice-completion-flow": "🔄",
+  "practice-completion-sentence": "✏️",
+  "exam-ielts": "🎓",
+  "exam-toefl": "🎓",
+  "exam-toeic": "🎓",
+  "exam-celpip": "🎓",
   "quiz-ielts": "📝",
   "quiz-toefl": "📝",
   "quiz-toeic": "📝",
@@ -57,7 +77,7 @@ const LEVEL_COLORS: Record<string, string> = {
 
 const PAGE_SIZE = 20;
 
-export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode, onSelectEpisode, onBack }: Props) {
+export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode, isExamMode, onSelectEpisode, onBack }: Props) {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [completed, setCompleted] = useState<CompletedEpisode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +93,7 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
     setHasMore(true);
     fetchEpisodes(0, true);
     fetchCompleted();
-  }, [selectedLevel, practiceMode, isQuizMode]);
+  }, [selectedLevel, practiceMode, isQuizMode, isExamMode]);
 
   async function buildQuery(from: number, to: number) {
     let query = supabase
@@ -82,7 +102,9 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
       .order("created_at", { ascending: true })
       .range(from, to);
 
-    if (isQuizMode) {
+    if (isExamMode) {
+      query = query.in("episode_type", ["exam-ielts", "exam-toefl", "exam-toeic", "exam-celpip"]);
+    } else if (isQuizMode) {
       query = query.in("episode_type", ["quiz-ielts", "quiz-toefl", "quiz-toeic", "quiz-celpip"]);
     } else {
       query = query.eq("level", selectedLevel);
@@ -93,10 +115,10 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
       else if (practiceMode === "matching") query = query.eq("episode_type", "practice-matching");
       else if (practiceMode === "map") query = query.eq("episode_type", "practice-map");
       else if (practiceMode === "completion-note") query = query.eq("episode_type", "practice-completion-note");
-else if (practiceMode === "completion-form") query = query.eq("episode_type", "practice-completion-form");
-else if (practiceMode === "completion-table") query = query.eq("episode_type", "practice-completion-table");
-else if (practiceMode === "completion-flow") query = query.eq("episode_type", "practice-completion-flow");
-else if (practiceMode === "completion-sentence") query = query.eq("episode_type", "practice-completion-sentence");
+      else if (practiceMode === "completion-form") query = query.eq("episode_type", "practice-completion-form");
+      else if (practiceMode === "completion-table") query = query.eq("episode_type", "practice-completion-table");
+      else if (practiceMode === "completion-flow") query = query.eq("episode_type", "practice-completion-flow");
+      else if (practiceMode === "completion-sentence") query = query.eq("episode_type", "practice-completion-sentence");
     }
     return query;
   }
@@ -128,8 +150,8 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
   }
 
   function getModeTitle() {
+    if (isExamMode) return "Full Exam Tests";
     if (isQuizMode) return "Exam Quiz";
-    
     const labels: Record<string, string> = {
       "mcq": "Multiple Choice",
       "fill-blank": "Fill in the Blank",
@@ -138,10 +160,10 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
       "matching": "Matching",
       "map": "Map Labelling",
       "completion-note": "Note Completion",
-"completion-form": "Form Completion",
-"completion-table": "Table Completion",
-"completion-flow": "Flow Chart Completion",
-"completion-sentence": "Sentence Completion",
+      "completion-form": "Form Completion",
+      "completion-table": "Table Completion",
+      "completion-flow": "Flow Chart",
+      "completion-sentence": "Sentence Completion",
     };
     return `${selectedLevel} — ${labels[practiceMode || ""] || "Practice"}`;
   }
@@ -171,8 +193,7 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
             </button>
             <h1 className="text-4xl font-bold">{getModeTitle()}</h1>
             <div className="mt-2 flex items-center gap-3 flex-wrap">
-              <p className="text-[#7a6258]">
-  {totalCount} practice tests</p>
+              <p className="text-[#7a6258]">{totalCount} {isExamMode ? "exams" : "practices"}</p>
               {completedCount > 0 && (
                 <span className="rounded-full bg-green-100 px-3 py-0.5 text-xs font-semibold text-green-700">
                   ✓ {completedCount} completed
@@ -186,7 +207,6 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
             </div>
           </div>
 
-          {/* Progress indicator */}
           {totalCount > 0 && completedCount > 0 && (
             <div className="shrink-0 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] px-5 py-4 text-center shadow-sm">
               <p className="text-2xl font-bold">{completedCount}<span className="text-base text-[#7a6258]">/{totalCount}</span></p>
@@ -200,35 +220,27 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
 
         {/* Search */}
         <div className="mt-6">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="🔍 Search practices..."
-            className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 text-sm shadow-sm focus:border-[#3b2f2f] focus:outline-none"
-          />
+          <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            placeholder={`🔍 Search ${isExamMode ? "exams" : "practices"}...`}
+            className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 text-sm shadow-sm focus:border-[#3b2f2f] focus:outline-none" />
         </div>
 
         {/* List */}
         {loading ? (
           <div className="mt-6 flex flex-col gap-3">
-            {[1,2,3,4,5].map(i => (
-              <div key={i} className="h-20 w-full animate-pulse rounded-[2rem] bg-[#ead7cc]" />
-            ))}
+            {[1,2,3,4,5].map(i => <div key={i} className="h-20 w-full animate-pulse rounded-[2rem] bg-[#ead7cc]" />)}
           </div>
         ) : filteredEpisodes.length === 0 ? (
           <div className="mt-16 text-center">
             <p className="text-5xl">🎧</p>
             <p className="mt-4 text-lg font-semibold">
-             {searchQuery ? "No practices match your search" : "Check back soon — new content is being added regularly!"}
+              {searchQuery ? "No results match your search" : "No content yet — check back soon!"}
             </p>
             <p className="mt-2 text-sm text-[#7a6258]">
-              {searchQuery ? "Try a different keyword." : "Check back soon — new content is being added regularly!"}
+              {searchQuery ? "Try a different keyword." : "New content is being added regularly."}
             </p>
             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="mt-4 text-sm font-semibold text-[#7a6258] underline">
-                Clear search
-              </button>
+              <button onClick={() => setSearchQuery("")} className="mt-4 text-sm font-semibold text-[#7a6258] underline">Clear search</button>
             )}
           </div>
         ) : (
@@ -237,29 +249,20 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
               {filteredEpisodes.map((episode, index) => {
                 const completion = getCompletionData(episode.id);
                 const isCompleted = !!completion;
-
                 return (
-                  <button
-                    key={episode.id}
-                    onClick={() => onSelectEpisode(episode.id)}
+                  <button key={episode.id} onClick={() => onSelectEpisode(episode.id)}
                     className={`group flex items-center gap-4 rounded-[2rem] border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                      isCompleted
-                        ? "border-green-200 bg-green-50 hover:bg-green-100"
-                        : "border-[#e0c7bb] bg-[#fffaf7] hover:bg-white"
-                    }`}
-                  >
-                    {/* Number / Check */}
+                      isCompleted ? "border-green-200 bg-green-50 hover:bg-green-100" : "border-[#e0c7bb] bg-[#fffaf7] hover:bg-white"
+                    }`}>
                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
                       isCompleted ? "bg-green-500 text-white" : "bg-[#ead7cc] text-[#3b2f2f]"
                     }`}>
                       {isCompleted ? "✓" : index + 1}
                     </div>
-
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-semibold text-[#7a6258]">
-                          {TYPE_EMOJI[episode.episode_type]} {TYPE_LABELS[episode.episode_type]}
+                          {TYPE_EMOJI[episode.episode_type] || "🎧"} {TYPE_LABELS[episode.episode_type] || episode.episode_type}
                         </span>
                         {episode.level && (
                           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LEVEL_COLORS[episode.level] || "bg-[#ead7cc] text-[#3b2f2f]"}`}>
@@ -268,18 +271,13 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
                         )}
                       </div>
                       <p className="mt-1 font-bold truncate">{episode.title}</p>
-
-                      {/* Score bar */}
                       {completion && (
                         <div className="mt-2 flex items-center gap-2">
                           <div className="h-1.5 flex-1 rounded-full bg-green-200">
-                            <div
-                              className={`h-1.5 rounded-full transition-all ${
-                                completion.pct >= 80 ? "bg-green-500" :
-                                completion.pct >= 60 ? "bg-yellow-400" : "bg-red-400"
-                              }`}
-                              style={{ width: `${completion.pct}%` }}
-                            />
+                            <div className={`h-1.5 rounded-full transition-all ${
+                              completion.pct >= 80 ? "bg-green-500" :
+                              completion.pct >= 60 ? "bg-yellow-400" : "bg-red-400"
+                            }`} style={{ width: `${completion.pct}%` }} />
                           </div>
                           <span className={`text-xs font-semibold ${
                             completion.pct >= 80 ? "text-green-600" :
@@ -288,29 +286,21 @@ else if (practiceMode === "completion-sentence") query = query.eq("episode_type"
                         </div>
                       )}
                     </div>
-
-                    {/* Arrow */}
                     <div className="shrink-0 text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</div>
                   </button>
                 );
               })}
             </div>
 
-            {/* Load more */}
             {!searchQuery && hasMore && (
-              <button
-                onClick={() => fetchEpisodes(page + 1)}
-                disabled={loadingMore}
-                className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white py-4 font-semibold text-[#3b2f2f] transition hover:bg-[#f1ded5] disabled:opacity-50"
-              >
-                {loadingMore ? "Loading..." : `Load more practices`}
+              <button onClick={() => fetchEpisodes(page + 1)} disabled={loadingMore}
+                className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white py-4 font-semibold text-[#3b2f2f] transition hover:bg-[#f1ded5] disabled:opacity-50">
+                {loadingMore ? "Loading..." : "Load more"}
               </button>
             )}
 
             {!searchQuery && !hasMore && episodes.length > PAGE_SIZE && (
-              <p className="mt-6 text-center text-sm text-[#7a6258]">
-               All {totalCount} practices loaded ✓
-              </p>
+              <p className="mt-6 text-center text-sm text-[#7a6258]">All {totalCount} loaded ✓</p>
             )}
           </>
         )}
