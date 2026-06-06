@@ -38,8 +38,6 @@ function checkAnswer(userAnswer: string, correctAnswer: string): boolean {
   return correctAnswer.split("|").map(normalize).some(v => v === normalize(userAnswer));
 }
 
-// ─── Question Renderers ───────────────────────────────────────────────────────
-
 function MCQRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   group: { label: string; data: unknown };
   sectionNum: number;
@@ -48,12 +46,12 @@ function MCQRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   locked: boolean;
 }) {
   const qs = group.data as { question: string; options: Record<string, string>; correctAnswer: string; explanation?: string }[];
+  if (!qs?.length) return null;
   return (
     <div className="flex flex-col gap-4">
       {qs.map((q, i) => {
         const key = `${sectionNum}-${group.label}-mcq-${i}`;
-        const answered = !!answers[key] && locked;
-        const isCorrect = answered && answers[key] === q.correctAnswer;
+        const isCorrect = locked && answers[key] === q.correctAnswer;
         return (
           <div key={i} className="rounded-2xl border border-[#e0c7bb] bg-white p-5">
             <p className="font-semibold text-sm mb-3">{i + 1}. {q.question}</p>
@@ -90,10 +88,10 @@ function NoteFormRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   locked: boolean;
 }) {
   const data = group.data as { title?: string; items?: { label: string; answer: string }[]; fields?: { label: string; answer: string }[] };
-  const items = data.items || data.fields || [];
+  const items = data?.items || data?.fields || [];
   return (
     <div className="rounded-2xl border border-[#e0c7bb] bg-white p-5">
-      {data.title && <p className="font-bold mb-4 text-center border-b border-[#e0c7bb] pb-3">{data.title}</p>}
+      {data?.title && <p className="font-bold mb-4 text-center border-b border-[#e0c7bb] pb-3">{data.title}</p>}
       <div className="flex flex-col gap-3">
         {items.map((item, i) => {
           const key = `${sectionNum}-${group.label}-item-${i}`;
@@ -101,23 +99,12 @@ function NoteFormRenderer({ group, sectionNum, answers, onAnswer, locked }: {
           const isCorrect = locked && checkAnswer(userAns, item.answer);
           const parts = item.label.split("___");
           return (
-            <div key={i} className="flex items-center gap-2 flex-wrap">
-              {parts.length > 1 ? (
-                <>
-                  <span className="text-sm">{parts[0]}</span>
-                  <input type="text" value={userAns} onChange={(e) => onAnswer(key, e.target.value)} disabled={locked}
-                    className={`rounded-xl border px-3 py-1.5 text-sm w-32 text-center font-semibold ${locked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
-                  <span className="text-sm">{parts[1]}</span>
-                  {locked && !isCorrect && <span className="text-xs text-green-600 font-semibold">✓ {item.answer.split("|")[0]}</span>}
-                </>
-              ) : (
-                <>
-                  <span className="text-sm">{item.label}</span>
-                  <input type="text" value={userAns} onChange={(e) => onAnswer(key, e.target.value)} disabled={locked}
-                    className={`rounded-xl border px-3 py-1.5 text-sm w-32 text-center font-semibold ${locked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
-                  {locked && !isCorrect && <span className="text-xs text-green-600 font-semibold">✓ {item.answer.split("|")[0]}</span>}
-                </>
-              )}
+            <div key={i} className="flex items-center gap-2 flex-wrap text-sm">
+              <span>{parts[0]}</span>
+              <input type="text" value={userAns} onChange={e => onAnswer(key, e.target.value)} disabled={locked}
+                className={`rounded-xl border px-3 py-1.5 text-sm w-32 text-center font-semibold ${locked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+              {parts[1] && <span>{parts[1]}</span>}
+              {locked && !isCorrect && <span className="text-xs text-green-600 font-semibold">✓ {item.answer.split("|")[0]}</span>}
             </div>
           );
         })}
@@ -133,7 +120,7 @@ function SentenceRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   onAnswer: (key: string, val: string) => void;
   locked: boolean;
 }) {
-  const items = (group.data as { items: { text: string; answer: string }[] }).items || [];
+  const items = (group.data as { items?: { text: string; answer: string }[] })?.items || [];
   return (
     <div className="flex flex-col gap-3">
       {items.map((item, i) => {
@@ -145,7 +132,7 @@ function SentenceRenderer({ group, sectionNum, answers, onAnswer, locked }: {
           <div key={i} className="rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm flex items-center gap-1 flex-wrap">
             <span className="font-semibold text-[#7a6258] mr-1">{i + 1}.</span>
             <span>{parts[0]}</span>
-            <input type="text" value={userAns} onChange={(e) => onAnswer(key, e.target.value)} disabled={locked}
+            <input type="text" value={userAns} onChange={e => onAnswer(key, e.target.value)} disabled={locked}
               className={`rounded-xl border px-2 py-1 text-sm w-28 text-center font-semibold ${locked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
             {parts[1] && <span>{parts[1]}</span>}
             {locked && !isCorrect && <span className="text-xs text-green-600 font-semibold ml-1">✓ {item.answer.split("|")[0]}</span>}
@@ -163,17 +150,18 @@ function FlowRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   onAnswer: (key: string, val: string) => void;
   locked: boolean;
 }) {
-  const data = group.data as { title?: string; steps: { text: string; answer: string; hasBlank: boolean }[] };
+  const data = group.data as { title?: string; steps?: { text: string; answer: string; hasBlank: boolean }[] };
+  const steps = data?.steps || [];
   let blankIdx = 0;
   return (
     <div className="rounded-2xl border border-[#e0c7bb] bg-white p-5">
-      {data.title && <p className="font-bold mb-4 text-center">{data.title}</p>}
+      {data?.title && <p className="font-bold mb-4 text-center">{data.title}</p>}
       <div className="flex flex-col items-center gap-0">
-        {data.steps.map((step, i) => {
+        {steps.map((step, i) => {
           const currentBlankIdx = step.hasBlank ? blankIdx++ : -1;
           const key = step.hasBlank ? `${sectionNum}-${group.label}-flow-${currentBlankIdx}` : "";
           const userAns = key ? (answers[key] || "") : "";
-          const isCorrect = key && locked && checkAnswer(userAns, step.answer);
+          const isCorrect = !!(key && locked && checkAnswer(userAns, step.answer));
           const parts = step.text.split("___");
           return (
             <div key={i} className="flex flex-col items-center w-full">
@@ -181,14 +169,14 @@ function FlowRenderer({ group, sectionNum, answers, onAnswer, locked }: {
                 {parts.length > 1 ? (
                   <span className="flex items-center justify-center gap-1 flex-wrap">
                     <span>{parts[0]}</span>
-                    <input type="text" value={userAns} onChange={(e) => onAnswer(key, e.target.value)} disabled={locked}
+                    <input type="text" value={userAns} onChange={e => onAnswer(key, e.target.value)} disabled={locked}
                       className={`rounded-xl border px-2 py-0.5 text-sm w-28 text-center font-semibold ${locked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
-                    <span>{parts[1]}</span>
+                    {parts[1] && <span>{parts[1]}</span>}
                     {locked && !isCorrect && <span className="text-xs text-green-600 font-semibold">✓ {step.answer.split("|")[0]}</span>}
                   </span>
-                ) : step.text}
+                ) : <span>{step.text}</span>}
               </div>
-              {i < data.steps.length - 1 && <div className="text-[#3b2f2f] text-xl font-bold leading-none py-1">↓</div>}
+              {i < steps.length - 1 && <div className="text-[#3b2f2f] text-xl font-bold leading-none py-1">↓</div>}
             </div>
           );
         })}
@@ -204,7 +192,7 @@ function ShortAnswerRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   onAnswer: (key: string, val: string) => void;
   locked: boolean;
 }) {
-  const qs = group.data as { question: string; answer: string }[];
+  const qs = (Array.isArray(group.data) ? group.data : []) as { question: string; answer: string }[];
   return (
     <div className="flex flex-col gap-3">
       {qs.map((q, i) => {
@@ -214,7 +202,7 @@ function ShortAnswerRenderer({ group, sectionNum, answers, onAnswer, locked }: {
         return (
           <div key={i} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
             <p className="text-sm font-semibold mb-2">{i + 1}. {q.question}</p>
-            <input type="text" value={userAns} onChange={(e) => onAnswer(key, e.target.value)} disabled={locked}
+            <input type="text" value={userAns} onChange={e => onAnswer(key, e.target.value)} disabled={locked}
               placeholder="Your answer..." className={`w-full rounded-2xl border p-3 text-sm ${locked ? (isCorrect ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50") : "border-[#e0c7bb] bg-white"}`} />
             {locked && !isCorrect && <p className="mt-1 text-xs text-green-600 font-semibold">✓ {q.answer.split("|")[0]}</p>}
           </div>
@@ -232,7 +220,9 @@ function MapRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   locked: boolean;
 }) {
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
-  const data = group.data as { points: { id: number; x: number; y: number; answer: string }[]; options: { key: string; label: string }[]; imageUrl: string };
+  const data = group.data as { points?: { id: number; x: number; y: number; answer: string }[]; options?: { key: string; label: string }[]; imageUrl?: string };
+  const points = data?.points || [];
+  const options = data?.options || [];
 
   function getPointColor(point: { id: number; answer: string }) {
     const key = `${sectionNum}-${group.label}-map-${point.id}`;
@@ -243,29 +233,30 @@ function MapRenderer({ group, sectionNum, answers, onAnswer, locked }: {
 
   return (
     <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
-      <div className="relative w-full overflow-hidden rounded-2xl border border-[#e0c7bb]" style={{ paddingBottom: "60%" }}>
-        <img src={data.imageUrl} alt="Map" className="absolute inset-0 h-full w-full object-contain bg-white" draggable={false} />
-        {data.points.map((point) => {
-          const key = `${sectionNum}-${group.label}-map-${point.id}`;
-          const userAns = answers[key];
-          const opt = data.options.find(o => o.key === userAns);
-          return (
-            <button key={point.id} disabled={locked} onClick={() => setSelectedPoint(selectedPoint === point.id ? null : point.id)}
-              className={`absolute flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-xs font-bold text-white shadow-lg transition ${getPointColor(point)}`}
-              style={{ left: `${point.x}%`, top: `${point.y}%` }}>
-              {userAns || point.id}
-            </button>
-          );
-        })}
-      </div>
+      {data?.imageUrl && (
+        <div className="relative w-full overflow-hidden rounded-2xl border border-[#e0c7bb]" style={{ paddingBottom: "60%" }}>
+          <img src={data.imageUrl} alt="Map" className="absolute inset-0 h-full w-full object-contain bg-white" draggable={false} />
+          {points.map(point => {
+            const key = `${sectionNum}-${group.label}-map-${point.id}`;
+            const userAns = answers[key];
+            return (
+              <button key={point.id} disabled={locked} onClick={() => setSelectedPoint(selectedPoint === point.id ? null : point.id)}
+                className={`absolute flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-xs font-bold text-white shadow-lg transition ${getPointColor(point)}`}
+                style={{ left: `${point.x}%`, top: `${point.y}%` }}>
+                {userAns || point.id}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {!locked && (
         <div className="mt-4">
           <p className="text-xs font-semibold text-[#7a6258] mb-2">
             {selectedPoint ? `Point ${selectedPoint} selected — choose answer:` : "Tap a point on the map"}
           </p>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            {data.options.map(opt => {
-              const isUsed = data.points.some(p => {
+            {options.map(opt => {
+              const isUsed = points.some(p => {
                 const key = `${sectionNum}-${group.label}-map-${p.id}`;
                 return answers[key] === opt.key && p.id !== selectedPoint;
               });
@@ -278,30 +269,15 @@ function MapRenderer({ group, sectionNum, answers, onAnswer, locked }: {
               );
             })}
           </div>
-          {Object.keys(answers).filter(k => k.includes(`${sectionNum}-${group.label}-map-`)).length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {data.points.map(p => {
-                const key = `${sectionNum}-${group.label}-map-${p.id}`;
-                const ans = answers[key];
-                const opt = data.options.find(o => o.key === ans);
-                if (!ans) return null;
-                return (
-                  <span key={p.id} className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                    {p.id} → {opt?.key}) {opt?.label}
-                  </span>
-                );
-              })}
-            </div>
-          )}
         </div>
       )}
       {locked && (
         <div className="mt-3 flex flex-col gap-1">
-          {data.points.map(p => {
+          {points.map(p => {
             const key = `${sectionNum}-${group.label}-map-${p.id}`;
             const userAns = answers[key];
-            const correctOpt = data.options.find(o => o.key === p.answer);
-            const userOpt = data.options.find(o => o.key === userAns);
+            const correctOpt = options.find(o => o.key === p.answer);
+            const userOpt = options.find(o => o.key === userAns);
             const isCorrect = userAns === p.answer;
             return (
               <p key={p.id} className={`text-xs font-semibold ${isCorrect ? "text-green-600" : "text-red-600"}`}>
@@ -322,45 +298,43 @@ function TableRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   onAnswer: (key: string, val: string) => void;
   locked: boolean;
 }) {
-  const data = group.data as { title?: string; headers: string[]; rows: { cells: string[]; answerIndices: number[]; answers: string[] }[] };
+  const data = group.data as { title?: string; headers?: string[]; rows?: { cells: string[]; answerIndices: number[]; answers: string[] }[] };
+  const headers = data?.headers || [];
+  const rows = data?.rows || [];
   let globalAnsIdx = 0;
   return (
     <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4 overflow-x-auto">
-      {data.title && <p className="font-bold mb-3 text-center">{data.title}</p>}
+      {data?.title && <p className="font-bold mb-3 text-center">{data.title}</p>}
       <table className="w-full text-sm border-collapse">
-        {data.headers.length > 0 && (
+        {headers.length > 0 && (
           <thead>
-            <tr>
-              {data.headers.map((h, i) => <th key={i} className="border border-[#e0c7bb] bg-[#f7eee8] px-3 py-2 text-left font-semibold">{h}</th>)}
-            </tr>
+            <tr>{headers.map((h, i) => <th key={i} className="border border-[#e0c7bb] bg-[#f7eee8] px-3 py-2 text-left font-semibold">{h}</th>)}</tr>
           </thead>
         )}
         <tbody>
-          {data.rows.map((row, ri) => {
-            return (
-              <tr key={ri}>
-                {row.cells.map((cell, ci) => {
-                  const isBlank = cell === "___";
-                  const ansIdx = isBlank ? globalAnsIdx++ : -1;
-                  const key = isBlank ? `${sectionNum}-${group.label}-table-${ansIdx}` : "";
-                  const userAns = key ? (answers[key] || "") : "";
-                  const correctAns = isBlank ? (row.answers[row.answerIndices.indexOf(ci)] || "") : "";
-                  const isCorrect = isBlank && locked && checkAnswer(userAns, correctAns);
-                  return (
-                    <td key={ci} className="border border-[#e0c7bb] px-3 py-2">
-                      {isBlank ? (
-                        <div className="flex items-center gap-1">
-                          <input type="text" value={userAns} onChange={(e) => onAnswer(key, e.target.value)} disabled={locked}
-                            className={`rounded-xl border px-2 py-1 text-xs w-24 text-center font-semibold ${locked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
-                          {locked && !isCorrect && <span className="text-xs text-green-600 font-semibold">✓{correctAns.split("|")[0]}</span>}
-                        </div>
-                      ) : cell}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
+          {rows.map((row, ri) => (
+            <tr key={ri}>
+              {row.cells.map((cell, ci) => {
+                const isBlank = cell === "___";
+                const ansIdx = isBlank ? globalAnsIdx++ : -1;
+                const key = isBlank ? `${sectionNum}-${group.label}-table-${ansIdx}` : "";
+                const userAns = key ? (answers[key] || "") : "";
+                const correctAns = isBlank ? (row.answers[row.answerIndices.indexOf(ci)] || "") : "";
+                const isCorrect = isBlank && locked && checkAnswer(userAns, correctAns);
+                return (
+                  <td key={ci} className="border border-[#e0c7bb] px-3 py-2">
+                    {isBlank ? (
+                      <div className="flex items-center gap-1">
+                        <input type="text" value={userAns} onChange={e => onAnswer(key, e.target.value)} disabled={locked}
+                          className={`rounded-xl border px-2 py-1 text-xs w-24 text-center font-semibold ${locked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                        {locked && !isCorrect && <span className="text-xs text-green-600 font-semibold">✓{correctAns.split("|")[0]}</span>}
+                      </div>
+                    ) : cell}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
@@ -374,7 +348,7 @@ function MatchingRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   onAnswer: (key: string, val: string) => void;
   locked: boolean;
 }) {
-  const pairs = (group.data as { pairs: { left: string; right: string }[] }).pairs || [];
+  const pairs = (group.data as { pairs?: { left: string; right: string }[] })?.pairs || [];
   return (
     <div className="flex flex-col gap-2">
       {pairs.map((pair, i) => {
@@ -385,7 +359,7 @@ function MatchingRenderer({ group, sectionNum, answers, onAnswer, locked }: {
           <div key={i} className={`flex items-center gap-3 rounded-2xl border p-3 ${locked ? (isCorrect ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50") : "border-[#e0c7bb] bg-white"}`}>
             <span className="text-sm font-semibold w-32 shrink-0">{pair.left}</span>
             <span className="text-[#7a6258]">→</span>
-            <input type="text" value={userAns} onChange={(e) => onAnswer(key, e.target.value)} disabled={locked}
+            <input type="text" value={userAns} onChange={e => onAnswer(key, e.target.value)} disabled={locked}
               placeholder="Answer..." className={`flex-1 rounded-xl border px-3 py-1.5 text-sm ${locked ? (isCorrect ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50") : "border-[#e0c7bb] bg-white"}`} />
             {locked && !isCorrect && <span className="text-xs text-green-600 font-semibold shrink-0">✓ {pair.right}</span>}
           </div>
@@ -420,30 +394,22 @@ function QuestionGroupView({ group, sectionNum, answers, onAnswer, locked }: {
 // ─── Main Exam Screen ─────────────────────────────────────────────────────────
 
 export default function IELTSExam({ title, examType, sections, answers, onUpdateAnswers, onFinish, onBack }: Props) {
-  const [phase, setPhase] = useState<Phase>({ type: "reading", sectionIndex: 0, countdown: 30 });
+  const [phase, setPhase] = useState<Phase>({ type: "reading", sectionIndex: 0, countdown: 45 });
   const [totalElapsed, setTotalElapsed] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
 
-  const REVIEW_TIME = 600; // 10 minutes
+  const REVIEW_TIME = 600;
 
-  // Countdown timer
   useEffect(() => {
     const interval = setInterval(() => {
       setTotalElapsed(prev => prev + 1);
       setPhase(prev => {
         if (prev.type === "reading") {
-          if (prev.countdown <= 1) {
-            // Start listening
-            return { type: "listening", sectionIndex: prev.sectionIndex };
-          }
+          if (prev.countdown <= 1) return { type: "listening", sectionIndex: prev.sectionIndex };
           return { ...prev, countdown: prev.countdown - 1 };
         }
         if (prev.type === "review") {
-          if (prev.countdown <= 1) {
-            onFinish();
-            return { type: "done" };
-          }
+          if (prev.countdown <= 1) { onFinish(); return { type: "done" }; }
           return { ...prev, countdown: prev.countdown - 1 };
         }
         return prev;
@@ -452,23 +418,20 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-play audio when listening phase starts
   useEffect(() => {
     if (phase.type === "listening") {
       const section = sections[phase.sectionIndex];
       if (section?.audioUrl && audioRef.current) {
         audioRef.current.src = section.audioUrl;
-        audioRef.current.play();
-        setIsPlaying(true);
+        audioRef.current.play().catch(() => {});
       }
     }
-  }, [phase.type === "listening" ? phase.sectionIndex : null, phase.type]);
+  }, [phase.type, phase.type === "listening" ? (phase as { type: "listening"; sectionIndex: number }).sectionIndex : 0]);
 
   function handleAudioEnded() {
-    setIsPlaying(false);
     const currentSectionIndex = phase.type === "listening" ? phase.sectionIndex : 0;
     if (currentSectionIndex < sections.length - 1) {
-      setPhase({ type: "reading", sectionIndex: currentSectionIndex + 1, countdown: 30 });
+      setPhase({ type: "reading", sectionIndex: currentSectionIndex + 1, countdown: 45 });
     } else {
       setPhase({ type: "review", countdown: REVIEW_TIME });
     }
@@ -485,11 +448,20 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
     }
   }
 
+  function skipReading() {
+    if (phase.type === "reading") {
+      const currentSectionIndex = phase.sectionIndex;
+      setPhase({ type: "listening", sectionIndex: currentSectionIndex });
+    }
+  }
+
   if (phase.type === "done") {
     return <div className="flex min-h-screen items-center justify-center bg-[#f7eee8]"><p>Loading results...</p></div>;
   }
 
-  const currentSectionIndex = phase.type === "reading" ? phase.sectionIndex : phase.type === "listening" ? phase.sectionIndex : 0;
+  const currentSectionIndex =
+    phase.type === "reading" ? phase.sectionIndex :
+    phase.type === "listening" ? phase.sectionIndex : 0;
   const currentSection = sections[currentSectionIndex];
 
   return (
@@ -502,26 +474,30 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
           <div className="flex items-center gap-3">
             <div className="flex gap-1">
               {sections.map((_, i) => (
-                <div key={i} className={`h-2 w-8 rounded-full ${i < currentSectionIndex ? "bg-green-400" : i === currentSectionIndex ? "bg-[#3b2f2f]" : "bg-[#e0c7bb]"}`} />
+                <div key={i} className={`h-2 w-8 rounded-full transition-all ${
+                  i < currentSectionIndex ? "bg-green-400" :
+                  i === currentSectionIndex ? "bg-[#3b2f2f]" : "bg-[#e0c7bb]"
+                }`} />
               ))}
             </div>
-            <span className="text-sm font-semibold">Section {currentSection?.number || "Review"}</span>
+            <span className="text-sm font-semibold">
+              {phase.type === "review" ? "Review" : `Section ${currentSection?.number || ""}`}
+            </span>
           </div>
-
           <div className="flex items-center gap-3">
             {phase.type === "reading" && (
               <div className={`rounded-full px-4 py-1.5 text-sm font-bold ${phase.countdown <= 10 ? "bg-red-100 text-red-600" : "bg-[#ead7cc] text-[#3b2f2f]"}`}>
-                Read: {formatTime(phase.countdown)}
+                📖 {formatTime(phase.countdown)}
               </div>
             )}
             {phase.type === "listening" && (
-              <div className="rounded-full bg-blue-100 px-4 py-1.5 text-sm font-bold text-blue-600">
+              <div className="rounded-full bg-blue-100 px-4 py-1.5 text-sm font-bold text-blue-600 animate-pulse">
                 🔊 Listening...
               </div>
             )}
             {phase.type === "review" && (
               <div className={`rounded-full px-4 py-1.5 text-sm font-bold ${phase.countdown <= 60 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
-                Review: {formatTime(phase.countdown)}
+                ✅ {formatTime(phase.countdown)}
               </div>
             )}
             <span className="text-xs text-[#7a6258]">{formatTime(totalElapsed)}</span>
@@ -532,17 +508,26 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
       <section className="mx-auto max-w-3xl px-6 py-8">
 
         {/* Reading phase */}
-        {phase.type === "reading" && (
+        {phase.type === "reading" && currentSection && (
           <div>
             <div className="mb-6 rounded-[2rem] border border-blue-200 bg-blue-50 p-5">
-              <p className="font-bold text-blue-700">📖 Read the questions for Section {currentSection?.number}</p>
-              <p className="mt-1 text-sm text-blue-600">Audio will start automatically in <strong>{phase.countdown} seconds</strong>. Read carefully.</p>
-              <div className="mt-3 h-2 w-full rounded-full bg-blue-200">
-                <div className="h-2 rounded-full bg-blue-500 transition-all" style={{ width: `${(phase.countdown / 30) * 100}%` }} />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-blue-700">📖 Read the questions — Section {currentSection.number}</p>
+                  <p className="mt-1 text-sm text-blue-600">
+                    Audio starts in <strong>{phase.countdown}s</strong>. Read all questions carefully before listening.
+                  </p>
+                </div>
+                <button onClick={skipReading} className="rounded-2xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">
+                  Ready →
+                </button>
+              </div>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-blue-200">
+                <div className="h-1.5 rounded-full bg-blue-500 transition-all duration-1000" style={{ width: `${(phase.countdown / 45) * 100}%` }} />
               </div>
             </div>
             <div className="flex flex-col gap-4">
-              {currentSection?.questionGroups.map((group, gi) => (
+              {currentSection.questionGroups.map((group, gi) => (
                 <QuestionGroupView key={gi} group={group} sectionNum={currentSection.number} answers={answers} onAnswer={handleAnswer} locked={false} />
               ))}
             </div>
@@ -550,7 +535,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
         )}
 
         {/* Listening phase */}
-        {phase.type === "listening" && (
+        {phase.type === "listening" && currentSection && (
           <div>
             <div className="mb-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5">
               <div className="flex items-center justify-between">
@@ -559,8 +544,8 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
                     <img src="/cat-logo.svg" alt="" className="h-7 w-7 object-contain" />
                   </div>
                   <div>
-                    <p className="font-bold">Section {currentSection?.number} — Now Playing</p>
-                    <p className="text-xs text-[#7a6258]">🔊 Audio plays once only. Write your answers below.</p>
+                    <p className="font-bold">Section {currentSection.number} — Now Playing</p>
+                    <p className="text-xs text-[#7a6258]">🔊 Audio plays once. Write your answers as you listen.</p>
                   </div>
                 </div>
                 <button onClick={skipToNextSection} className="rounded-2xl border border-[#e0c7bb] bg-white px-3 py-2 text-xs font-semibold hover:bg-[#f1ded5]">
@@ -569,7 +554,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
               </div>
             </div>
             <div className="flex flex-col gap-4">
-              {currentSection?.questionGroups.map((group, gi) => (
+              {currentSection.questionGroups.map((group, gi) => (
                 <QuestionGroupView key={gi} group={group} sectionNum={currentSection.number} answers={answers} onAnswer={handleAnswer} locked={false} />
               ))}
             </div>
@@ -581,11 +566,13 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
           <div>
             <div className="mb-6 rounded-[2rem] border border-green-200 bg-green-50 p-5">
               <p className="font-bold text-green-700">✅ All sections complete — Review your answers</p>
-              <p className="mt-1 text-sm text-green-600">You have <strong>{formatTime(phase.countdown)}</strong> to check and edit your answers.</p>
+              <p className="mt-1 text-sm text-green-600">
+                You have <strong>{formatTime(phase.countdown)}</strong> to check and edit your answers.
+              </p>
             </div>
             {sections.map((section, si) => (
               <div key={si} className="mb-8">
-                <h2 className="text-lg font-bold mb-4">Section {section.number}</h2>
+                <h2 className="text-xl font-bold mb-4 border-b border-[#e0c7bb] pb-2">Section {section.number}</h2>
                 <div className="flex flex-col gap-4">
                   {section.questionGroups.map((group, gi) => (
                     <QuestionGroupView key={gi} group={group} sectionNum={section.number} answers={answers} onAnswer={handleAnswer} locked={false} />
