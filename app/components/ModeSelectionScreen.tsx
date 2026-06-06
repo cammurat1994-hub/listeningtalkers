@@ -1,4 +1,5 @@
 type Props = {
+  level: string;
   onSelectMCQ: () => void;
   onSelectFillBlank: () => void;
   onSelectDictation: () => void;
@@ -17,8 +18,7 @@ const modes = [
     description: "Choose the correct answer from options A to E.",
     tip: "Take notes while listening — you'll need them for questions.",
     exams: ["IELTS", "TOEFL", "TOEIC"],
-    difficulty: "Medium",
-    diffColor: "bg-yellow-100 text-yellow-700",
+    beginnerOnly: false,
   },
   {
     id: "fill",
@@ -27,8 +27,7 @@ const modes = [
     description: "Listen and fill in the missing words in the text as you hear them.",
     tip: null,
     exams: ["IELTS", "PTE", "CELPIP"],
-    difficulty: "Medium",
-    diffColor: "bg-yellow-100 text-yellow-700",
+    beginnerOnly: false,
   },
   {
     id: "dictation",
@@ -37,8 +36,7 @@ const modes = [
     description: "Listen carefully and type exactly what you hear, word for word.",
     tip: null,
     exams: ["PTE", "Cambridge", "IELTS"],
-    difficulty: "Hard",
-    diffColor: "bg-red-100 text-red-700",
+    beginnerOnly: false,
   },
   {
     id: "short",
@@ -47,8 +45,7 @@ const modes = [
     description: "Answer each question in 1–3 words based on what you hear.",
     tip: "Take notes while listening — you'll need them for questions.",
     exams: ["IELTS", "TOEFL"],
-    difficulty: "Medium",
-    diffColor: "bg-yellow-100 text-yellow-700",
+    beginnerOnly: false,
   },
   {
     id: "matching",
@@ -57,8 +54,7 @@ const modes = [
     description: "Match each item on the left with the correct description on the right.",
     tip: "Take notes while listening — you'll need them for questions.",
     exams: ["IELTS", "TOEIC"],
-    difficulty: "Easy",
-    diffColor: "bg-green-100 text-green-700",
+    beginnerOnly: false,
   },
   {
     id: "map",
@@ -67,8 +63,7 @@ const modes = [
     description: "Listen to directions and label the correct locations on a map.",
     tip: "Study the map before listening — identify key reference points first.",
     exams: ["IELTS", "TOEFL"],
-    difficulty: "Hard",
-    diffColor: "bg-red-100 text-red-700",
+    beginnerOnly: true,
   },
   {
     id: "completions",
@@ -77,12 +72,12 @@ const modes = [
     description: "Complete notes, forms, tables, flow charts or sentences based on what you hear.",
     tip: "Read the incomplete text carefully before listening.",
     exams: ["IELTS", "TOEFL", "PTE"],
-    difficulty: "Medium",
-    diffColor: "bg-yellow-100 text-yellow-700",
+    beginnerOnly: true,
   },
 ];
 
 export default function ModeSelectionScreen({
+  level,
   onSelectMCQ,
   onSelectFillBlank,
   onSelectDictation,
@@ -102,6 +97,9 @@ export default function ModeSelectionScreen({
     completions: onSelectCompletions,
   };
 
+  const isBeginnerLocked = level === "Beginner";
+  const visibleModes = modes.filter(m => !(isBeginnerLocked && m.beginnerOnly));
+
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
       <section className="mx-auto max-w-5xl px-6 py-16">
@@ -117,15 +115,15 @@ export default function ModeSelectionScreen({
         </div>
 
         <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {modes.map((mode) => (
+          {visibleModes.map((mode) => (
             <button
               key={mode.id}
               onClick={handlers[mode.id]}
               className="group rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#3b2f2f] hover:bg-white hover:shadow-md"
             >
-         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">
-  {mode.emoji}
-</div>
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">
+                {mode.emoji}
+              </div>
 
               <h2 className="mt-4 text-xl font-bold">{mode.title}</h2>
               <p className="mt-2 text-sm text-[#7a6258]">{mode.description}</p>

@@ -257,15 +257,16 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <ModeSelectionScreen
-          onSelectMCQ={() => { setPracticeMode("mcq"); goTo("episodes"); }}
-          onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("episodes"); }}
-          onSelectDictation={() => { setPracticeMode("dictation"); goTo("episodes"); }}
-          onSelectShortAnswer={() => { setPracticeMode("short-answer"); goTo("episodes"); }}
-          onSelectMatching={() => { setPracticeMode("matching"); goTo("episodes"); }}
-          onSelectMap={() => { setPracticeMode("map"); goTo("episodes"); }}
-          onSelectCompletions={() => goTo("completion-type")}
-          onBack={() => goTo("levels")}
-        />
+  level={selectedLevel}
+  onSelectMCQ={() => { setPracticeMode("mcq"); goTo("episodes"); }}
+  onSelectFillBlank={() => { setPracticeMode("fill-blank"); goTo("episodes"); }}
+  onSelectDictation={() => { setPracticeMode("dictation"); goTo("episodes"); }}
+  onSelectShortAnswer={() => { setPracticeMode("short-answer"); goTo("episodes"); }}
+  onSelectMatching={() => { setPracticeMode("matching"); goTo("episodes"); }}
+  onSelectMap={() => { setPracticeMode("map"); goTo("episodes"); }}
+  onSelectCompletions={() => goTo("completion-type")}
+  onBack={() => goTo("levels")}
+/>
       </>
     );
   }

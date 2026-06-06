@@ -639,9 +639,12 @@ const [managePage, setManagePage] = useState(0);
   }
 
   async function publishEpisode() {
-    if (!title) { alert("Please enter episode title."); return; }
-    setUploading(true);
-    try {
+  if (!title) { alert("Please enter episode title."); return; }
+  if ((episodeType === "practice-map" || episodeType.startsWith("practice-completion-")) && level === "Beginner") {
+    alert("Map Labelling and Completions are not available for Beginner level."); return;
+  }
+  setUploading(true);
+  try {
       let audioUrl = existingAudioUrl;
       if (audioFile) audioUrl = await uploadFile(audioFile, "episode");
       let pdfUrl = existingPdfUrl;
@@ -834,6 +837,9 @@ const [managePage, setManagePage] = useState(0);
                     <select value={level} onChange={e => setLevel(e.target.value)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
                       <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
                     </select>
+                    {(episodeType === "practice-map" || episodeType.startsWith("practice-completion-")) && level === "Beginner" && (
+  <p className="mt-2 text-sm text-orange-600 font-semibold">⚠️ Map Labelling and Completions are not available for Beginner level. Please select Intermediate or Advanced.</p>
+)}
                   </div>
                 )}
                 <div>
