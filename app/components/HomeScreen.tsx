@@ -5,7 +5,7 @@ type Props = {
 
 const stats = [
   { value: "3,000+", label: "Practice exercises" },
-  { value: "5", label: "Question types" },
+  { value: "12", label: "Question types" },
   { value: "3", label: "Levels" },
   { value: "Free", label: "To get started" },
 ];
@@ -22,15 +22,29 @@ const features = [
     desc: "See your accuracy by question type and identify exactly where you need more practice.",
   },
   {
-    emoji: "🔁",
-    title: "5 question types",
-    desc: "Multiple choice, fill in the blank, dictation, short answer and matching — all in one place.",
+    emoji: "🗺️",
+    title: "12 question types",
+    desc: "MCQ, Fill in the Blank, Dictation, Short Answer, Matching, Map Labelling, and 5 Completion types — all in one place.",
   },
   {
     emoji: "💬",
     title: "Community discussion",
     desc: "Ask questions and share tips with other learners on every episode.",
   },
+];
+
+const questionTypes = [
+  { emoji: "🔤", label: "Multiple Choice", desc: "IELTS, TOEFL, TOEIC" },
+  { emoji: "✏️", label: "Fill in the Blank", desc: "IELTS, PTE, CELPIP" },
+  { emoji: "🎙️", label: "Dictation", desc: "PTE, Cambridge" },
+  { emoji: "✍️", label: "Short Answer", desc: "IELTS, TOEFL" },
+  { emoji: "🔗", label: "Matching", desc: "IELTS, TOEIC" },
+  { emoji: "🗺️", label: "Map Labelling", desc: "IELTS, TOEFL" },
+  { emoji: "📝", label: "Note Completion", desc: "IELTS, TOEFL" },
+  { emoji: "📄", label: "Form Completion", desc: "IELTS, CELPIP" },
+  { emoji: "📊", label: "Table Completion", desc: "IELTS, PTE" },
+  { emoji: "🔄", label: "Flow Chart", desc: "IELTS, TOEFL" },
+  { emoji: "✏️", label: "Sentence Completion", desc: "IELTS, PTE" },
 ];
 
 export default function HomeScreen({ onSelectPractice, onSelectQuiz }: Props) {
@@ -97,7 +111,7 @@ export default function HomeScreen({ onSelectPractice, onSelectQuiz }: Props) {
               </div>
             </div>
             <p className="mt-5 text-[#7a6258]">
-              Choose your level and question type. Practice MCQ, Fill in the Blank, Dictation, Short Answer or Matching at your own pace.
+              Choose your level and question type. Practice across 12 different question types at your own pace.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {["Beginner", "Intermediate", "Advanced"].map(l => (
@@ -107,32 +121,32 @@ export default function HomeScreen({ onSelectPractice, onSelectQuiz }: Props) {
             <p className="mt-5 font-bold text-[#3b2f2f] group-hover:underline">Start practicing →</p>
           </button>
 
-         <button
-  onClick={onSelectQuiz}
-  className="group rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#3b2f2f] hover:bg-white"
->
-  <div className="flex items-center gap-4">
-    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">🎓</div>
-    <div>
-      <h3 className="text-2xl font-bold">Full Exam Simulation</h3>
-      <p className="text-sm text-[#7a6258]">Real format • Timed • Band score</p>
-    </div>
-  </div>
-  <p className="mt-5 text-[#7a6258]">
-    Simulate a full IELTS, TOEFL, TOEIC or CELPIP listening exam. 4 sections, 40 questions, real timing — just like exam day.
-  </p>
-  <div className="mt-5 flex flex-wrap gap-2">
-    {["IELTS", "TOEFL", "TOEIC", "CELPIP"].map(e => (
-      <span key={e} className="rounded-full bg-[#3b2f2f] px-3 py-1 text-xs font-bold text-white">{e}</span>
-    ))}
-  </div>
-  <div className="mt-5 flex items-center gap-2">
-    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">⏱ 40 min</span>
-    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">📊 Band score</span>
-    <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">📄 PDF download</span>
-  </div>
-  <p className="mt-5 font-bold text-[#3b2f2f] group-hover:underline">Start full exam →</p>
-</button>
+          <button
+            onClick={onSelectQuiz}
+            className="group rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#3b2f2f] hover:bg-white"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">🎓</div>
+              <div>
+                <h3 className="text-2xl font-bold">Full Exam Simulation</h3>
+                <p className="text-sm text-[#7a6258]">Real format • Timed • Band score</p>
+              </div>
+            </div>
+            <p className="mt-5 text-[#7a6258]">
+              Simulate a full IELTS, TOEFL, TOEIC or CELPIP listening exam. 4 sections, 40 questions, real timing — just like exam day.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["IELTS", "TOEFL", "TOEIC", "CELPIP"].map(e => (
+                <span key={e} className="rounded-full bg-[#3b2f2f] px-3 py-1 text-xs font-bold text-white">{e}</span>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">⏱ 40 min</span>
+              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">📊 Band score</span>
+              <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">📄 PDF download</span>
+            </div>
+            <p className="mt-5 font-bold text-[#3b2f2f] group-hover:underline">Start full exam →</p>
+          </button>
         </div>
       </section>
 
@@ -161,20 +175,21 @@ export default function HomeScreen({ onSelectPractice, onSelectQuiz }: Props) {
         <h2 className="text-center text-3xl font-bold">All question types covered</h2>
         <p className="mt-3 text-center text-[#7a6258]">Practice every format you'll see on exam day.</p>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-5">
-          {[
-            { emoji: "🔤", label: "Multiple Choice", desc: "IELTS, TOEFL, TOEIC" },
-            { emoji: "✏️", label: "Fill in the Blank", desc: "IELTS, PTE, CELPIP" },
-            { emoji: "🎙️", label: "Dictation", desc: "PTE, Cambridge" },
-            { emoji: "✍️", label: "Short Answer", desc: "IELTS, TOEFL" },
-            { emoji: "🔗", label: "Matching", desc: "IELTS, TOEIC" },
-          ].map((t) => (
+        <div className="mt-10 grid gap-4 grid-cols-2 md:grid-cols-4">
+          {questionTypes.map((t) => (
             <div key={t.label} className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 text-center shadow-sm">
               <div className="text-3xl">{t.emoji}</div>
               <p className="mt-3 font-bold text-sm">{t.label}</p>
               <p className="mt-1 text-xs text-[#7a6258]">{t.desc}</p>
             </div>
           ))}
+
+          {/* Completions grup kartı */}
+          <div className="rounded-[2rem] border-2 border-[#ead7cc] bg-[#fffaf7] p-5 text-center shadow-sm col-span-2 md:col-span-4">
+            <div className="text-3xl">📋</div>
+            <p className="mt-3 font-bold text-sm">Completions</p>
+            <p className="mt-1 text-xs text-[#7a6258]">Note · Form · Table · Flow Chart · Sentence — IELTS, TOEFL, PTE</p>
+          </div>
         </div>
       </section>
 
@@ -185,12 +200,14 @@ export default function HomeScreen({ onSelectPractice, onSelectQuiz }: Props) {
           <p className="mt-4 text-lg text-[#c9a99a]">
             Join thousands of learners already practicing on ListeningTalkers.
           </p>
-          <button
-            onClick={onSelectPractice}
-            className="mt-8 rounded-2xl bg-white px-10 py-4 text-lg font-bold text-[#3b2f2f] transition hover:bg-[#ead7cc]"
-          >
-            Start for Free →
-          </button>
+          <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <button
+              onClick={onSelectPractice}
+              className="w-full sm:w-auto rounded-2xl bg-white px-10 py-4 text-lg font-bold text-[#3b2f2f] transition hover:bg-[#ead7cc]"
+            >
+              Start for Free →
+            </button>
+          </div>
         </div>
       </section>
 

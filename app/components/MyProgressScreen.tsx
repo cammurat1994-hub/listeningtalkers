@@ -21,13 +21,28 @@ type Result = {
 
 const levels = ["Beginner", "Intermediate", "Advanced"];
 
-const TYPE_LABELS: Record<string, string> = {
+const PRACTICE_TYPE_LABELS: Record<string, string> = {
   "practice-mcq": "Multiple Choice",
   "practice-fill": "Fill in the Blank",
   "practice-dictation": "Dictation",
   "practice-short": "Short Answer",
   "practice-matching": "Matching",
+  "practice-map": "Map Labelling",
+  "practice-completion-note": "Note Completion",
+  "practice-completion-form": "Form Completion",
+  "practice-completion-table": "Table Completion",
+  "practice-completion-flow": "Flow Chart",
+  "practice-completion-sentence": "Sentence Completion",
 };
+
+const PRACTICE_TYPES = Object.keys(PRACTICE_TYPE_LABELS);
+
+function getTypeLabel(t: string): string {
+  if (PRACTICE_TYPE_LABELS[t]) return PRACTICE_TYPE_LABELS[t];
+  if (t?.includes("completion")) return "Completions";
+  if (t?.startsWith("quiz-")) return "Quiz";
+  return "Practice";
+}
 
 function calculateStreak(results: Result[]): number {
   if (!results.length) return 0;
@@ -47,13 +62,21 @@ function calculateStreak(results: Result[]): number {
 }
 
 function getMotivationMessage(streak: number, accuracy: number, completed: number): string {
-  if (completed === 0) return "🎧 Start your first episode and track your progress here!";
+  if (completed === 0) return "🎧 Start your first practice and track your progress here!";
   if (streak >= 7) return `🔥 ${streak} days in a row! You're unstoppable!`;
   if (streak >= 3) return `⚡ ${streak}-day streak! Keep the momentum going!`;
   if (streak === 1) return "👋 Good to see you back! You studied today.";
   if (accuracy >= 80) return "🎯 Excellent accuracy! Your listening is sharp.";
   if (accuracy >= 60) return "📈 Good work! Keep practicing to improve.";
   return "💪 Every session counts. Keep going!";
+}
+
+function getAccuracyMessage(pct: number): string {
+  if (pct >= 80) return "Excellent — keep it up!";
+  if (pct >= 60) return "Good progress — a little more practice will get you there.";
+  if (pct >= 40) return "You're building a foundation — consistency is key.";
+  if (pct >= 20) return "Early days — every attempt improves your ear.";
+  return "Just getting started — keep going!";
 }
 
 function AccuracyBar({ pct, color = "bg-[#3b2f2f]" }: { pct: number; color?: string }) {
@@ -64,10 +87,25 @@ function AccuracyBar({ pct, color = "bg-[#3b2f2f]" }: { pct: number; color?: str
   );
 }
 
+function barColor(pct: number) {
+  if (pct >= 80) return "bg-green-500";
+  if (pct >= 60) return "bg-yellow-500";
+  if (pct >= 40) return "bg-orange-400";
+  return "bg-[#c9a99a]";
+}
+
+function textColor(pct: number) {
+  if (pct >= 80) return "text-green-600";
+  if (pct >= 60) return "text-yellow-600";
+  return "text-[#7a6258]";
+}
+
 export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
   const [results, setResults] = useState<Result[]>([]);
   const [selectedLevel, setSelectedLevel] = useState("Beginner");
   const [loading, setLoading] = useState(true);
+  const [activityPage, setActivityPage] = useState(0);
+  const ACTIVITY_PAGE_SIZE = 5;
 
   useEffect(() => {
     async function fetchData() {
@@ -91,6 +129,9 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
     return map;
   }, [results]);
 
+  const practiceResults = useMemo(() => results.filter(r => !r.episode_type?.startsWith("quiz-")), [results]);
+  const quizResults = useMemo(() => results.filter(r => r.episode_type?.startsWith("quiz-")), [results]);
+
   const completedCount = latestByEpisode.size;
   const totalCorrect = results.reduce((s, r) => s + r.score, 0);
   const totalQuestions = results.reduce((s, r) => s + r.total_questions, 0);
@@ -105,16 +146,37 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
     return `${diff} days ago`;
   })() : null;
 
-  // Zayıf alan analizi
-  const weakAreas = useMemo(() => {
-    const typeMap: Record<string, { correct: number; total: number }> = {};
-    results.forEach((r) => {
-      const key = r.level;
-      if (!typeMap[key]) typeMap[key] = { correct: 0, total: 0 };
-      typeMap[key].correct += r.score;
-      typeMap[key].total += r.total_questions;
+  // Practice type bazlı performans
+  const practiceTypeStats = useMemo(() => {
+    const map: Record<string, { correct: number; total: number }> = {};
+    practiceResults.forEach((r) => {
+      const key = r.episode_type;
+      if (!key || !PRACTICE_TYPES.includes(key)) return;
+      if (!map[key]) map[key] = { correct: 0, total: 0 };
+      map[key].correct += r.score;
+      map[key].total += r.total_questions;
     });
-    return Object.entries(typeMap)
+    return Object.entries(map)
+      .map(([type, { correct, total }]) => ({
+        type,
+        label: PRACTICE_TYPE_LABELS[type] || type,
+        pct: total > 0 ? Math.round((correct / total) * 100) : 0,
+        total,
+      }))
+      .filter(a => a.total > 0)
+      .sort((a, b) => a.pct - b.pct);
+  }, [practiceResults]);
+
+  // Quiz type bazlı performans
+  const quizTypeStats = useMemo(() => {
+    const map: Record<string, { correct: number; total: number }> = {};
+    quizResults.forEach((r) => {
+      const key = r.episode_type?.replace("quiz-", "").toUpperCase() || "Quiz";
+      if (!map[key]) map[key] = { correct: 0, total: 0 };
+      map[key].correct += r.score;
+      map[key].total += r.total_questions;
+    });
+    return Object.entries(map)
       .map(([label, { correct, total }]) => ({
         label,
         pct: total > 0 ? Math.round((correct / total) * 100) : 0,
@@ -122,9 +184,12 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
       }))
       .filter(a => a.total > 0)
       .sort((a, b) => a.pct - b.pct);
-  }, [results]);
+  }, [quizResults]);
 
   const levelResults = results.filter((r) => r.level === selectedLevel);
+
+  const pagedActivity = results.slice(activityPage * ACTIVITY_PAGE_SIZE, (activityPage + 1) * ACTIVITY_PAGE_SIZE);
+  const totalActivityPages = Math.ceil(results.length / ACTIVITY_PAGE_SIZE);
 
   if (loading) {
     return (
@@ -157,17 +222,7 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
           <p className="text-lg font-semibold">{motivationMessage}</p>
           {lastActivity && (
             <p className="mt-1 text-sm text-[#c9a99a]">
-           Last activity: {lastActivity} — {results[0]?.level} · {(() => {
-  const t = results[0]?.episode_type;
-  if (t === "practice-mcq") return "Multiple Choice";
-  if (t === "practice-fill") return "Fill in the Blank";
-  if (t === "practice-dictation") return "Dictation";
-  if (t === "practice-short") return "Short Answer";
-  if (t === "practice-matching") return "Matching";
-  if (t === "practice-map") return "Map Labelling";
-  if (t?.includes("completion")) return "Completions";
-  return "Practice";
-})()}
+              Last activity: {lastActivity} — {results[0]?.level} · {getTypeLabel(results[0]?.episode_type)}
             </p>
           )}
           {streak > 0 && (
@@ -184,7 +239,7 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
             { emoji: "🔥", label: "Streak", value: `${streak}`, sub: streak === 1 ? "day" : "days", color: streak >= 3 ? "border-orange-200 bg-orange-50" : "" },
-            { emoji: "🎧", label: "Episodes", value: `${completedCount}`, sub: "completed", color: "" },
+            { emoji: "🎧", label: "Practices", value: `${completedCount}`, sub: "completed", color: "" },
             { emoji: "🎯", label: "Accuracy", value: `${overallAccuracy}%`, sub: "overall", color: overallAccuracy >= 80 ? "border-green-200 bg-green-50" : "" },
             { emoji: "✅", label: "Correct", value: `${totalCorrect}`, sub: `of ${totalQuestions}`, color: "" },
           ].map((card) => (
@@ -196,35 +251,55 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
           ))}
         </div>
 
-        {/* Zayıf alan analizi */}
-        {weakAreas.length > 0 && (
-          <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold">Performance by Level</h2>
-            <p className="mt-1 text-sm text-[#7a6258]">Focus on your weakest areas first.</p>
-            <div className="mt-5 flex flex-col gap-4">
-              {weakAreas.map((area) => (
-                <div key={area.label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold">{area.label}</span>
-                    <span className={`text-sm font-bold ${
-                      area.pct >= 80 ? "text-green-600" :
-                      area.pct >= 60 ? "text-yellow-600" : "text-red-600"
-                    }`}>{area.pct}%</span>
-                  </div>
-                  <AccuracyBar
-                    pct={area.pct}
-                    color={area.pct >= 80 ? "bg-green-500" : area.pct >= 60 ? "bg-yellow-500" : "bg-red-400"}
-                  />
-                  {area.pct < 60 && (
-                    <p className="mt-1 text-xs text-red-500">⚠️ Needs more practice</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Practice ve Quiz 2 kart */}
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
 
-        {/* Seviye bazlı istatistik */}
+          {/* Practice performansı */}
+          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold">🎧 Practice Performance</h2>
+            <p className="mt-1 text-xs text-[#7a6258]">Your accuracy by question type.</p>
+            {practiceTypeStats.length === 0 ? (
+              <p className="mt-4 text-sm text-[#7a6258]">No practice data yet.</p>
+            ) : (
+              <div className="mt-4 flex flex-col gap-4">
+                {practiceTypeStats.map((s) => (
+                  <div key={s.type}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-semibold">{s.label}</span>
+                      <span className={`text-sm font-bold ${textColor(s.pct)}`}>{s.pct}%</span>
+                    </div>
+                    <AccuracyBar pct={s.pct} color={barColor(s.pct)} />
+                    <p className="mt-1 text-xs text-[#7a6258]">{getAccuracyMessage(s.pct)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quiz performansı */}
+          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold">📝 Quiz Performance</h2>
+            <p className="mt-1 text-xs text-[#7a6258]">Your accuracy by exam type.</p>
+            {quizTypeStats.length === 0 ? (
+              <p className="mt-4 text-sm text-[#7a6258]">No quiz data yet. Try an exam-style quiz!</p>
+            ) : (
+              <div className="mt-4 flex flex-col gap-4">
+                {quizTypeStats.map((s) => (
+                  <div key={s.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-semibold">{s.label}</span>
+                      <span className={`text-sm font-bold ${textColor(s.pct)}`}>{s.pct}%</span>
+                    </div>
+                    <AccuracyBar pct={s.pct} color={barColor(s.pct)} />
+                    <p className="mt-1 text-xs text-[#7a6258]">{getAccuracyMessage(s.pct)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Progress by Level */}
         <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold">Progress by Level</h2>
           <div className="mt-5 flex gap-3">
@@ -233,25 +308,24 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
               const lvlQ = lvlResults.reduce((s, r) => s + r.total_questions, 0);
               const lvlC = lvlResults.reduce((s, r) => s + r.score, 0);
               const acc = lvlQ > 0 ? Math.round((lvlC / lvlQ) * 100) : 0;
-              const episodes = new Set(lvlResults.map((r) => r.episode_id)).size;
+              const practices = new Set(lvlResults.map((r) => r.episode_id)).size;
               return (
                 <button key={level} onClick={() => setSelectedLevel(level)}
                   className={`flex-1 rounded-2xl border p-4 text-left transition ${selectedLevel === level ? "border-[#3b2f2f] bg-[#f7eee8]" : "border-[#e0c7bb] hover:bg-[#fffaf7]"}`}>
                   <p className="font-bold text-sm">{level}</p>
                   <p className="mt-1 text-2xl font-bold">{acc > 0 ? `${acc}%` : "—"}</p>
-                  <p className="mt-1 text-xs text-[#7a6258]">{episodes} episodes</p>
+                  <p className="mt-1 text-xs text-[#7a6258]">{practices} practices</p>
                   <div className="mt-2">
-                    <AccuracyBar pct={acc} />
+                    <AccuracyBar pct={acc} color={barColor(acc)} />
                   </div>
                 </button>
               );
             })}
           </div>
 
-          {/* Seçilen seviye detayı */}
           {levelResults.length > 0 && (
             <div className="mt-5 flex flex-col gap-2">
-              <p className="text-sm font-semibold text-[#7a6258]">{selectedLevel} — recent episodes</p>
+              <p className="text-sm font-semibold text-[#7a6258]">{selectedLevel} — recent practices</p>
               {Array.from(new Map(levelResults.map(r => [r.episode_id, r])).values()).slice(0, 5).map((r) => {
                 const acc = Math.round((r.score / r.total_questions) * 100);
                 return (
@@ -270,12 +344,17 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
           )}
         </div>
 
-        {/* Son aktiviteler */}
+        {/* Recent Activity — 5'lik sayfalı */}
         {results.length > 0 && (
           <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold">Recent Activity</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Recent Activity</h2>
+              {totalActivityPages > 1 && (
+                <p className="text-sm text-[#7a6258]">Page {activityPage + 1} / {totalActivityPages}</p>
+              )}
+            </div>
             <div className="mt-5 flex flex-col gap-3">
-              {results.slice(0, 10).map((result) => {
+              {pagedActivity.map((result) => {
                 const acc = result.total_questions > 0 ? Math.round((result.score / result.total_questions) * 100) : 0;
                 const diff = Math.floor((Date.now() - new Date(result.created_at).getTime()) / 86400000);
                 const dateLabel = diff === 0 ? "Today" : diff === 1 ? "Yesterday" : `${diff}d ago`;
@@ -289,13 +368,27 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
                     }`}>{acc}%</div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold truncate">{result.episode_title}</p>
-                      <p className="mt-0.5 text-xs text-[#7a6258]">{result.level} · {dateLabel} · {result.score}/{result.total_questions} correct</p>
+                      <p className="mt-0.5 text-xs text-[#7a6258]">{result.level} · {getTypeLabel(result.episode_type)} · {dateLabel} · {result.score}/{result.total_questions} correct</p>
                     </div>
                     <span className="shrink-0 text-[#c9a99a]">→</span>
                   </button>
                 );
               })}
             </div>
+            {totalActivityPages > 1 && (
+              <div className="mt-5 flex items-center justify-center gap-2">
+                <button onClick={() => setActivityPage(p => Math.max(0, p - 1))} disabled={activityPage === 0}
+                  className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">← Prev</button>
+                {Array.from({ length: totalActivityPages }, (_, i) => (
+                  <button key={i} onClick={() => setActivityPage(i)}
+                    className={`rounded-2xl px-4 py-2 text-sm font-semibold ${activityPage === i ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+                    {i + 1}
+                  </button>
+                ))}
+                <button onClick={() => setActivityPage(p => Math.min(totalActivityPages - 1, p + 1))} disabled={activityPage === totalActivityPages - 1}
+                  className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Next →</button>
+              </div>
+            )}
           </div>
         )}
 
@@ -304,7 +397,7 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
           <div className="mt-12 rounded-[2rem] border border-[#e0c7bb] bg-white p-12 text-center shadow-sm">
             <p className="text-5xl">🎧</p>
             <h2 className="mt-4 text-2xl font-bold">No activity yet</h2>
-            <p className="mt-2 text-[#7a6258]">Complete your first episode to start tracking progress.</p>
+            <p className="mt-2 text-[#7a6258]">Complete your first practice to start tracking progress.</p>
             <button onClick={onBack} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-3 font-semibold text-white hover:bg-[#2f2424]">
               Start Practicing →
             </button>
