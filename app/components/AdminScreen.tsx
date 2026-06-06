@@ -589,7 +589,7 @@ export default function AdminScreen({ onBack }: Props) {
   const [users, setUsers] = useState<{ email: string; created_at: string }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [copied, setCopied] = useState(false);
-
+const [managePage, setManagePage] = useState(0);
   const isPractice = episodeType.startsWith("practice-");
   const isCompletion = episodeType.startsWith("practice-completion-");
   const isExam = episodeType.startsWith("exam-");
@@ -1219,41 +1219,66 @@ export default function AdminScreen({ onBack }: Props) {
           </div>
         )}
 
-        {/* MANAGE TAB */}
-        {activeTab === "manage" && (
-          <div className="mt-8">
-            <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Episodes</h2>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="🔍 Search..." className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
-                <select value={filterType} onChange={e => setFilterType(e.target.value)} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
-                  <option value="all">All Types</option>
-                  {ALL_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
-                </select>
-                <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
-                  <option value="all">All Levels</option>
-                  {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-                </select>
-              </div>
-              <p className="mt-3 text-sm text-[#7a6258]">{filteredEpisodes.length} episode found</p>
-              <div className="mt-4 flex flex-col gap-3">
-                {filteredEpisodes.map(ep => (
-                  <div key={ep.id} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                    <div>
-                      <p className="text-xs text-[#7a6258]">{ep.level ? `${ep.level} — ` : ""}{ALL_TYPES.find(t => t.id === ep.episode_type)?.label || ep.episode_type}</p>
-                      <p className="font-bold">{ep.title}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEdit(ep.id)} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
-                      <button onClick={async () => { if (!confirm("Delete?")) return; await supabase.from("episodes").delete().eq("id", ep.id); fetchEpisodes(); }} className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
-                    </div>
-                  </div>
-                ))}
-                {filteredEpisodes.length === 0 && <p className="py-8 text-center text-[#7a6258]">No episodes found.</p>}
-              </div>
+     {activeTab === "manage" && (
+  <div className="mt-8">
+    <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+      <h2 className="text-2xl font-bold">Episodes</h2>
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setManagePage(0); }} placeholder="🔍 Search..." className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+        <select value={filterType} onChange={e => { setFilterType(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
+          <option value="all">All Types</option>
+          {ALL_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
+        </select>
+        <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
+          <option value="all">All Levels</option>
+          {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+      </div>
+      {(() => {
+        const MANAGE_PAGE_SIZE = 15;
+        const totalPages = Math.ceil(filteredEpisodes.length / MANAGE_PAGE_SIZE);
+        const pagedEpisodes = filteredEpisodes.slice(managePage * MANAGE_PAGE_SIZE, (managePage + 1) * MANAGE_PAGE_SIZE);
+        return (
+          <>
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-sm text-[#7a6258]">{filteredEpisodes.length} episode found</p>
+              {totalPages > 1 && <p className="text-sm text-[#7a6258]">Page {managePage + 1} / {totalPages}</p>}
             </div>
-          </div>
-        )}
+            <div className="mt-4 flex flex-col gap-3">
+              {pagedEpisodes.map(ep => (
+                <div key={ep.id} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                  <div>
+                    <p className="text-xs text-[#7a6258]">{ep.level ? `${ep.level} — ` : ""}{ALL_TYPES.find(t => t.id === ep.episode_type)?.label || ep.episode_type}</p>
+                    <p className="font-bold">{ep.title}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEdit(ep.id)} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
+                    <button onClick={async () => { if (!confirm("Delete?")) return; await supabase.from("episodes").delete().eq("id", ep.id); fetchEpisodes(); }} className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
+                  </div>
+                </div>
+              ))}
+              {pagedEpisodes.length === 0 && <p className="py-8 text-center text-[#7a6258]">No episodes found.</p>}
+            </div>
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+                <button onClick={() => setManagePage(p => Math.max(0, p - 1))} disabled={managePage === 0}
+                  className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">← Prev</button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button key={i} onClick={() => setManagePage(i)}
+                    className={`rounded-2xl px-4 py-2 text-sm font-semibold ${managePage === i ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+                    {i + 1}
+                  </button>
+                ))}
+                <button onClick={() => setManagePage(p => Math.min(totalPages - 1, p + 1))} disabled={managePage === totalPages - 1}
+                  className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Next →</button>
+              </div>
+            )}
+          </>
+        );
+      })()}
+    </div>
+  </div>
+)}
 
         {/* USERS TAB */}
         {activeTab === "users" && (
