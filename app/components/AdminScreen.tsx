@@ -596,10 +596,10 @@ const [managePage, setManagePage] = useState(0);
 
   useEffect(() => { fetchEpisodes(); }, []);
 
-  async function fetchEpisodes() {
-    const { data, error } = await supabase.from("episodes").select("id, title, level, episode_type").order("created_at", { ascending: false }).limit(50);
-    if (!error && data) setPublishedEpisodes(data);
-  }
+async function fetchEpisodes() {
+  const { data, error } = await supabase.from("episodes").select("id, title, level, episode_type").order("created_at", { ascending: false });
+  if (!error && data) setPublishedEpisodes(data);
+}
 
   async function fetchUsers() {
     setLoadingUsers(true);
