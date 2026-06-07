@@ -498,19 +498,24 @@ function ExamSectionEditor({ section, onChange, onRemove, uploadAudio }: {
 }) {
   const [addingGroupType, setAddingGroupType] = useState<QuestionGroupType | "">("");
   const [groupLabel, setGroupLabel] = useState("");
-
-  function addGroup() {
-    if (!addingGroupType) return;
-    const newGroup: QuestionGroup = {
-      id: `group-${Date.now()}`,
-      type: addingGroupType,
-      label: groupLabel || `Questions ${section.questionGroups.length * 10 + 1}–${(section.questionGroups.length + 1) * 10}`,
-      data: createEmptyGroupData(addingGroupType),
-    };
-    onChange({ ...section, questionGroups: [...section.questionGroups, newGroup] });
-    setAddingGroupType("");
-    setGroupLabel("");
-  }
+const [groupWordLimit, setGroupWordLimit] = useState("");
+const [groupIsSection4, setGroupIsSection4] = useState(false);
+function addGroup() {
+  if (!addingGroupType) return;
+  const newGroup: QuestionGroup = {
+    id: `group-${Date.now()}`,
+    type: addingGroupType,
+    label: groupLabel || `Questions ${section.questionGroups.length * 5 + 1}–${(section.questionGroups.length + 1) * 5}`,
+    wordLimit: groupWordLimit || "NO MORE THAN TWO WORDS AND/OR A NUMBER",
+    isSection4: groupIsSection4,
+    data: createEmptyGroupData(addingGroupType),
+  };
+  onChange({ ...section, questionGroups: [...section.questionGroups, newGroup] });
+  setAddingGroupType("");
+  setGroupLabel("");
+  setGroupWordLimit("");
+  setGroupIsSection4(false);
+}
 
   return (
     <div className="rounded-3xl border-2 border-[#3b2f2f] bg-[#fffaf7] p-6">
@@ -533,14 +538,23 @@ function ExamSectionEditor({ section, onChange, onRemove, uploadAudio }: {
       </div>
       <div className="mt-5 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
         <p className="mb-3 text-sm font-semibold text-[#7a6258]">Add Question Group to Section {section.number}</p>
-        <div className="grid gap-2 md:grid-cols-3">
-          <select value={addingGroupType} onChange={e => setAddingGroupType(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
-            <option value="">Select type...</option>
-            {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
-          </select>
-          <input type="text" value={groupLabel} onChange={e => setGroupLabel(e.target.value)} placeholder="Label (e.g. Questions 1–5)" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
-          <button onClick={addGroup} disabled={!addingGroupType} className="rounded-2xl bg-[#3b2f2f] py-2 text-sm font-semibold text-white disabled:opacity-40">+ Add Group</button>
-        </div>
+       <div className="grid gap-2 md:grid-cols-2">
+  <select value={addingGroupType} onChange={e => setAddingGroupType(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+    <option value="">Select type...</option>
+    {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
+  </select>
+  <input type="text" value={groupLabel} onChange={e => setGroupLabel(e.target.value)} placeholder="e.g. Questions 1–5" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+</div>
+<div className="grid gap-2 md:grid-cols-2 mt-2">
+  <input type="text" value={groupWordLimit} onChange={e => setGroupWordLimit(e.target.value)} placeholder="Word limit — e.g. NO MORE THAN TWO WORDS AND/OR A NUMBER" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+  <div className="flex items-center gap-3">
+    <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+      <input type="checkbox" checked={groupIsSection4} onChange={e => setGroupIsSection4(e.target.checked)} className="h-4 w-4" />
+      Section 4 (no reading break)
+    </label>
+    <button onClick={addGroup} disabled={!addingGroupType} className="flex-1 rounded-2xl bg-[#3b2f2f] py-2 text-sm font-semibold text-white disabled:opacity-40">+ Add Group</button>
+  </div>
+</div>
       </div>
     </div>
   );
