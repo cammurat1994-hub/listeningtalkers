@@ -21,6 +21,7 @@ type Props = {
 type Phase =
   | { type: "reading"; sectionIndex: number; countdown: number }
   | { type: "listening"; sectionIndex: number }
+  | { type: "checking"; sectionIndex: number; countdown: number }
   | { type: "review"; countdown: number }
   | { type: "done" };
 
@@ -38,6 +39,8 @@ function checkAnswer(userAnswer: string, correctAnswer: string): boolean {
   return correctAnswer.split("|").map(normalize).some(v => v === normalize(userAnswer));
 }
 
+// ─── Question Renderers ───────────────────────────────────────────────────────
+
 function MCQRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   group: { label: string; data: unknown };
   sectionNum: number;
@@ -45,13 +48,12 @@ function MCQRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   onAnswer: (key: string, val: string) => void;
   locked: boolean;
 }) {
-  const qs = group.data as { question: string; options: Record<string, string>; correctAnswer: string; explanation?: string }[];
-  if (!qs?.length) return null;
+  const qs = (Array.isArray(group.data) ? group.data : []) as { question: string; options: Record<string, string>; correctAnswer: string; explanation?: string }[];
+  if (!qs.length) return null;
   return (
     <div className="flex flex-col gap-4">
       {qs.map((q, i) => {
         const key = `${sectionNum}-${group.label}-mcq-${i}`;
-        const isCorrect = locked && answers[key] === q.correctAnswer;
         return (
           <div key={i} className="rounded-2xl border border-[#e0c7bb] bg-white p-5">
             <p className="font-semibold text-sm mb-3">{i + 1}. {q.question}</p>
@@ -398,6 +400,8 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
   const [totalElapsed, setTotalElapsed] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const READING_TIME = 45;
+  const CHECKING_TIME = 30;
   const REVIEW_TIME = 600;
 
   useEffect(() => {
@@ -408,6 +412,16 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
           if (prev.countdown <= 1) return { type: "listening", sectionIndex: prev.sectionIndex };
           return { ...prev, countdown: prev.countdown - 1 };
         }
+        if (prev.type === "checking") {
+          if (prev.countdown <= 1) {
+            if (prev.sectionIndex < sections.length - 1) {
+              return { type: "reading", sectionIndex: prev.sectionIndex + 1, countdown: READING_TIME };
+            } else {
+              return { type: "review", countdown: REVIEW_TIME };
+            }
+          }
+          return { ...prev, countdown: prev.countdown - 1 };
+        }
         if (prev.type === "review") {
           if (prev.countdown <= 1) { onFinish(); return { type: "done" }; }
           return { ...prev, countdown: prev.countdown - 1 };
@@ -416,7 +430,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [sections.length]);
 
   useEffect(() => {
     if (phase.type === "listening") {
@@ -430,28 +444,33 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
 
   function handleAudioEnded() {
     const currentSectionIndex = phase.type === "listening" ? phase.sectionIndex : 0;
-    if (currentSectionIndex < sections.length - 1) {
-      setPhase({ type: "reading", sectionIndex: currentSectionIndex + 1, countdown: 45 });
-    } else {
-      setPhase({ type: "review", countdown: REVIEW_TIME });
-    }
+    setPhase({ type: "checking", sectionIndex: currentSectionIndex, countdown: CHECKING_TIME });
   }
 
   function handleAnswer(key: string, val: string) {
     onUpdateAnswers({ ...answers, [key]: val });
   }
 
-  function skipToNextSection() {
+  function skipReading() {
+    if (phase.type === "reading") {
+      setPhase({ type: "listening", sectionIndex: phase.sectionIndex });
+    }
+  }
+
+  function skipToChecking() {
     if (phase.type === "listening") {
       if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
       handleAudioEnded();
     }
   }
 
-  function skipReading() {
-    if (phase.type === "reading") {
-      const currentSectionIndex = phase.sectionIndex;
-      setPhase({ type: "listening", sectionIndex: currentSectionIndex });
+  function skipChecking() {
+    if (phase.type === "checking") {
+      if (phase.sectionIndex < sections.length - 1) {
+        setPhase({ type: "reading", sectionIndex: phase.sectionIndex + 1, countdown: READING_TIME });
+      } else {
+        setPhase({ type: "review", countdown: REVIEW_TIME });
+      }
     }
   }
 
@@ -461,7 +480,9 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
 
   const currentSectionIndex =
     phase.type === "reading" ? phase.sectionIndex :
-    phase.type === "listening" ? phase.sectionIndex : 0;
+    phase.type === "listening" ? phase.sectionIndex :
+    phase.type === "checking" ? phase.sectionIndex : 0;
+
   const currentSection = sections[currentSectionIndex];
 
   return (
@@ -481,7 +502,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
               ))}
             </div>
             <span className="text-sm font-semibold">
-              {phase.type === "review" ? "Review" : `Section ${currentSection?.number || ""}`}
+              {phase.type === "review" ? "📋 Review" : `Section ${currentSection?.number || ""}`}
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -493,6 +514,11 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
             {phase.type === "listening" && (
               <div className="rounded-full bg-blue-100 px-4 py-1.5 text-sm font-bold text-blue-600 animate-pulse">
                 🔊 Listening...
+              </div>
+            )}
+            {phase.type === "checking" && (
+              <div className={`rounded-full px-4 py-1.5 text-sm font-bold ${phase.countdown <= 10 ? "bg-red-100 text-red-600" : "bg-yellow-100 text-yellow-700"}`}>
+                ✏️ {formatTime(phase.countdown)}
               </div>
             )}
             {phase.type === "review" && (
@@ -511,19 +537,27 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
         {phase.type === "reading" && currentSection && (
           <div>
             <div className="mb-6 rounded-[2rem] border border-blue-200 bg-blue-50 p-5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-bold text-blue-700">📖 Read the questions — Section {currentSection.number}</p>
+                  <p className="font-bold text-blue-700 text-lg">
+                    Section {currentSection.number} — Read the questions
+                  </p>
                   <p className="mt-1 text-sm text-blue-600">
-                    Audio starts in <strong>{phase.countdown}s</strong>. Read all questions carefully before listening.
+                    You have <strong>{phase.countdown} seconds</strong> to read the questions before the audio starts. Read carefully.
+                  </p>
+                  <p className="mt-1 text-xs text-blue-500 italic">
+                    {currentSection.number === 1 && "You will hear a conversation between two people."}
+                    {currentSection.number === 2 && "You will hear a monologue about a local topic."}
+                    {currentSection.number === 3 && "You will hear a discussion between students or academics."}
+                    {currentSection.number === 4 && "You will hear an academic lecture or talk."}
                   </p>
                 </div>
-                <button onClick={skipReading} className="rounded-2xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">
+                <button onClick={skipReading} className="shrink-0 rounded-2xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">
                   Ready →
                 </button>
               </div>
               <div className="mt-3 h-1.5 w-full rounded-full bg-blue-200">
-                <div className="h-1.5 rounded-full bg-blue-500 transition-all duration-1000" style={{ width: `${(phase.countdown / 45) * 100}%` }} />
+                <div className="h-1.5 rounded-full bg-blue-500 transition-all duration-1000" style={{ width: `${(phase.countdown / READING_TIME) * 100}%` }} />
               </div>
             </div>
             <div className="flex flex-col gap-4">
@@ -540,17 +574,51 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
             <div className="mb-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#3b2f2f]">
-                    <img src="/cat-logo.svg" alt="" className="h-7 w-7 object-contain" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#3b2f2f] animate-pulse">
+                    <img src="/cat-logo.svg" alt="" className="h-8 w-8 object-contain" />
                   </div>
                   <div>
                     <p className="font-bold">Section {currentSection.number} — Now Playing</p>
-                    <p className="text-xs text-[#7a6258]">🔊 Audio plays once. Write your answers as you listen.</p>
+                    <p className="text-xs text-[#7a6258]">🔊 Audio plays once only. Write your answers as you listen.</p>
                   </div>
                 </div>
-                <button onClick={skipToNextSection} className="rounded-2xl border border-[#e0c7bb] bg-white px-3 py-2 text-xs font-semibold hover:bg-[#f1ded5]">
+                <button onClick={skipToChecking} className="rounded-2xl border border-[#e0c7bb] bg-white px-3 py-2 text-xs font-semibold hover:bg-[#f1ded5]">
                   Skip →
                 </button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-4">
+              {currentSection.questionGroups.map((group, gi) => (
+                <QuestionGroupView key={gi} group={group} sectionNum={currentSection.number} answers={answers} onAnswer={handleAnswer} locked={false} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Checking phase */}
+        {phase.type === "checking" && currentSection && (
+          <div>
+            <div className="mb-6 rounded-[2rem] border border-yellow-200 bg-yellow-50 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-bold text-yellow-700 text-lg">
+                    That is the end of Section {currentSection.number}.
+                  </p>
+                  <p className="mt-1 text-sm text-yellow-600">
+                    You have <strong>{phase.countdown} seconds</strong> to check your answers for this section.
+                  </p>
+                  {phase.sectionIndex < sections.length - 1 && (
+                    <p className="mt-1 text-xs text-yellow-600">
+                      Now turn to Section {currentSection.number + 1}...
+                    </p>
+                  )}
+                </div>
+                <button onClick={skipChecking} className="shrink-0 rounded-2xl bg-yellow-500 px-4 py-2 text-xs font-bold text-white hover:bg-yellow-600">
+                  {phase.sectionIndex < sections.length - 1 ? `Next Section →` : "Review All →"}
+                </button>
+              </div>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-yellow-200">
+                <div className="h-1.5 rounded-full bg-yellow-500 transition-all duration-1000" style={{ width: `${(phase.countdown / CHECKING_TIME) * 100}%` }} />
               </div>
             </div>
             <div className="flex flex-col gap-4">
@@ -565,10 +633,23 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
         {phase.type === "review" && (
           <div>
             <div className="mb-6 rounded-[2rem] border border-green-200 bg-green-50 p-5">
-              <p className="font-bold text-green-700">✅ All sections complete — Review your answers</p>
-              <p className="mt-1 text-sm text-green-600">
-                You have <strong>{formatTime(phase.countdown)}</strong> to check and edit your answers.
-              </p>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-bold text-green-700 text-lg">
+                    That is the end of the listening test.
+                  </p>
+                  <p className="mt-1 text-sm text-green-600">
+                    You now have <strong>{formatTime(phase.countdown)}</strong> to transfer your answers to the answer sheet.
+                  </p>
+                  <p className="mt-1 text-xs text-green-500">Review and edit any answers before submitting.</p>
+                </div>
+                <button onClick={onFinish} className="shrink-0 rounded-2xl bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700">
+                  Submit →
+                </button>
+              </div>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-green-200">
+                <div className="h-1.5 rounded-full bg-green-500 transition-all duration-1000" style={{ width: `${(phase.countdown / REVIEW_TIME) * 100}%` }} />
+              </div>
             </div>
             {sections.map((section, si) => (
               <div key={si} className="mb-8">
