@@ -31,8 +31,8 @@ type FlowQuestion = { title: string; steps: FlowStep[]; };
 type SentenceItem = { text: string; answer: string; };
 type SentenceQuestion = { items: SentenceItem[]; };
 type QuestionGroupType = "mcq" | "form-completion" | "note-completion" | "table-completion" | "flow-completion" | "sentence-completion" | "short-answer" | "matching" | "map";
-type QuestionGroup = { id: string; type: QuestionGroupType; label: string; data: any; };
-type ExamSection = { id: string; number: number; audioFile: File | null; audioUrl: string; questionGroups: QuestionGroup[]; };
+type QuestionGroup = { id: string; type: QuestionGroupType; label: string; wordLimit?: string; isSection4?: boolean; data: any; };
+type ExamSection = { id: string; number: number; audioFile: File | null; audioUrl: string; introFile?: File | null; introUrl?: string; questionGroups: QuestionGroup[]; };
 type PublishedEpisode = { id: string; title: string; level: string; episode_type: EpisodeType; };
 type AdminTab = "new" | "manage" | "users";
 
@@ -94,7 +94,7 @@ function createEmptyGroupData(type: QuestionGroupType): any {
 }
 
 function createEmptySection(number: number): ExamSection {
-  return { id: `section-${Date.now()}-${number}`, number, audioFile: null, audioUrl: "", questionGroups: [] };
+  return { id: `section-${Date.now()}-${number}`, number, audioFile: null, audioUrl: "", introFile: null, introUrl: "", questionGroups: [] };
 }
 
 const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: "", C: "", D: "", E: "" }, correctAnswer: "A", explanation: "" });
@@ -262,10 +262,12 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
   return (
     <div className="rounded-2xl border-2 border-[#e0c7bb] bg-white p-5">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-lg">{typeLabel?.emoji}</span>
           <span className="font-bold text-sm">{typeLabel?.label}</span>
           <span className="text-xs text-[#7a6258]">— {group.label}</span>
+          {group.wordLimit && <span className="rounded-full bg-[#ead7cc] px-2 py-0.5 text-xs font-semibold text-[#3b2f2f]">{group.wordLimit}</span>}
+          {group.isSection4 && <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">Section 4</span>}
         </div>
         <div className="flex gap-2">
           {group.type !== "map" && (
@@ -490,32 +492,32 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
 
 // ─── Exam Section Editor ──────────────────────────────────────────────────────
 
-function ExamSectionEditor({ section, onChange, onRemove, uploadAudio }: {
+function ExamSectionEditor({ section, onChange, onRemove }: {
   section: ExamSection;
   onChange: (s: ExamSection) => void;
   onRemove: () => void;
-  uploadAudio: (file: File) => Promise<string>;
 }) {
   const [addingGroupType, setAddingGroupType] = useState<QuestionGroupType | "">("");
   const [groupLabel, setGroupLabel] = useState("");
-const [groupWordLimit, setGroupWordLimit] = useState("");
-const [groupIsSection4, setGroupIsSection4] = useState(false);
-function addGroup() {
-  if (!addingGroupType) return;
-  const newGroup: QuestionGroup = {
-    id: `group-${Date.now()}`,
-    type: addingGroupType,
-    label: groupLabel || `Questions ${section.questionGroups.length * 5 + 1}–${(section.questionGroups.length + 1) * 5}`,
-    wordLimit: groupWordLimit || "NO MORE THAN TWO WORDS AND/OR A NUMBER",
-    isSection4: groupIsSection4,
-    data: createEmptyGroupData(addingGroupType),
-  };
-  onChange({ ...section, questionGroups: [...section.questionGroups, newGroup] });
-  setAddingGroupType("");
-  setGroupLabel("");
-  setGroupWordLimit("");
-  setGroupIsSection4(false);
-}
+  const [groupWordLimit, setGroupWordLimit] = useState("");
+  const [groupIsSection4, setGroupIsSection4] = useState(false);
+
+  function addGroup() {
+    if (!addingGroupType) return;
+    const newGroup: QuestionGroup = {
+      id: `group-${Date.now()}`,
+      type: addingGroupType,
+      label: groupLabel || `Questions ${section.questionGroups.length * 5 + 1}–${(section.questionGroups.length + 1) * 5}`,
+      wordLimit: groupWordLimit || "NO MORE THAN TWO WORDS AND/OR A NUMBER",
+      isSection4: groupIsSection4,
+      data: createEmptyGroupData(addingGroupType),
+    };
+    onChange({ ...section, questionGroups: [...section.questionGroups, newGroup] });
+    setAddingGroupType("");
+    setGroupLabel("");
+    setGroupWordLimit("");
+    setGroupIsSection4(false);
+  }
 
   return (
     <div className="rounded-3xl border-2 border-[#3b2f2f] bg-[#fffaf7] p-6">
@@ -523,11 +525,31 @@ function addGroup() {
         <h3 className="text-xl font-bold">Section {section.number}</h3>
         <button onClick={onRemove} className="rounded-2xl border border-red-200 bg-white px-3 py-1 text-sm font-semibold text-red-600">Remove Section</button>
       </div>
+
+      {/* Intro Audio */}
+      <div className="mb-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+        <label className="mb-2 block text-sm font-semibold">
+          🎙️ Intro Audio
+          <span className="ml-2 font-normal text-xs text-[#7a6258]">(yönlendirme cümleleri + sessizlikler)</span>
+        </label>
+        {section.introUrl && <p className="mb-1 text-xs text-green-600">✓ Intro audio uploaded</p>}
+        <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, introFile: f, introUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+        <p className="mt-1 text-xs text-[#7a6258]">
+          {section.number === 1 && "Örnek: \"Now turn to Section 1. You will hear a conversation between two people. First you have some time to look at Questions 1 to 5.\" → 25sn sessizlik → konuşma → \"Before you hear the rest...\" → 20sn sessizlik → konuşma → \"That is the end of Section 1...\" → 30sn sessizlik"}
+          {section.number === 2 && "Örnek: \"Now turn to Section 2. You will hear a talk about local facilities. First you have some time to look at Questions 11 to 15.\" → 25sn sessizlik → konuşma → ara → konuşma → \"That is the end of Section 2...\" → 30sn sessizlik"}
+          {section.number === 3 && "Örnek: \"Now turn to Section 3. You will hear a discussion between students. First you have some time to look at Questions 21 to 25.\" → 25sn sessizlik → konuşma → ara → konuşma → \"That is the end of Section 3...\" → 30sn sessizlik"}
+          {section.number === 4 && "Örnek: \"Now turn to Section 4. You will hear a lecture. You now have some time to look at Questions 31 to 40.\" → 45sn sessizlik → ders başlar (ARA YOK) → \"That is the end of the listening test. You now have 10 minutes to transfer your answers.\""}
+        </p>
+      </div>
+
+      {/* Main Audio */}
       <div className="mb-5">
-        <label className="mb-2 block text-sm font-semibold">Section {section.number} Audio</label>
-        {section.audioUrl && <p className="mb-1 text-xs text-green-600">✓ Audio uploaded</p>}
+        <label className="mb-2 block text-sm font-semibold">🔊 Main Audio <span className="font-normal text-xs text-[#7a6258]">(sadece konuşma içeriği)</span></label>
+        {section.audioUrl && <p className="mb-1 text-xs text-green-600">✓ Main audio uploaded</p>}
         <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, audioFile: f, audioUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
       </div>
+
+      {/* Question Groups */}
       <div className="flex flex-col gap-4">
         {section.questionGroups.map((group, gi) => (
           <QuestionGroupEditor key={group.id} group={group}
@@ -536,25 +558,27 @@ function addGroup() {
           />
         ))}
       </div>
+
+      {/* Add Group */}
       <div className="mt-5 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
         <p className="mb-3 text-sm font-semibold text-[#7a6258]">Add Question Group to Section {section.number}</p>
-       <div className="grid gap-2 md:grid-cols-2">
-  <select value={addingGroupType} onChange={e => setAddingGroupType(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
-    <option value="">Select type...</option>
-    {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
-  </select>
-  <input type="text" value={groupLabel} onChange={e => setGroupLabel(e.target.value)} placeholder="e.g. Questions 1–5" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
-</div>
-<div className="grid gap-2 md:grid-cols-2 mt-2">
-  <input type="text" value={groupWordLimit} onChange={e => setGroupWordLimit(e.target.value)} placeholder="Word limit — e.g. NO MORE THAN TWO WORDS AND/OR A NUMBER" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
-  <div className="flex items-center gap-3">
-    <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
-      <input type="checkbox" checked={groupIsSection4} onChange={e => setGroupIsSection4(e.target.checked)} className="h-4 w-4" />
-      Section 4 (no reading break)
-    </label>
-    <button onClick={addGroup} disabled={!addingGroupType} className="flex-1 rounded-2xl bg-[#3b2f2f] py-2 text-sm font-semibold text-white disabled:opacity-40">+ Add Group</button>
-  </div>
-</div>
+        <div className="grid gap-2 md:grid-cols-2">
+          <select value={addingGroupType} onChange={e => setAddingGroupType(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+            <option value="">Select type...</option>
+            {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
+          </select>
+          <input type="text" value={groupLabel} onChange={e => setGroupLabel(e.target.value)} placeholder="e.g. Questions 1–5" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+        </div>
+        <div className="grid gap-2 md:grid-cols-2 mt-2">
+          <input type="text" value={groupWordLimit} onChange={e => setGroupWordLimit(e.target.value)} placeholder="Word limit — e.g. NO MORE THAN TWO WORDS AND/OR A NUMBER" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+              <input type="checkbox" checked={groupIsSection4} onChange={e => setGroupIsSection4(e.target.checked)} className="h-4 w-4" />
+              Section 4 (no reading break)
+            </label>
+            <button onClick={addGroup} disabled={!addingGroupType} className="flex-1 rounded-2xl bg-[#3b2f2f] py-2 text-sm font-semibold text-white disabled:opacity-40">+ Add Group</button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -603,17 +627,18 @@ export default function AdminScreen({ onBack }: Props) {
   const [users, setUsers] = useState<{ email: string; created_at: string }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [copied, setCopied] = useState(false);
-const [managePage, setManagePage] = useState(0);
+  const [managePage, setManagePage] = useState(0);
+
   const isPractice = episodeType.startsWith("practice-");
   const isCompletion = episodeType.startsWith("practice-completion-");
   const isExam = episodeType.startsWith("exam-");
 
   useEffect(() => { fetchEpisodes(); }, []);
 
-async function fetchEpisodes() {
-  const { data, error } = await supabase.from("episodes").select("id, title, level, episode_type").order("created_at", { ascending: false });
-  if (!error && data) setPublishedEpisodes(data);
-}
+  async function fetchEpisodes() {
+    const { data, error } = await supabase.from("episodes").select("id, title, level, episode_type").order("created_at", { ascending: false });
+    if (!error && data) setPublishedEpisodes(data);
+  }
 
   async function fetchUsers() {
     setLoadingUsers(true);
@@ -626,23 +651,14 @@ async function fetchEpisodes() {
   }
 
   async function uploadFile(file: File, folder: string) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("folder", folder);
-
-  const res = await fetch("/api/upload", {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Upload failed");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Upload failed"); }
+    const { url } = await res.json();
+    return url;
   }
-
-  const { url } = await res.json();
-  return url;
-}
 
   function handleMapImageSelect(file: File) {
     setMapImageFile(file);
@@ -663,12 +679,12 @@ async function fetchEpisodes() {
   }
 
   async function publishEpisode() {
-  if (!title) { alert("Please enter episode title."); return; }
-  if ((episodeType === "practice-map" || episodeType.startsWith("practice-completion-")) && level === "Beginner") {
-    alert("Map Labelling and Completions are not available for Beginner level."); return;
-  }
-  setUploading(true);
-  try {
+    if (!title) { alert("Please enter episode title."); return; }
+    if ((episodeType === "practice-map" || episodeType.startsWith("practice-completion-")) && level === "Beginner") {
+      alert("Map Labelling and Completions are not available for Beginner level."); return;
+    }
+    setUploading(true);
+    try {
       let audioUrl = existingAudioUrl;
       if (audioFile) audioUrl = await uploadFile(audioFile, "episode");
       let pdfUrl = existingPdfUrl;
@@ -680,6 +696,8 @@ async function fetchEpisodes() {
         const processedSections = await Promise.all(examSections.map(async section => {
           let sectionAudioUrl = section.audioUrl;
           if (section.audioFile) sectionAudioUrl = await uploadFile(section.audioFile, "section");
+          let introUrl = section.introUrl || "";
+          if (section.introFile) introUrl = await uploadFile(section.introFile, "intro");
           const processedGroups = await Promise.all(section.questionGroups.map(async group => {
             if (group.type === "map" && group.data?._imageFile) {
               const imageUrl = await uploadFile(group.data._imageFile, "map");
@@ -688,7 +706,7 @@ async function fetchEpisodes() {
             }
             return group;
           }));
-          return { number: section.number, audioUrl: sectionAudioUrl, questionGroups: processedGroups };
+          return { number: section.number, audioUrl: sectionAudioUrl, introUrl, questionGroups: processedGroups };
         }));
         sections = processedSections;
       } else if (!audioUrl) {
@@ -761,7 +779,12 @@ async function fetchEpisodes() {
     setBulkMode(false); setBulkText(""); setBulkError("");
     setCompletionBulkText(""); setCompletionBulkMode(false);
     if (data.sections && data.episode_type?.startsWith("exam-")) {
-      setExamSections(data.sections.map((s: any) => ({ id: `section-${s.number}`, number: s.number, audioFile: null, audioUrl: s.audioUrl || "", questionGroups: s.questionGroups || [] })));
+      setExamSections(data.sections.map((s: any) => ({
+        id: `section-${s.number}`, number: s.number,
+        audioFile: null, audioUrl: s.audioUrl || "",
+        introFile: null, introUrl: s.introUrl || "",
+        questionGroups: s.questionGroups || []
+      })));
     }
     if (data.questions) {
       const et = data.episode_type;
@@ -862,8 +885,8 @@ async function fetchEpisodes() {
                       <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
                     </select>
                     {(episodeType === "practice-map" || episodeType.startsWith("practice-completion-")) && level === "Beginner" && (
-  <p className="mt-2 text-sm text-orange-600 font-semibold">⚠️ Map Labelling and Completions are not available for Beginner level. Please select Intermediate or Advanced.</p>
-)}
+                      <p className="mt-2 text-sm text-orange-600 font-semibold">⚠️ Map Labelling and Completions are not available for Beginner level.</p>
+                    )}
                   </div>
                 )}
                 <div>
@@ -895,7 +918,7 @@ async function fetchEpisodes() {
                   <button onClick={() => setExamSections([...examSections, createEmptySection(examSections.length + 1)])} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold hover:bg-[#f1ded5]">+ Add Section</button>
                 </div>
                 {examSections.map((section, si) => (
-                  <ExamSectionEditor key={section.id} section={section} uploadAudio={file => uploadFile(file, "section")}
+                  <ExamSectionEditor key={section.id} section={section}
                     onChange={updated => { const u = [...examSections]; u[si] = updated; setExamSections(u); }}
                     onRemove={() => setExamSections(examSections.filter((_, i) => i !== si).map((s, i) => ({ ...s, number: i + 1 })))}
                   />
@@ -1249,66 +1272,62 @@ async function fetchEpisodes() {
           </div>
         )}
 
-     {activeTab === "manage" && (
-  <div className="mt-8">
-    <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-      <h2 className="text-2xl font-bold">Episodes</h2>
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
-        <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setManagePage(0); }} placeholder="🔍 Search..." className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
-        <select value={filterType} onChange={e => { setFilterType(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
-          <option value="all">All Types</option>
-          {ALL_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
-        </select>
-        <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
-          <option value="all">All Levels</option>
-          {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-        </select>
-      </div>
-      {(() => {
-        const MANAGE_PAGE_SIZE = 15;
-        const totalPages = Math.ceil(filteredEpisodes.length / MANAGE_PAGE_SIZE);
-        const pagedEpisodes = filteredEpisodes.slice(managePage * MANAGE_PAGE_SIZE, (managePage + 1) * MANAGE_PAGE_SIZE);
-        return (
-          <>
-            <div className="mt-3 flex items-center justify-between">
-              <p className="text-sm text-[#7a6258]">{filteredEpisodes.length} episode found</p>
-              {totalPages > 1 && <p className="text-sm text-[#7a6258]">Page {managePage + 1} / {totalPages}</p>}
-            </div>
-            <div className="mt-4 flex flex-col gap-3">
-              {pagedEpisodes.map(ep => (
-                <div key={ep.id} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                  <div>
-                    <p className="text-xs text-[#7a6258]">{ep.level ? `${ep.level} — ` : ""}{ALL_TYPES.find(t => t.id === ep.episode_type)?.label || ep.episode_type}</p>
-                    <p className="font-bold">{ep.title}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleEdit(ep.id)} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
-                    <button onClick={async () => { if (!confirm("Delete?")) return; await supabase.from("episodes").delete().eq("id", ep.id); fetchEpisodes(); }} className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
-                  </div>
-                </div>
-              ))}
-              {pagedEpisodes.length === 0 && <p className="py-8 text-center text-[#7a6258]">No episodes found.</p>}
-            </div>
-            {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
-                <button onClick={() => setManagePage(p => Math.max(0, p - 1))} disabled={managePage === 0}
-                  className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">← Prev</button>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button key={i} onClick={() => setManagePage(i)}
-                    className={`rounded-2xl px-4 py-2 text-sm font-semibold ${managePage === i ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
-                    {i + 1}
-                  </button>
-                ))}
-                <button onClick={() => setManagePage(p => Math.min(totalPages - 1, p + 1))} disabled={managePage === totalPages - 1}
-                  className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Next →</button>
+        {/* MANAGE TAB */}
+        {activeTab === "manage" && (
+          <div className="mt-8">
+            <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+              <h2 className="text-2xl font-bold">Practices</h2>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setManagePage(0); }} placeholder="🔍 Search..." className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+                <select value={filterType} onChange={e => { setFilterType(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
+                  <option value="all">All Types</option>
+                  {ALL_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
+                </select>
+                <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
+                  <option value="all">All Levels</option>
+                  {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
               </div>
-            )}
-          </>
-        );
-      })()}
-    </div>
-  </div>
-)}
+              {(() => {
+                const MANAGE_PAGE_SIZE = 15;
+                const totalPages = Math.ceil(filteredEpisodes.length / MANAGE_PAGE_SIZE);
+                const pagedEpisodes = filteredEpisodes.slice(managePage * MANAGE_PAGE_SIZE, (managePage + 1) * MANAGE_PAGE_SIZE);
+                return (
+                  <>
+                    <div className="mt-3 flex items-center justify-between">
+                      <p className="text-sm text-[#7a6258]">{filteredEpisodes.length} practice found</p>
+                      {totalPages > 1 && <p className="text-sm text-[#7a6258]">Page {managePage + 1} / {totalPages}</p>}
+                    </div>
+                    <div className="mt-4 flex flex-col gap-3">
+                      {pagedEpisodes.map(ep => (
+                        <div key={ep.id} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                          <div>
+                            <p className="text-xs text-[#7a6258]">{ep.level ? `${ep.level} — ` : ""}{ALL_TYPES.find(t => t.id === ep.episode_type)?.label || ep.episode_type}</p>
+                            <p className="font-bold">{ep.title}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => handleEdit(ep.id)} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
+                            <button onClick={async () => { if (!confirm("Delete?")) return; await supabase.from("episodes").delete().eq("id", ep.id); fetchEpisodes(); }} className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
+                          </div>
+                        </div>
+                      ))}
+                      {pagedEpisodes.length === 0 && <p className="py-8 text-center text-[#7a6258]">No episodes found.</p>}
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+                        <button onClick={() => setManagePage(p => Math.max(0, p - 1))} disabled={managePage === 0} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">← Prev</button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                          <button key={i} onClick={() => setManagePage(i)} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${managePage === i ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>{i + 1}</button>
+                        ))}
+                        <button onClick={() => setManagePage(p => Math.min(totalPages - 1, p + 1))} disabled={managePage === totalPages - 1} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Next →</button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* USERS TAB */}
         {activeTab === "users" && (
