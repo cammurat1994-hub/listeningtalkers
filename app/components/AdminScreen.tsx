@@ -16,7 +16,11 @@ type MCQQuestion = { question: string; options: { A: string; B: string; C: strin
 type FillQuestion = { text: string; blanks: { index: number; answer: string }[]; };
 type DictationQuestion = { sentence: string; };
 type ShortAnswerQuestion = { question: string; answer: string; hint?: string; };
-type MatchingQuestion = { pairs: { left: string; right: string }[]; };
+type MatchingQuestion = {
+  items: string[];
+  options: { key: string; label: string }[];
+  answers: Record<string, string>;
+};
 type MapPoint = { id: number; x: number; y: number; answer: string; explanation: string; };
 type MapOption = { key: string; label: string; };
 type MapQuestion = { points: MapPoint[]; options: MapOption[]; };
@@ -127,7 +131,15 @@ const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: 
 const createEmptyFill = (): FillQuestion => ({ text: "", blanks: [] });
 const createEmptyDictation = (): DictationQuestion => ({ sentence: "" });
 const createEmptyShort = (): ShortAnswerQuestion => ({ question: "", answer: "", hint: "" });
-const createEmptyMatching = (): MatchingQuestion => ({ pairs: [{ left: "", right: "" }, { left: "", right: "" }, { left: "", right: "" }] });
+const createEmptyMatching = (): MatchingQuestion => ({
+  items: ["", "", "", "", ""],
+  options: [
+    { key: "A", label: "" }, { key: "B", label: "" }, { key: "C", label: "" },
+    { key: "D", label: "" }, { key: "E", label: "" }, { key: "F", label: "" },
+    { key: "G", label: "" },
+  ],
+  answers: {},
+});
 const createEmptyMap = (): MapQuestion => ({ points: [], options: OPTION_KEYS.slice(0, 6).map(k => ({ key: k, label: "" })) });
 const createEmptyNote = (): NoteQuestion => ({ title: "", items: [{ label: "", answer: "" }, { label: "", answer: "" }, { label: "", answer: "" }] });
 const createEmptyForm = (): FormQuestion => ({ title: "", fields: [{ label: "", answer: "" }, { label: "", answer: "" }, { label: "", answer: "" }] });
@@ -239,7 +251,7 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
       case "flow-completion": return `TITLE) Process\nSTEP) Start at ___\nSTEP) Check documents\nSTEP) Submit if ___\nANS1) main desk\nANS2) approved`;
       case "sentence-completion": return `S) The conference will be held in ___ next month.\nS) Arrive ___ minutes early.\nANS1) Berlin\nANS2) fifteen|15`;
       case "short-answer": return `Q) What time does it close?\nA) 9pm|nine\nH) Hint (optional)\n\nQ) Where is it held?\nA) conference room`;
-      case "matching": return `L) Monday\nR) First day\n\nL) Tuesday\nR) Second day`;
+      case "matching": return `Q1) Pinewood Cottage\nQ2) Hillside Lodge\nQ3) Riverside Retreat\nQ4) Oak House\nQ5) Valley View\nA) close to the beach\nB) provides free bicycles\nC) has a private garden\nD) recently renovated\nE) cheapest option\nF) has a swimming pool\nG) near a train station\nANS1) A\nANS2) B\nANS3) C\nANS4) D\nANS5) E`;
       default: return "";
     }
   }
@@ -267,17 +279,28 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         onChange(parsed);
         break;
       }
-      case "matching": {
-        const blocks = bulkText.trim().split(/\n{2,}/);
-        const pairs: { left: string; right: string }[] = [];
-        for (const block of blocks) {
-          const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
-          const lLine = lines.find(l => /^L\)/i.test(l));
-          const rLine = lines.find(l => /^R\)/i.test(l));
-          if (!lLine || !rLine) continue;
-          pairs.push({ left: lLine.replace(/^L\)\s*/i, "").trim(), right: rLine.replace(/^R\)\s*/i, "").trim() });
+  case "matching": {
+        const lines = bulkText.trim().split("\n").map(l => l.trim()).filter(Boolean);
+        const items: string[] = [];
+        const options: { key: string; label: string }[] = [];
+        const answers: Record<string, string> = {};
+        for (const line of lines) {
+          if (/^Q\d+\)/i.test(line)) {
+            const match = line.match(/^Q(\d+)\)\s*(.*)/i);
+            if (match) items.push(match[2].trim());
+          } else if (/^[A-G]\)/i.test(line)) {
+            const key = line[0].toUpperCase();
+            const label = line.replace(/^[A-G]\)\s*/i, "").trim();
+            options.push({ key, label });
+          } else if (/^ANS\d+\)/i.test(line)) {
+            const match = line.match(/^ANS(\d+)\)\s*([A-G])/i);
+            if (match) {
+              const itemIndex = String(parseInt(match[1]) - 1);
+              answers[itemIndex] = match[2].toUpperCase();
+            }
+          }
         }
-        onChange({ pairs });
+        onChange({ items, options, answers });
         break;
       }
     }
@@ -726,7 +749,7 @@ export default function AdminScreen({ onBack }: Props) {
       } else if (episodeType === "practice-fill") { questions = fillQuestions.filter(q => q.text.trim());
       } else if (episodeType === "practice-dictation") { questions = dictationQuestions.filter(q => q.sentence.trim());
       } else if (episodeType === "practice-short") { questions = shortQuestions.filter(q => q.question.trim() && q.answer.trim());
-      } else if (episodeType === "practice-matching") { questions = matchingQuestions;
+     } else if (episodeType === "practice-matching") { questions = matchingQuestions.length > 0 ? [matchingQuestions[0]] : [];
       } else if (episodeType === "practice-map") {
         if (!mapImageFile && !mapImageUrl) { alert("Please upload a map image."); setUploading(false); return; }
         const finalMapImageUrl = mapImageFile ? await uploadFile(mapImageFile, "map") : mapImageUrl;
@@ -1119,48 +1142,102 @@ exam_section: isPractice && examSection ? examSection : null,
               </div>
             )}
 
-            {/* Matching */}
+{/* Matching */}
             {episodeType === "practice-matching" && (
               <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Matching</h2>
-                  <button onClick={() => setMatchingQuestions([...matchingQuestions, createEmptyMatching()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Set</button>
+                  <h2 className="text-2xl font-bold">🔗 Matching</h2>
+                  <button onClick={() => setCompletionBulkMode(!completionBulkMode)} className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${completionBulkMode ? "bg-[#ead7cc]" : "border border-[#e0c7bb] bg-white"}`}>{completionBulkMode ? "Manual" : "Bulk Paste"}</button>
                 </div>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                  <pre className="text-xs leading-6 text-[#7a6258]">{`L) Monday\nR) First day\n\nL) Tuesday\nR) Second day`}</pre>
-                </div>
-                <textarea placeholder={`L) Monday\nR) First day`} className="mt-4 min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
-                  onChange={e => {
-                    const blocks = e.target.value.trim().split(/\n{2,}/);
-                    const pairs: { left: string; right: string }[] = [];
-                    for (const block of blocks) {
-                      const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
-                      const lLine = lines.find(l => /^L\)/i.test(l)); const rLine = lines.find(l => /^R\)/i.test(l));
-                      if (!lLine || !rLine) continue;
-                      pairs.push({ left: lLine.replace(/^L\)\s*/i, "").trim(), right: rLine.replace(/^R\)\s*/i, "").trim() });
-                    }
-                    if (pairs.length) setMatchingQuestions([{ pairs }]);
-                  }}
-                />
-                <div className="mt-4 flex flex-col gap-6">
-                  {matchingQuestions.map((mq, mi) => (
-                    <div key={mi} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-bold">Set {mi + 1}</span>
-                        <div className="flex gap-3">
-                          <button onClick={() => { const u = [...matchingQuestions]; u[mi].pairs.push({ left: "", right: "" }); setMatchingQuestions(u); }} className="text-sm font-semibold text-[#3b2f2f]">+ Pair</button>
-                          {matchingQuestions.length > 1 && <button onClick={() => setMatchingQuestions(matchingQuestions.filter((_, j) => j !== mi))} className="text-sm text-red-600">Remove</button>}
-                        </div>
+                {completionBulkMode && (
+                  <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
+                    <pre className="rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258] whitespace-pre-wrap">{`Q1) Pinewood Cottage\nQ2) Hillside Lodge\nQ3) Riverside Retreat\nQ4) Oak House\nQ5) Valley View\nA) close to the beach\nB) provides free bicycles\nC) has a private garden\nD) recently renovated\nE) cheapest option\nF) has a swimming pool\nG) near a train station\nANS1) A\nANS2) B\nANS3) C\nANS4) D\nANS5) E`}</pre>
+                    <textarea value={completionBulkText} onChange={e => setCompletionBulkText(e.target.value)} placeholder="Yapıştır..." className="mt-3 min-h-[250px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 font-mono text-sm" />
+                    <button onClick={() => {
+                      const lines = completionBulkText.trim().split("\n").map(l => l.trim()).filter(Boolean);
+                      const items: string[] = [];
+                      const options: { key: string; label: string }[] = [];
+                      const answers: Record<string, string> = {};
+                      for (const line of lines) {
+                        if (/^Q\d+\)/i.test(line)) {
+                          const match = line.match(/^Q(\d+)\)\s*(.*)/i);
+                          if (match) items.push(match[2].trim());
+                        } else if (/^[A-G]\)/i.test(line)) {
+                          const key = line[0].toUpperCase();
+                          const label = line.replace(/^[A-G]\)\s*/i, "").trim();
+                          options.push({ key, label });
+                        } else if (/^ANS\d+\)/i.test(line)) {
+                          const match = line.match(/^ANS(\d+)\)\s*([A-G])/i);
+                          if (match) answers[String(parseInt(match[1]) - 1)] = match[2].toUpperCase();
+                        }
+                      }
+                      setMatchingQuestions([{ items, options, answers } as any]);
+                      setCompletionBulkMode(false); setCompletionBulkText("");
+                    }} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Apply</button>
+                  </div>
+                )}
+                {!completionBulkMode && (
+                  <div className="mt-6">
+                    {/* Items (Questions) */}
+                    <div className="mb-5">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-semibold">Questions (left side) — 5 items</label>
                       </div>
-                      {mq.pairs.map((pair, pi) => (
-                        <div key={pi} className="mt-2 grid grid-cols-2 gap-2">
-                          <input type="text" value={pair.left} onChange={e => { const u = [...matchingQuestions]; u[mi].pairs[pi].left = e.target.value; setMatchingQuestions(u); }} placeholder={`Item ${pi + 1}`} className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
-                          <input type="text" value={pair.right} onChange={e => { const u = [...matchingQuestions]; u[mi].pairs[pi].right = e.target.value; setMatchingQuestions(u); }} placeholder={`Match ${pi + 1}`} className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                      {(matchingQuestions[0] as any)?.items?.map((item: string, i: number) => (
+                        <div key={i} className="mt-2 flex items-center gap-2">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{i + 1}</span>
+                          <input type="text" value={item} onChange={e => {
+                            const mq = matchingQuestions[0] as any;
+                            const newItems = [...mq.items];
+                            newItems[i] = e.target.value;
+                            setMatchingQuestions([{ ...mq, items: newItems }]);
+                          }} placeholder={`Item ${i + 1} (e.g. Pinewood Cottage)`} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-[#7a6258]">→</span>
+                            <select value={(matchingQuestions[0] as any)?.answers?.[String(i)] || ""} onChange={e => {
+                              const mq = matchingQuestions[0] as any;
+                              setMatchingQuestions([{ ...mq, answers: { ...mq.answers, [String(i)]: e.target.value } }]);
+                            }} className="rounded-xl border border-[#e0c7bb] bg-white p-1.5 text-xs">
+                              <option value="">Answer?</option>
+                              {(matchingQuestions[0] as any)?.options?.map((opt: any) => (
+                                <option key={opt.key} value={opt.key}>{opt.key}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                       ))}
                     </div>
-                  ))}
-                </div>
+                    {/* Options (right side) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-semibold">Options (right side) — A to G</label>
+                        <div className="flex gap-2">
+                          <button onClick={() => {
+                            const mq = matchingQuestions[0] as any;
+                            const keys = ["A","B","C","D","E","F","G"];
+                            const next = keys[mq.options.length];
+                            if (next) setMatchingQuestions([{ ...mq, options: [...mq.options, { key: next, label: "" }] }]);
+                          }} disabled={(matchingQuestions[0] as any)?.options?.length >= 7} className="rounded-xl bg-[#3b2f2f] px-2 py-0.5 text-xs text-white disabled:opacity-40">+</button>
+                          <button onClick={() => {
+                            const mq = matchingQuestions[0] as any;
+                            if (mq.options.length > 5) setMatchingQuestions([{ ...mq, options: mq.options.slice(0, -1) }]);
+                          }} disabled={(matchingQuestions[0] as any)?.options?.length <= 5} className="rounded-xl border border-[#e0c7bb] px-2 py-0.5 text-xs disabled:opacity-40">-</button>
+                        </div>
+                      </div>
+                      {(matchingQuestions[0] as any)?.options?.map((opt: any, i: number) => (
+                        <div key={opt.key} className="mt-2 flex items-center gap-2">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#ead7cc] text-xs font-bold text-[#3b2f2f]">{opt.key}</span>
+                          <input type="text" value={opt.label} onChange={e => {
+                            const mq = matchingQuestions[0] as any;
+                            const newOpts = [...mq.options];
+                            newOpts[i] = { ...newOpts[i], label: e.target.value };
+                            setMatchingQuestions([{ ...mq, options: newOpts }]);
+                          }} placeholder={`Option ${opt.key} label`} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

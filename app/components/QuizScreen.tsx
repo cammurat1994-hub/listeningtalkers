@@ -35,7 +35,9 @@ type ShortAnswerQuestion = {
 };
 
 type MatchingQuestion = {
-  pairs: { left: string; right: string }[];
+  items: string[];
+  options: { key: string; label: string }[];
+  answers: Record<string, string>;
 };
 
 type MapPoint = {
@@ -578,50 +580,86 @@ function ShortAnswerView({ question, answer, feedback, revealed, onChange, onChe
   );
 }
 
-function MatchingView({ question, userMatches, checked, onMatch, onCheck }: {
-  question: MatchingQuestion; userMatches: Record<number, number>; checked: boolean;
-  onMatch: (leftIdx: number, rightIdx: number) => void; onCheck: () => void;
+function MatchingView({ question, userAnswers, checked, onAnswer, onCheck }: {
+  question: MatchingQuestion;
+  userAnswers: Record<number, string>;
+  checked: boolean;
+  onAnswer: (itemIndex: number, optionKey: string) => void;
+  onCheck: () => void;
 }) {
-  const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
-  const shuffledRight = question.pairs.map((p, i) => ({ text: p.right, originalIdx: i })).sort((a, b) => a.originalIdx - b.originalIdx);
-  const isCorrect = (leftIdx: number) => userMatches[leftIdx] === leftIdx;
+  const isCorrect = (i: number) => userAnswers[i] === question.answers[String(i)];
+  const allAnswered = question.items.every((_, i) => userAnswers[i]);
+
   return (
     <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-      <p className="mb-4 text-sm font-semibold text-[#7a6258]">Match each item on the left with the correct description on the right:</p>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-bold text-[#7a6258] uppercase">Items</p>
-          {question.pairs.map((pair, i) => (
-            <button key={i} onClick={() => { if (!checked) setSelectedLeft(i); }}
-              className={`rounded-2xl border p-3 text-left text-sm font-semibold transition ${checked ? (isCorrect(i) ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50") : selectedLeft === i ? "border-[#3b2f2f] bg-[#ead7cc]" : userMatches[i] !== undefined ? "border-[#c9a99a] bg-[#f7eee8]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
-              {pair.left}
-              {userMatches[i] !== undefined && !checked && <span className="ml-2 text-xs text-[#7a6258]">→ {shuffledRight[userMatches[i]]?.text}</span>}
-            </button>
+      <p className="mb-2 text-sm font-semibold text-[#7a6258]">
+        Match each item with the correct option. Write the letter (A–G).
+      </p>
+
+      {/* Options list */}
+      <div className="mb-5 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+        <p className="text-xs font-bold uppercase tracking-wide text-[#7a6258] mb-2">Options</p>
+        <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+          {question.options.map(opt => (
+            <div key={opt.key} className="flex items-center gap-2 text-sm">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ead7cc] text-xs font-bold text-[#3b2f2f]">{opt.key}</span>
+              <span>{opt.label}</span>
+            </div>
           ))}
-        </div>
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-bold text-[#7a6258] uppercase">Matches</p>
-          {shuffledRight.map((item, i) => {
-            const isMatched = Object.values(userMatches).includes(i);
-            return (
-              <button key={i} onClick={() => { if (!checked && selectedLeft !== null) { onMatch(selectedLeft, i); setSelectedLeft(null); } }}
-                className={`rounded-2xl border p-3 text-left text-sm transition ${checked ? (Object.entries(userMatches).some(([l, r]) => Number(r) === i && Number(l) === item.originalIdx) ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50") : isMatched ? "border-[#c9a99a] bg-[#f7eee8]" : selectedLeft !== null ? "border-[#3b2f2f] bg-white hover:bg-[#ead7cc] cursor-pointer" : "border-[#e0c7bb] bg-white"}`}>
-                {item.text}
-              </button>
-            );
-          })}
         </div>
       </div>
+
+      {/* Questions */}
+      <div className="flex flex-col gap-3">
+        {question.items.map((item, i) => {
+          const selected = userAnswers[i];
+          const correct = question.answers[String(i)];
+          const correct_label = question.options.find(o => o.key === correct)?.label;
+          const selected_label = question.options.find(o => o.key === selected)?.label;
+
+          return (
+            <div key={i} className={`rounded-2xl border p-4 ${checked ? (isCorrect(i) ? "border-green-300 bg-green-50" : "border-red-300 bg-red-50") : "border-[#e0c7bb] bg-white"}`}>
+              <div className="flex items-start gap-3 flex-wrap">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{i + 1}</span>
+                <span className="flex-1 text-sm font-semibold pt-0.5">{item}</span>
+                {!checked ? (
+                  <select value={selected || ""} onChange={e => onAnswer(i, e.target.value)}
+                    className="rounded-xl border border-[#e0c7bb] bg-[#f7eee8] px-3 py-1.5 text-sm font-semibold">
+                    <option value="">Select...</option>
+                    {question.options.map(opt => (
+                      <option key={opt.key} value={opt.key}>{opt.key}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold ${isCorrect(i) ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}`}>
+                    {selected || "—"} {isCorrect(i) ? "✓" : `✗ → ${correct}`}
+                  </span>
+                )}
+              </div>
+              {checked && !isCorrect(i) && (
+                <div className="mt-2 ml-10 text-xs text-[#7a6258]">
+                  <span className="text-red-600">Your answer: {selected || "none"}) {selected_label || "—"}</span>
+                  <span className="mx-2">|</span>
+                  <span className="text-green-700">Correct: {correct}) {correct_label}</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {!checked && (
+        <button onClick={onCheck} disabled={!allAnswered}
+          className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white disabled:opacity-40">
+          {allAnswered ? "Check Answers" : `Answer all items (${Object.keys(userAnswers).length}/${question.items.length})`}
+        </button>
+      )}
+
       {checked && (
-        <div className="mt-4 flex flex-col gap-1">
-          {question.pairs.map((pair, i) => (
-            <p key={i} className={`text-sm font-semibold ${isCorrect(i) ? "text-green-600" : "text-red-600"}`}>
-              {isCorrect(i) ? `✓ ${pair.left} → ${pair.right}` : `✗ ${pair.left} → correct: ${pair.right}`}
-            </p>
-          ))}
+        <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold ${question.items.every((_, i) => isCorrect(i)) ? "bg-green-100 text-green-700" : "bg-[#f7eee8] text-[#7a6258]"}`}>
+          {question.items.filter((_, i) => isCorrect(i)).length}/{question.items.length} correct
         </div>
       )}
-      {!checked && <button onClick={onCheck} className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check Matches</button>}
     </div>
   );
 }
@@ -655,7 +693,7 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
   const [shortAnswers, setShortAnswers] = useState<Record<number, string>>({});
   const [shortFeedback, setShortFeedback] = useState<Record<number, boolean | null>>({});
   const [shortRevealed, setShortRevealed] = useState<Record<number, boolean>>({});
-  const [matchingAnswers, setMatchingAnswers] = useState<Record<number, Record<number, number>>>({});
+ const [matchingAnswers, setMatchingAnswers] = useState<Record<number, Record<number, string>>>({});
   const [matchingChecked, setMatchingChecked] = useState<Record<number, boolean>>({});
   const [mapAnswers, setMapAnswers] = useState<Record<number, string>>({});
   const [mapChecked, setMapChecked] = useState(false);
@@ -705,9 +743,9 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
         total++; if (dictationFeedback[i] === true) correct++;
       } else if (type === "practice-short") {
         total++; if (shortFeedback[i] === true) correct++;
-      } else if (type === "practice-matching") {
+     } else if (type === "practice-matching") {
         const mq = q as MatchingQuestion;
-        mq.pairs.forEach((_, pi) => { total++; if (matchingAnswers[i]?.[pi] === pi) correct++; });
+        mq.items.forEach((_, pi) => { total++; if (matchingAnswers[i]?.[pi] === mq.answers[String(pi)]) correct++; });
       } else if (type === "practice-map") {
         const mq = q as MapQuestion;
         mq.points.forEach((p) => { total++; if (mapAnswers[p.id] === p.answer) correct++; });
@@ -885,12 +923,12 @@ export default function QuizScreen({ episodeId, practiceMode, isQuizMode, onBack
           </div>
         )}
 
-        {/* Matching sorular */}
+       {/* Matching sorular */}
         {isMatching && testStarted && !showResults && (
           <div className="mt-8 flex flex-col gap-6">
             {questions.map((q, i) => (
-              <MatchingView key={i} question={q as MatchingQuestion} userMatches={matchingAnswers[i] || {}} checked={matchingChecked[i] || false}
-                onMatch={(leftIdx, rightIdx) => setMatchingAnswers({ ...matchingAnswers, [i]: { ...(matchingAnswers[i] || {}), [leftIdx]: rightIdx } })}
+              <MatchingView key={i} question={q as MatchingQuestion} userAnswers={matchingAnswers[i] || {}} checked={matchingChecked[i] || false}
+                onAnswer={(itemIndex, optionKey) => setMatchingAnswers({ ...matchingAnswers, [i]: { ...(matchingAnswers[i] || {}), [itemIndex]: optionKey } })}
                 onCheck={() => setMatchingChecked({ ...matchingChecked, [i]: true })} />
             ))}
             <button onClick={async () => { setShowResults(true); await saveResult(); }} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Finish ✓</button>
