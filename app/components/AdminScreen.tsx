@@ -737,8 +737,21 @@ export default function AdminScreen({ onBack }: Props) {
       } else if (episodeType === "practice-completion-flow") { questions = [flowQuestion];
       } else if (episodeType === "practice-completion-sentence") { questions = [sentenceQuestion]; }
 
-      const autoLevel = isPractice ? getAutoLevel(examType, examSection) : null;
-      const autoTitle = getAutoTitle(examType, examSection, episodeType);
+    const autoLevel = isPractice
+  ? examSection === 1 ? "Beginner"
+  : examSection === 2 ? "Intermediate"
+  : examSection === 3 ? "Intermediate"
+  : examSection === 4 ? "Advanced"
+  : "Intermediate"
+  : null;
+
+const sectionLabel = examSection ? `IELTS S${examSection} — ` : "";
+const typeLabel = PRACTICE_TYPES.find(t => t.id === episodeType)?.label
+  || COMPLETION_TYPES.find(t => t.id === episodeType)?.label
+  || "";
+const autoTitle = isExam
+  ? `${episodeType.replace("exam-", "").toUpperCase()} Full Test #${Date.now().toString().slice(-4)}`
+  : `${sectionLabel}${typeLabel} #${Date.now().toString().slice(-4)}`;
 
       const payload: Record<string, any> = {
         level: autoLevel,
@@ -750,8 +763,8 @@ export default function AdminScreen({ onBack }: Props) {
         sections: isExam ? sections : null,
         vocabulary: [],
         pdf_url: pdfUrl || null,
-        exam_type: isPractice && examType ? examType : null,
-        exam_section: isPractice && examType === "ielts" && examSection ? examSection : null,
+       exam_type: isPractice && examSection ? "ielts" : null,
+exam_section: isPractice && examSection ? examSection : null,
       };
 
       let dbError = null;
@@ -893,40 +906,26 @@ export default function AdminScreen({ onBack }: Props) {
               </div>
 
               <div className="mt-6 grid gap-4">
-                {/* Exam Type */}
-                {isPractice && (
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Exam Type <span className="font-normal text-xs text-[#7a6258]">(optional)</span>
-                    </label>
-                    <select value={examType} onChange={e => { setExamType(e.target.value); setExamSection(null); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                      <option value="">General — no exam tag</option>
-                      <option value="ielts">IELTS</option>
-                      <option value="toefl">TOEFL</option>
-                      <option value="toeic">TOEIC</option>
-                      <option value="celpip">CELPIP</option>
-                    </select>
-                  </div>
-                )}
+              
 
                 {/* IELTS Section */}
-                {isPractice && examType === "ielts" && (
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">IELTS Section</label>
-                    <select value={examSection || ""} onChange={e => setExamSection(Number(e.target.value))} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                      <option value="">Select section...</option>
-                      {IELTS_SECTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                    </select>
-                  </div>
-                )}
+             {isPractice && (
+  <div>
+    <label className="mb-2 block text-sm font-semibold">IELTS Section <span className="font-normal text-xs text-[#7a6258]">(optional)</span></label>
+    <select value={examSection || ""} onChange={e => setExamSection(e.target.value ? Number(e.target.value) : null)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
+      <option value="">General — no section tag</option>
+      {IELTS_SECTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+    </select>
+  </div>
+)}
 
                 {/* Auto info */}
-                {isPractice && (
-                  <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-                    <p>📋 <strong>Level:</strong> {getAutoLevel(examType, examSection)}</p>
-                    <p className="mt-1">🏷️ <strong>Title will be:</strong> {getAutoTitle(examType, examSection, episodeType)}</p>
-                  </div>
-                )}
+               {isPractice && (
+  <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
+    <p>📋 <strong>Level:</strong> {examSection === 1 ? "Beginner" : examSection === 4 ? "Advanced" : "Intermediate"}</p>
+    <p className="mt-1">🏷️ <strong>Section:</strong> {examSection ? `IELTS Section ${examSection}` : "General (no section tag)"}</p>
+  </div>
+)}
 
                 {/* Audio */}
                 {!isExam && (
