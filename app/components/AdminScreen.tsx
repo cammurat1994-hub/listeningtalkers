@@ -12,7 +12,12 @@ type EpisodeType =
   | "exam-ielts" | "exam-toefl" | "exam-toeic" | "exam-celpip"
   | "quiz-ielts" | "quiz-toefl" | "quiz-toeic" | "quiz-celpip";
 
-type MCQQuestion = { question: string; options: { A: string; B: string; C: string; D: string; E: string }; correctAnswer: "A"|"B"|"C"|"D"|"E"; explanation?: string; };
+type MCQQuestion = {
+  question: string;
+  options: { A: string; B: string; C: string; D?: string; E?: string; F?: string; G?: string };
+  correctAnswer: string | string[];
+  explanation?: string;
+};
 type FillQuestion = { text: string; blanks: { index: number; answer: string }[]; };
 type DictationQuestion = { sentence: string; };
 type ShortAnswerQuestion = { question: string; answer: string; hint?: string; };
@@ -127,7 +132,7 @@ function createEmptySection(number: number): ExamSectionType {
   return { id: `section-${Date.now()}-${number}`, number, audioFile: null, audioUrl: "", introFile: null, introUrl: "", questionGroups: [] };
 }
 
-const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: "", C: "", D: "", E: "" }, correctAnswer: "A", explanation: "" });
+const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: "", C: "" }, correctAnswer: "A", explanation: "" });
 const createEmptyFill = (): FillQuestion => ({ text: "", blanks: [] });
 const createEmptyDictation = (): DictationQuestion => ({ sentence: "" });
 const createEmptyShort = (): ShortAnswerQuestion => ({ question: "", answer: "", hint: "" });
@@ -153,7 +158,7 @@ function parseBulkMCQ(raw: string): MCQQuestion[] {
   for (const block of blocks) {
     const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
     if (!lines.length) continue;
-    const q = createEmptyMCQ();
+    const q: MCQQuestion = { question: "", options: { A: "", B: "", C: "" }, correctAnswer: "A", explanation: "" };
     for (const line of lines) {
       if (/^Q[):.\s]/i.test(line)) q.question = line.replace(/^Q[):.\s]+/i, "").trim();
       else if (/^A[):.\s]/i.test(line)) q.options.A = line.replace(/^A[):.\s]+/i, "").trim();
@@ -161,9 +166,12 @@ function parseBulkMCQ(raw: string): MCQQuestion[] {
       else if (/^C[):.\s]/i.test(line)) q.options.C = line.replace(/^C[):.\s]+/i, "").trim();
       else if (/^D[):.\s]/i.test(line)) q.options.D = line.replace(/^D[):.\s]+/i, "").trim();
       else if (/^E[):.\s]/i.test(line)) q.options.E = line.replace(/^E[):.\s]+/i, "").trim();
+      else if (/^F[):.\s]/i.test(line)) q.options.F = line.replace(/^F[):.\s]+/i, "").trim();
+      else if (/^G[):.\s]/i.test(line)) q.options.G = line.replace(/^G[):.\s]+/i, "").trim();
       else if (/^correct[):.\s]/i.test(line)) {
-        const ans = line.replace(/^correct[):.\s]+/i, "").trim().toUpperCase();
-        if (["A","B","C","D","E"].includes(ans)) q.correctAnswer = ans as any;
+        const raw = line.replace(/^correct[):.\s]+/i, "").trim().toUpperCase();
+        const answers = raw.split(",").map(a => a.trim()).filter(a => /^[A-G]$/.test(a));
+        q.correctAnswer = answers.length === 1 ? answers[0] : answers;
       }
       else if (/^explanation[):.\s]/i.test(line)) q.explanation = line.replace(/^explanation[):.\s]+/i, "").trim();
     }
@@ -998,7 +1006,7 @@ exam_section: isPractice && examSection ? examSection : null,
                 </div>
                 {bulkMode && (
                   <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
-                    <pre className="rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258]">{`Q) Soru\nA) Şık A\nB) Şık B\nC) Şık C\nD) Şık D\nE) Şık E\nCorrect) C\nExplanation) Açıklama\n\nQ) Sonraki...`}</pre>
+                  <pre className="rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258] whitespace-pre-wrap">{`Single answer (A/B/C):\nQ) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nCorrect) B\nExplanation) Açıklama\n\nChoose TWO (A–E):\nQ) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nD) Şık D\nE) Şık E\nCorrect) B,D\nExplanation) Açıklama\n\nChoose THREE (A–G):\nQ) Soru metni\nA) ... G) ...\nCorrect) A,C,F\nExplanation) Açıklama`}</pre>
                     <textarea value={bulkText} onChange={e => setBulkText(e.target.value)} placeholder="Soruları yapıştır..." className="mt-3 min-h-[280px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 font-mono text-sm" />
                     {bulkError && <p className="mt-2 text-sm text-red-600">{bulkError}</p>}
                     <button onClick={() => { setBulkError(""); const parsed = parseBulkMCQ(bulkText); if (!parsed.length) { setBulkError("No questions found."); return; } setMcqQuestions(parsed); setBulkMode(false); setBulkText(""); }} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Apply</button>
@@ -1013,20 +1021,68 @@ exam_section: isPractice && examSection ? examSection : null,
                           <button onClick={() => setMcqQuestions(mcqQuestions.filter((_, i) => i !== index))} className="text-sm text-red-600">Remove</button>
                         </div>
                         <textarea value={item.question} onChange={e => { const u = [...mcqQuestions]; u[index].question = e.target.value; setMcqQuestions(u); }} placeholder="Write your question..." className="mt-3 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3" />
-                        <div className="mt-4 flex flex-col gap-2">
-                          {(["A","B","C","D","E"] as const).map(letter => (
-                            <div key={letter} className="flex items-center gap-3 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
-                              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${item.correctAnswer === letter ? "bg-green-200 text-green-800" : "bg-[#ead7cc]"}`}>{letter}</span>
-                              <input type="text" value={item.options[letter]} onChange={e => { const u = [...mcqQuestions]; u[index].options[letter] = e.target.value; setMcqQuestions(u); }} placeholder={`Option ${letter}`} className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-sm" />
-                            </div>
-                          ))}
+                   {/* Option count selector */}
+                        <div className="mt-3 flex items-center gap-3">
+                          <label className="text-xs font-semibold text-[#7a6258]">Type:</label>
+                          {[
+                            { label: "Single (A–C)", keys: ["A","B","C"] },
+                            { label: "Choose TWO (A–E)", keys: ["A","B","C","D","E"] },
+                            { label: "Choose THREE (A–G)", keys: ["A","B","C","D","E","F","G"] },
+                          ].map(opt => {
+                            const currentKeys = Object.keys(item.options).filter(k => item.options[k as keyof typeof item.options] !== undefined);
+                            const isActive = currentKeys.length === opt.keys.length;
+                            return (
+                              <button key={opt.label} onClick={() => {
+                                const u = [...mcqQuestions];
+                                const newOpts: any = {};
+                                opt.keys.forEach(k => { newOpts[k] = (item.options as any)[k] || ""; });
+                                u[index].options = newOpts;
+                                u[index].correctAnswer = Array.isArray(u[index].correctAnswer)
+                                  ? (u[index].correctAnswer as string[]).filter(a => opt.keys.includes(a))
+                                  : opt.keys.includes(u[index].correctAnswer as string) ? u[index].correctAnswer : opt.keys[0];
+                                setMcqQuestions(u);
+                              }} className={`rounded-xl px-3 py-1 text-xs font-semibold transition ${isActive ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+                                {opt.label}
+                              </button>
+                            );
+                          })}
                         </div>
-                        <div className="mt-3">
-                          <label className="mb-1 block text-sm font-semibold">Correct Answer</label>
-                          <select value={item.correctAnswer} onChange={e => { const u = [...mcqQuestions]; u[index].correctAnswer = e.target.value as any; setMcqQuestions(u); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
-                            {["A","B","C","D","E"].map(l => <option key={l}>{l}</option>)}
-                          </select>
+                        <div className="mt-3 flex flex-col gap-2">
+                          {Object.entries(item.options).filter(([,v]) => v !== undefined).map(([letter]) => {
+                            const isCorrect = Array.isArray(item.correctAnswer)
+                              ? item.correctAnswer.includes(letter)
+                              : item.correctAnswer === letter;
+                            return (
+                              <div key={letter} className="flex items-center gap-3 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
+                                <button onClick={() => {
+                                  const u = [...mcqQuestions];
+                                  if (Array.isArray(u[index].correctAnswer)) {
+                                    const arr = u[index].correctAnswer as string[];
+                                    u[index].correctAnswer = arr.includes(letter)
+                                      ? arr.filter(a => a !== letter)
+                                      : [...arr, letter].sort();
+                                  } else {
+                                    const optCount = Object.keys(u[index].options).filter(k => (u[index].options as any)[k] !== undefined).length;
+                                    if (optCount > 3) {
+                                      u[index].correctAnswer = [letter];
+                                    } else {
+                                      u[index].correctAnswer = letter;
+                                    }
+                                  }
+                                  setMcqQuestions(u);
+                                }} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition ${isCorrect ? "bg-green-200 text-green-800 ring-2 ring-green-400" : "bg-[#ead7cc] hover:bg-[#d4b89a]"}`}>
+                                  {letter}
+                                </button>
+                                <input type="text" value={(item.options as any)[letter]} onChange={e => { const u = [...mcqQuestions]; (u[index].options as any)[letter] = e.target.value; setMcqQuestions(u); }} placeholder={`Option ${letter}`} className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+                              </div>
+                            );
+                          })}
                         </div>
+                        {Array.isArray(item.correctAnswer) && (
+                          <p className="mt-1 text-xs text-[#7a6258]">
+                            Correct: {(item.correctAnswer as string[]).join(", ") || "none selected"} — click letters above to toggle
+                          </p>
+                        )}
                         <div className="mt-3">
                           <label className="mb-1 block text-sm font-semibold">Explanation</label>
                           <textarea value={item.explanation || ""} onChange={e => { const u = [...mcqQuestions]; u[index].explanation = e.target.value; setMcqQuestions(u); }} placeholder="Doğru cevap neden doğru?" className="min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />

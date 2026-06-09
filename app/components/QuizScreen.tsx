@@ -14,8 +14,8 @@ type Props = {
 
 type MCQQuestion = {
   question: string;
-  options: { A: string; B: string; C: string; D: string; E: string };
-  correctAnswer: "A" | "B" | "C" | "D" | "E";
+  options: { A: string; B: string; C?: string; D?: string; E?: string; F?: string; G?: string };
+  correctAnswer: string | string[];
   explanation?: string;
 };
 
@@ -421,38 +421,93 @@ function CommentsPanel({ episodeId, userEmail }: { episodeId: string; userEmail:
   );
 }
 
-function MCQQuestionView({ question, answer, feedback, onAnswer }: {
-  question: MCQQuestion; answer?: string; feedback?: boolean; onAnswer: (letter: string) => void;
+function MCQQuestionView({ question, selectedAnswers, confirmed, onToggle, onConfirm }: {
+  question: MCQQuestion;
+  selectedAnswers: string[];
+  confirmed: boolean;
+  onToggle: (letter: string) => void;
+  onConfirm: () => void;
 }) {
-  const answered = feedback !== undefined;
+  const correctArr = Array.isArray(question.correctAnswer)
+    ? question.correctAnswer as string[]
+    : [question.correctAnswer as string];
+  const isMultiple = correctArr.length > 1;
+  const optionLetters = Object.keys(question.options).filter(k => (question.options as any)[k]);
+  const requiredCount = correctArr.length;
+
+  const isCorrectAnswer = (letter: string) => correctArr.includes(letter);
+  const isSelected = (letter: string) => selectedAnswers.includes(letter);
+
+  const getButtonClass = (letter: string) => {
+    if (!confirmed) {
+      return isSelected(letter)
+        ? "border-[#3b2f2f] bg-[#ead7cc]"
+        : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]";
+    }
+    if (isCorrectAnswer(letter) && isSelected(letter)) return "border-green-400 bg-green-50";
+    if (isCorrectAnswer(letter) && !isSelected(letter)) return "border-green-400 bg-green-50 opacity-70";
+    if (!isCorrectAnswer(letter) && isSelected(letter)) return "border-red-400 bg-red-50";
+    return "border-[#e0c7bb] bg-white opacity-50";
+  };
+
+  const allCorrect = confirmed &&
+    correctArr.every(c => selectedAnswers.includes(c)) &&
+    selectedAnswers.every(s => correctArr.includes(s));
+
+  const canConfirm = !confirmed && selectedAnswers.length === requiredCount;
+
   return (
     <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-      <p className="text-xl font-bold">{question.question}</p>
-      <div className="mt-5 flex flex-col gap-3">
-        {(["A", "B", "C", "D", "E"] as const).map((letter) => {
-          const isSelected = answer === letter;
-          const isCorrect = question.correctAnswer === letter;
-          const showCorrect = answered && isCorrect;
-          const showWrong = answered && isSelected && !isCorrect;
-          return (
-            <button key={letter} onClick={() => onAnswer(letter)} disabled={answered}
-              className={`rounded-2xl border p-4 text-left transition ${showCorrect ? "border-green-400 bg-green-50" : showWrong ? "border-red-400 bg-red-50" : isSelected ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
-              <div className="flex items-center gap-2">
-                <span className="font-bold">{letter}.</span>
-                <span>{question.options[letter]}</span>
-                {showCorrect && <span className="ml-auto font-bold text-green-600">✓</span>}
-                {showWrong && <span className="ml-auto font-bold text-red-600">✗</span>}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      {answered && (
-        <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold ${feedback ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-          {feedback ? "✓ Correct!" : `✗ Wrong. Correct answer: ${question.correctAnswer}`}
+      {isMultiple && (
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#ead7cc] px-3 py-1 text-xs font-bold text-[#3b2f2f]">
+          Choose {requiredCount === 2 ? "TWO" : "THREE"} answers
         </div>
       )}
-      {answered && question.explanation && (
+      <p className="text-xl font-bold">{question.question}</p>
+      <div className="mt-5 flex flex-col gap-3">
+        {optionLetters.map((letter) => (
+          <button key={letter} onClick={() => { if (!confirmed) onToggle(letter); }} disabled={confirmed}
+            className={`rounded-2xl border p-4 text-left transition ${getButtonClass(letter)}`}>
+            <div className="flex items-center gap-3">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition ${
+                isSelected(letter) && !confirmed ? "bg-[#3b2f2f] text-white" :
+                confirmed && isCorrectAnswer(letter) ? "bg-green-400 text-white" :
+                confirmed && isSelected(letter) && !isCorrectAnswer(letter) ? "bg-red-400 text-white" :
+                "bg-[#ead7cc] text-[#3b2f2f]"
+              }`}>{letter}</span>
+              <span>{(question.options as any)[letter]}</span>
+              {confirmed && isCorrectAnswer(letter) && <span className="ml-auto font-bold text-green-600">✓</span>}
+              {confirmed && isSelected(letter) && !isCorrectAnswer(letter) && <span className="ml-auto font-bold text-red-600">✗</span>}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {!confirmed && isMultiple && (
+        <p className="mt-3 text-xs text-[#7a6258]">
+          {selectedAnswers.length}/{requiredCount} selected
+          {selectedAnswers.length === requiredCount ? " — ready to confirm" : ""}
+        </p>
+      )}
+
+      {!confirmed && (
+        <button onClick={onConfirm} disabled={!canConfirm}
+          className="mt-4 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white disabled:opacity-40">
+          {isMultiple
+            ? canConfirm ? "Confirm Answers" : `Select ${requiredCount - selectedAnswers.length} more`
+            : selectedAnswers.length === 0 ? "Select an answer" : "Confirm Answer"}
+        </button>
+      )}
+
+      {confirmed && (
+        <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold ${allCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+          {allCorrect
+            ? "✓ Correct!"
+            : `✗ Correct answer${correctArr.length > 1 ? "s" : ""}: ${correctArr.join(" and ")}`}
+        </div>
+      )}
+
+      {confirmed && question.explanation && (
         <div className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-4">
           <p className="text-xs font-bold uppercase tracking-wide text-[#7a6258] mb-1">💡 Explanation</p>
           <p className="text-sm text-[#3b2f2f]">{question.explanation}</p>
