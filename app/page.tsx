@@ -5,7 +5,6 @@ import { supabase } from "./lib/supabase";
 
 import LoginScreen from "./components/LoginScreen";
 import HomeScreen from "./components/HomeScreen";
-import LevelScreen from "./components/LevelScreen";
 import EpisodeScreen from "./components/EpisodeScreen";
 import QuizScreen from "./components/QuizScreen";
 import AdminScreen from "./components/AdminScreen";
@@ -14,15 +13,16 @@ import CompletionTypeScreen from "./components/CompletionTypeScreen";
 import MyProgressScreen from "./components/MyProgressScreen";
 import LoadingScreen from "./components/LoadingScreen";
 import IELTSSectionScreen from "./components/IELTSSectionScreen";
+import ExamSelectionScreen from "./components/ExamSelectionScreen";
 import ExamIntro from "./Exam/ExamIntro";
 import IELTSExam from "./Exam/IELTSExam";
 import ExamResults from "./Exam/ExamResults";
 
 type Screen =
-  | "login" | "home" | "levels" | "episodes"
+  | "login" | "home" | "episodes"
   | "mode-selection" | "completion-type" | "practice" | "quiz"
   | "progress" | "admin"
-  | "exam-list" | "exam-intro" | "exam-running" | "exam-results"
+  | "exam-selection" | "exam-list" | "exam-intro" | "exam-running" | "exam-results"
   | "ielts-sections";
 
 type PracticeMode =
@@ -65,7 +65,6 @@ function UserPanel({ userEmail, onNavigate, onLogout }: {
         <span className="hidden sm:inline">Account</span>
         <span>▾</span>
       </button>
-
       {isMenuOpen && (
         <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-[#e0c7bb] bg-white shadow-2xl">
           <div className="border-b border-[#e0c7bb] px-5 py-4">
@@ -94,7 +93,7 @@ function UserPanel({ userEmail, onNavigate, onLogout }: {
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("login");
-  const [selectedLevel, setSelectedLevel] = useState("");
+  const [selectedLevel] = useState("Intermediate");
   const [selectedPracticeId, setSelectedPracticeId] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(true);
@@ -124,13 +123,7 @@ export default function Home() {
   async function loadExam(practiceId: string) {
     const { data, error } = await supabase.from("episodes").select("*").eq("id", practiceId).single();
     if (!error && data) {
-      setCurrentExam({
-        id: data.id,
-        title: data.title,
-        episode_type: data.episode_type,
-        sections: data.sections || [],
-        pdf_url: data.pdf_url || undefined,
-      });
+      setCurrentExam({ id: data.id, title: data.title, episode_type: data.episode_type, sections: data.sections || [], pdf_url: data.pdf_url || undefined });
       setExamAnswers({});
       goTo("exam-intro");
     }
@@ -143,14 +136,7 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <ExamIntro
-          title={currentExam.title}
-          examType={examTypeLabel}
-          sections={currentExam.sections}
-          pdfUrl={currentExam.pdf_url}
-          onStart={() => goTo("exam-running")}
-          onBack={() => goTo("exam-list")}
-        />
+        <ExamIntro title={currentExam.title} examType={examTypeLabel} sections={currentExam.sections} pdfUrl={currentExam.pdf_url} onStart={() => goTo("exam-running")} onBack={() => goTo("exam-list")} />
       </>
     );
   }
@@ -158,15 +144,7 @@ export default function Home() {
   if (screen === "exam-running" && currentExam) {
     const examTypeLabel = currentExam.episode_type.replace("exam-", "").toUpperCase();
     return (
-      <IELTSExam
-        title={currentExam.title}
-        examType={examTypeLabel}
-        sections={currentExam.sections}
-        answers={examAnswers}
-        onUpdateAnswers={setExamAnswers}
-        onFinish={() => goTo("exam-results")}
-        onBack={() => goTo("exam-intro")}
-      />
+      <IELTSExam title={currentExam.title} examType={examTypeLabel} sections={currentExam.sections} answers={examAnswers} onUpdateAnswers={setExamAnswers} onFinish={() => goTo("exam-results")} onBack={() => goTo("exam-intro")} />
     );
   }
 
@@ -175,14 +153,7 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <ExamResults
-          title={currentExam.title}
-          examType={examTypeLabel}
-          sections={currentExam.sections}
-          answers={examAnswers}
-          onBack={() => goTo("exam-list")}
-          onRetry={() => { setExamAnswers({}); goTo("exam-intro"); }}
-        />
+        <ExamResults title={currentExam.title} examType={examTypeLabel} sections={currentExam.sections} answers={examAnswers} onBack={() => goTo("exam-list")} onRetry={() => { setExamAnswers({}); goTo("exam-intro"); }} />
       </>
     );
   }
@@ -191,12 +162,18 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <EpisodeScreen
-          selectedLevel={selectedLevel}
-          practiceMode={null}
-          isQuizMode={false}
-          isExamMode={true}
-          onSelectEpisode={(id) => loadExam(id)}
+        <EpisodeScreen selectedLevel="" practiceMode={null} isQuizMode={false} isExamMode={true} onSelectEpisode={(id) => loadExam(id)} onBack={() => goTo("exam-selection")} />
+      </>
+    );
+  }
+
+  if (screen === "exam-selection") {
+    return (
+      <>
+        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
+        <ExamSelectionScreen
+          mode={isQuizMode ? "exam" : "practice"}
+          onSelectIELTS={() => isQuizMode ? goTo("exam-list") : goTo("ielts-sections")}
           onBack={() => goTo("home")}
         />
       </>
@@ -209,11 +186,8 @@ export default function Home() {
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <IELTSSectionScreen
           userEmail={userEmail}
-          onSelectSection={(section) => {
-            setSelectedIELTSSection(section);
-            goTo("episodes");
-          }}
-          onBack={() => goTo("home")}
+        onSelectSection={(section: number) => { setSelectedIELTSSection(section); goTo("episodes"); }}
+          onBack={() => goTo("exam-selection")}
         />
       </>
     );
@@ -246,10 +220,7 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <MyProgressScreen
-          onBack={() => goTo("home")}
-          onSelectEpisode={(id) => { setSelectedPracticeId(id); goTo("practice"); }}
-        />
+        <MyProgressScreen onBack={() => goTo("home")} onSelectEpisode={(id) => { setSelectedPracticeId(id); goTo("practice"); }} />
       </>
     );
   }
@@ -283,7 +254,7 @@ export default function Home() {
           onSelectMatching={() => { setPracticeMode("matching"); goTo("episodes"); }}
           onSelectMap={() => { setPracticeMode("map"); goTo("episodes"); }}
           onSelectCompletions={() => goTo("completion-type")}
-          onBack={() => goTo("levels")}
+          onBack={() => goTo("ielts-sections")}
         />
       </>
     );
@@ -297,10 +268,7 @@ export default function Home() {
           episodeId={selectedPracticeId}
           practiceMode={practiceMode}
           isQuizMode={false}
-          onBack={() => {
-            if (selectedIELTSSection) return goTo("ielts-sections");
-            return goTo("episodes");
-          }}
+          onBack={() => selectedIELTSSection ? goTo("ielts-sections") : goTo("episodes")}
           onNextEpisode={(nextId) => { setSelectedPracticeId(nextId); goTo("practice"); }}
           onStudyVocabulary={() => {}}
         />
@@ -333,32 +301,13 @@ export default function Home() {
           practiceMode={selectedIELTSSection ? null : practiceMode}
           isQuizMode={isQuizMode}
           ieltsSection={selectedIELTSSection}
-          onSelectEpisode={(id) => {
-            setSelectedPracticeId(id);
-            isQuizMode ? goTo("quiz") : goTo("practice");
-          }}
+          onSelectEpisode={(id) => { setSelectedPracticeId(id); isQuizMode ? goTo("quiz") : goTo("practice"); }}
           onBack={() => {
             if (selectedIELTSSection) return goTo("ielts-sections");
-            if (isQuizMode) return goTo("levels");
+            if (isQuizMode) return goTo("exam-selection");
             if (practiceMode?.startsWith("completion-")) return goTo("completion-type");
             return goTo("mode-selection");
           }}
-        />
-      </>
-    );
-  }
-
-  if (screen === "levels") {
-    return (
-      <>
-        <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <LevelScreen
-          onSelectLevel={(level) => {
-            setSelectedLevel(level);
-            setSelectedIELTSSection(null);
-            isQuizMode ? goTo("episodes") : goTo("mode-selection");
-          }}
-          onBack={() => goTo("home")}
         />
       </>
     );
@@ -369,8 +318,8 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <HomeScreen
-          onSelectPractice={() => { setIsQuizMode(false); setSelectedIELTSSection(null); goTo("ielts-sections"); }}
-          onSelectQuiz={() => { setIsQuizMode(true); goTo("exam-list"); }}
+          onSelectPractice={() => { setIsQuizMode(false); setSelectedIELTSSection(null); goTo("exam-selection"); }}
+          onSelectQuiz={() => { setIsQuizMode(true); goTo("exam-selection"); }}
         />
       </>
     );

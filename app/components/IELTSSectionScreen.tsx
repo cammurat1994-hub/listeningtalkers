@@ -19,7 +19,7 @@ const sections = [
     color: "border-green-200 hover:border-green-400",
     badge: "bg-green-100 text-green-700",
     emoji: "💬",
-    types: ["Form Completion", "Note Completion", "Table Completion"],
+    types: ["Form Completion", "Note Completion", "Table Completion", "Matching", "Short Answer"],
     desc: "Two people in a social context — hotel booking, course registration, travel arrangements.",
   },
   {
@@ -30,7 +30,7 @@ const sections = [
     color: "border-yellow-200 hover:border-yellow-400",
     badge: "bg-yellow-100 text-yellow-700",
     emoji: "🗣️",
-    types: ["Map Labelling", "Matching", "Multiple Choice"],
+    types: ["Map Labelling", "Multiple Choice", "Matching", "Form Completion", "Sentence Completion"],
     desc: "One person speaking about a local topic — museum, park, campus.",
   },
   {
@@ -41,7 +41,7 @@ const sections = [
     color: "border-orange-200 hover:border-orange-400",
     badge: "bg-orange-100 text-orange-700",
     emoji: "🎓",
-    types: ["Multiple Choice", "Matching", "Sentence Completion"],
+    types: ["Multiple Choice", "Matching", "Note Completion", "Sentence Completion"],
     desc: "2–4 people in an academic context — student project, research discussion.",
   },
   {
@@ -52,7 +52,7 @@ const sections = [
     color: "border-red-200 hover:border-red-400",
     badge: "bg-red-100 text-red-700",
     emoji: "📚",
-    types: ["Note Completion", "Flow Chart", "Table Completion", "Sentence Completion"],
+    types: ["Note Completion", "Flow Chart", "Table Completion", "Sentence Completion", "Summary Completion"],
     desc: "One speaker giving an academic lecture. No pauses — the hardest section.",
   },
 ];
@@ -62,19 +62,13 @@ export default function IELTSSectionScreen({ onSelectSection, onBack, userEmail 
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    // Modal gösterme mantığı
     if (!userEmail) {
-      // Misafir: her seferinde göster
       setShowModal(true);
     } else {
-      // Üye: sadece ilk seferinde göster
       const key = `ielts_info_seen_${userEmail}`;
-      if (!localStorage.getItem(key)) {
-        setShowModal(true);
-      }
+      if (!localStorage.getItem(key)) setShowModal(true);
     }
 
-    // Practice count'ları çek
     async function fetchCounts() {
       const { data } = await supabase
         .from("episodes")
@@ -95,9 +89,7 @@ export default function IELTSSectionScreen({ onSelectSection, onBack, userEmail 
 
   function handleModalClose() {
     setShowModal(false);
-    if (userEmail) {
-      localStorage.setItem(`ielts_info_seen_${userEmail}`, "1");
-    }
+    if (userEmail) localStorage.setItem(`ielts_info_seen_${userEmail}`, "1");
   }
 
   return (
@@ -127,9 +119,7 @@ export default function IELTSSectionScreen({ onSelectSection, onBack, userEmail 
               className={`group rounded-[2rem] border-2 bg-[#fffaf7] p-7 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md ${s.color}`}>
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">
-                    {s.emoji}
-                  </div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">{s.emoji}</div>
                   <div>
                     <p className="font-bold text-xl">{s.title}</p>
                     <p className="text-sm text-[#7a6258]">{s.subtitle}</p>
@@ -137,20 +127,15 @@ export default function IELTSSectionScreen({ onSelectSection, onBack, userEmail 
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-bold shrink-0 ${s.badge}`}>{s.level}</span>
               </div>
-
               <p className="text-sm text-[#7a6258] mb-4">{s.desc}</p>
-
               <div className="flex flex-wrap gap-2 mb-4">
                 {s.types.map(t => (
-                  <span key={t} className="rounded-full border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold text-[#3b2f2f]">
-                    {t}
-                  </span>
+                  <span key={t} className="rounded-full border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold text-[#3b2f2f]">{t}</span>
                 ))}
               </div>
-
               <div className="flex items-center justify-between border-t border-[#e0c7bb] pt-4">
                 <span className="text-sm text-[#7a6258]">
-                  {counts[s.number] ? `${counts[s.number]} practices available` : "Practices loading..."}
+                  {counts[s.number] ? `${counts[s.number]} practices available` : "Practices coming soon"}
                 </span>
                 <span className="text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</span>
               </div>
