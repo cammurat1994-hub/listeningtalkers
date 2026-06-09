@@ -32,7 +32,7 @@ type SentenceItem = { text: string; answer: string; };
 type SentenceQuestion = { items: SentenceItem[]; };
 type QuestionGroupType = "mcq" | "form-completion" | "note-completion" | "table-completion" | "flow-completion" | "sentence-completion" | "short-answer" | "matching" | "map";
 type QuestionGroup = { id: string; type: QuestionGroupType; label: string; wordLimit?: string; isSection4?: boolean; data: any; };
-type ExamSection = { id: string; number: number; audioFile: File | null; audioUrl: string; introFile?: File | null; introUrl?: string; questionGroups: QuestionGroup[]; };
+type ExamSectionType = { id: string; number: number; audioFile: File | null; audioUrl: string; introFile?: File | null; introUrl?: string; questionGroups: QuestionGroup[]; };
 type PublishedPractice = { id: string; title: string; level: string; episode_type: EpisodeType; exam_type?: string; exam_section?: number; };
 type AdminTab = "new" | "manage" | "users";
 
@@ -51,7 +51,7 @@ const COMPLETION_TYPES = [
   { id: "practice-completion-flow", label: "Flow Chart", emoji: "🔄" },
   { id: "practice-completion-sentence", label: "Sentence Completion", emoji: "✏️" },
 ];
-const EXAM_TYPES = [
+const EXAM_TYPES_LIST = [
   { id: "exam-ielts", label: "IELTS Full Exam", emoji: "🎓" },
   { id: "exam-toefl", label: "TOEFL Full Exam", emoji: "🎓" },
   { id: "exam-toeic", label: "TOEIC Full Exam", emoji: "🎓" },
@@ -63,7 +63,7 @@ const QUIZ_TYPES = [
   { id: "quiz-toeic", label: "TOEIC Style", emoji: "📝" },
   { id: "quiz-celpip", label: "CELPIP Style", emoji: "📝" },
 ];
-const ALL_TYPES = [...PRACTICE_TYPES, ...COMPLETION_TYPES, ...EXAM_TYPES, ...QUIZ_TYPES];
+const ALL_TYPES = [...PRACTICE_TYPES, ...COMPLETION_TYPES, ...EXAM_TYPES_LIST, ...QUIZ_TYPES];
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 const OPTION_KEYS = ["A","B","C","D","E","F","G","H"];
 const QUESTION_GROUP_TYPES: { id: QuestionGroupType; label: string; emoji: string }[] = [
@@ -77,13 +77,32 @@ const QUESTION_GROUP_TYPES: { id: QuestionGroupType; label: string; emoji: strin
   { id: "matching", label: "Matching", emoji: "🔗" },
   { id: "map", label: "Map Labelling", emoji: "🗺️" },
 ];
-
 const IELTS_SECTIONS = [
   { value: 1, label: "Section 1 — Form / Note / Table / Matching (A2–B1)" },
   { value: 2, label: "Section 2 — Map / MCQ / Matching (B1–B2)" },
   { value: 3, label: "Section 3 — MCQ / Matching / Sentence Completion (B2–C1)" },
   { value: 4, label: "Section 4 — Note / Flow Chart / Table / Sentence (C1–C2)" },
 ];
+
+function getAutoLevel(examType: string, examSection: number | null): string {
+  if (examType === "ielts") {
+    if (examSection === 1) return "Beginner";
+    if (examSection === 2) return "Intermediate";
+    if (examSection === 3) return "Intermediate";
+    if (examSection === 4) return "Advanced";
+  }
+  return "Intermediate";
+}
+
+function getAutoTitle(examType: string, examSection: number | null, episodeType: string): string {
+  if (examType === "ielts" && examSection) {
+    return `IELTS S${examSection} — Practice #${Date.now().toString().slice(-4)}`;
+  }
+  if (episodeType.startsWith("exam-")) {
+    return `${episodeType.replace("exam-", "").toUpperCase()} Full Test #${Date.now().toString().slice(-4)}`;
+  }
+  return `Practice #${Date.now().toString().slice(-4)}`;
+}
 
 function createEmptyGroupData(type: QuestionGroupType): any {
   switch (type) {
@@ -100,7 +119,7 @@ function createEmptyGroupData(type: QuestionGroupType): any {
   }
 }
 
-function createEmptySection(number: number): ExamSection {
+function createEmptySection(number: number): ExamSectionType {
   return { id: `section-${Date.now()}-${number}`, number, audioFile: null, audioUrl: "", introFile: null, introUrl: "", questionGroups: [] };
 }
 
@@ -492,8 +511,8 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
 // ─── Exam Section Editor ──────────────────────────────────────────────────────
 
 function ExamSectionEditor({ section, onChange, onRemove }: {
-  section: ExamSection;
-  onChange: (s: ExamSection) => void;
+  section: ExamSectionType;
+  onChange: (s: ExamSectionType) => void;
   onRemove: () => void;
 }) {
   const [addingGroupType, setAddingGroupType] = useState<QuestionGroupType | "">("");
@@ -526,9 +545,9 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
         {section.introUrl && <p className="mb-1 text-xs text-green-600">✓ Intro audio uploaded</p>}
         <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, introFile: f, introUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
         <p className="mt-1 text-xs text-[#7a6258]">
-          {section.number === 1 && "\"Now turn to Section 1...\" → 25sn sessizlik → Q1-5 konuşma → \"Before you hear the rest...\" → 20sn → Q6-10 → \"That is the end of Section 1...\" → 30sn"}
-          {section.number === 2 && "\"Now turn to Section 2...\" → 25sn → Q11-15 konuşma → ara → Q16-20 → \"That is the end of Section 2...\" → 30sn"}
-          {section.number === 3 && "\"Now turn to Section 3...\" → 25sn → Q21-25 konuşma → ara → Q26-30 → \"That is the end of Section 3...\" → 30sn"}
+          {section.number === 1 && "\"Now turn to Section 1...\" → 25sn → Q1-5 → \"Before you hear the rest...\" → 20sn → Q6-10 → \"That is the end of Section 1...\" → 30sn"}
+          {section.number === 2 && "\"Now turn to Section 2...\" → 25sn → Q11-15 → ara → Q16-20 → \"That is the end of Section 2...\" → 30sn"}
+          {section.number === 3 && "\"Now turn to Section 3...\" → 25sn → Q21-25 → ara → Q26-30 → \"That is the end of Section 3...\" → 30sn"}
           {section.number === 4 && "\"Now turn to Section 4...\" → 45sn → ders başlar (ARA YOK) → \"That is the end of the listening test. You now have 10 minutes...\""}
         </p>
       </div>
@@ -574,10 +593,8 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
 export default function AdminScreen({ onBack }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>("new");
   const [episodeType, setEpisodeType] = useState<EpisodeType>("practice-mcq");
-  const [level, setLevel] = useState("Beginner");
   const [examType, setExamType] = useState("");
   const [examSection, setExamSection] = useState<number | null>(null);
-  const [title, setTitle] = useState("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [existingAudioUrl, setExistingAudioUrl] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -606,7 +623,7 @@ export default function AdminScreen({ onBack }: Props) {
   const [sentenceQuestion, setSentenceQuestion] = useState<SentenceQuestion>(createEmptySentence());
   const [completionBulkText, setCompletionBulkText] = useState("");
   const [completionBulkMode, setCompletionBulkMode] = useState(false);
-  const [examSections, setExamSections] = useState<ExamSection[]>([createEmptySection(1), createEmptySection(2), createEmptySection(3), createEmptySection(4)]);
+  const [examSections, setExamSections] = useState<ExamSectionType[]>([createEmptySection(1), createEmptySection(2), createEmptySection(3), createEmptySection(4)]);
   const [practices, setPractices] = useState<PublishedPractice[]>([]);
   const [filterType, setFilterType] = useState("all");
   const [filterLevel, setFilterLevel] = useState("all");
@@ -667,10 +684,6 @@ export default function AdminScreen({ onBack }: Props) {
   }
 
   async function publishPractice() {
-    if (!title) { alert("Please enter a title."); return; }
-    if ((episodeType === "practice-map" || episodeType.startsWith("practice-completion-")) && level === "Beginner") {
-      alert("Map Labelling and Completions are not available for Beginner level."); return;
-    }
     setUploading(true);
     try {
       let audioUrl = existingAudioUrl;
@@ -724,9 +737,12 @@ export default function AdminScreen({ onBack }: Props) {
       } else if (episodeType === "practice-completion-flow") { questions = [flowQuestion];
       } else if (episodeType === "practice-completion-sentence") { questions = [sentenceQuestion]; }
 
+      const autoLevel = isPractice ? getAutoLevel(examType, examSection) : null;
+      const autoTitle = getAutoTitle(examType, examSection, episodeType);
+
       const payload: Record<string, any> = {
-        level: isPractice ? level : null,
-        title,
+        level: autoLevel,
+        title: autoTitle,
         audio_url: isExam ? null : audioUrl,
         episode_type: episodeType,
         show_notes: episodeType === "practice-fill" ? showNotes : false,
@@ -750,7 +766,7 @@ export default function AdminScreen({ onBack }: Props) {
   }
 
   function resetForm() {
-    setTitle(""); setEditingId(null); setAudioFile(null); setExistingAudioUrl("");
+    setEditingId(null); setAudioFile(null); setExistingAudioUrl("");
     setPdfFile(null); setExistingPdfUrl(""); setShowNotes(false);
     setExamType(""); setExamSection(null);
     setMcqQuestions([createEmptyMCQ()]); setFillQuestions([createEmptyFill()]);
@@ -768,7 +784,6 @@ export default function AdminScreen({ onBack }: Props) {
     const { data, error } = await supabase.from("episodes").select("*").eq("id", id).single();
     if (error || !data) return;
     setEditingId(data.id); setEpisodeType(data.episode_type || "practice-mcq");
-    setLevel(data.level || "Beginner"); setTitle(data.title);
     setExamType(data.exam_type || ""); setExamSection(data.exam_section || null);
     setExistingAudioUrl(data.audio_url || ""); setExistingPdfUrl(data.pdf_url || "");
     setShowNotes(data.show_notes || false); setAudioFile(null); setPdfFile(null);
@@ -856,12 +871,11 @@ export default function AdminScreen({ onBack }: Props) {
             <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
               <h2 className="text-2xl font-bold">{editingId ? "Edit Practice" : "New Practice"}</h2>
 
-              {/* Practice Type Selection */}
               <div className="mt-6 grid gap-4 md:grid-cols-4">
                 {[
                   { label: "Practice", types: PRACTICE_TYPES },
                   { label: "Completions", types: COMPLETION_TYPES },
-                  { label: "🎓 Full Exam", types: EXAM_TYPES },
+                  { label: "🎓 Full Exam", types: EXAM_TYPES_LIST },
                   { label: "Quiz", types: QUIZ_TYPES },
                 ].map(col => (
                   <div key={col.label}>
@@ -878,30 +892,14 @@ export default function AdminScreen({ onBack }: Props) {
                 ))}
               </div>
 
-              {/* Fields */}
               <div className="mt-6 grid gap-4">
-
-                {/* Level */}
-                {isPractice && (
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">Level</label>
-                    <select value={level} onChange={e => setLevel(e.target.value)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                      <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
-                    </select>
-                    {(episodeType === "practice-map" || episodeType.startsWith("practice-completion-")) && level === "Beginner" && (
-                      <p className="mt-2 text-sm text-orange-600 font-semibold">⚠️ Map Labelling and Completions are not available for Beginner level.</p>
-                    )}
-                  </div>
-                )}
-
                 {/* Exam Type */}
                 {isPractice && (
                   <div>
                     <label className="mb-2 block text-sm font-semibold">
-                      Exam Type <span className="font-normal text-xs text-[#7a6258]">(optional — tag this practice for a specific exam)</span>
+                      Exam Type <span className="font-normal text-xs text-[#7a6258]">(optional)</span>
                     </label>
-                    <select value={examType} onChange={e => { setExamType(e.target.value); setExamSection(null); }}
-                      className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                    <select value={examType} onChange={e => { setExamType(e.target.value); setExamSection(null); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
                       <option value="">General — no exam tag</option>
                       <option value="ielts">IELTS</option>
                       <option value="toefl">TOEFL</option>
@@ -915,21 +913,20 @@ export default function AdminScreen({ onBack }: Props) {
                 {isPractice && examType === "ielts" && (
                   <div>
                     <label className="mb-2 block text-sm font-semibold">IELTS Section</label>
-                    <select value={examSection || ""} onChange={e => setExamSection(Number(e.target.value))}
-                      className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                    <select value={examSection || ""} onChange={e => setExamSection(Number(e.target.value))} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
                       <option value="">Select section...</option>
                       {IELTS_SECTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                     </select>
                   </div>
                 )}
 
-                {/* Title */}
-                <div>
-                  <label className="mb-2 block text-sm font-semibold">Title</label>
-                  <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-                    placeholder={isExam ? "IELTS Full Test #1" : examType === "ielts" ? `IELTS Section ${examSection || "?"} — Practice #1` : "Practice #1 — The Job Interview"}
-                    className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
-                </div>
+                {/* Auto info */}
+                {isPractice && (
+                  <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
+                    <p>📋 <strong>Level:</strong> {getAutoLevel(examType, examSection)}</p>
+                    <p className="mt-1">🏷️ <strong>Title will be:</strong> {getAutoTitle(examType, examSection, episodeType)}</p>
+                  </div>
+                )}
 
                 {/* Audio */}
                 {!isExam && (
@@ -1350,9 +1347,7 @@ export default function AdminScreen({ onBack }: Props) {
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-xs text-[#7a6258]">{p.level ? `${p.level} — ` : ""}{ALL_TYPES.find(t => t.id === p.episode_type)?.label || p.episode_type}</p>
                               {p.exam_type === "ielts" && p.exam_section && (
-                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                                  IELTS S{p.exam_section}
-                                </span>
+                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">IELTS S{p.exam_section}</span>
                               )}
                             </div>
                             <p className="font-bold">{p.title}</p>
