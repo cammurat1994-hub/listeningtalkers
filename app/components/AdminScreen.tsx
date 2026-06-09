@@ -33,7 +33,7 @@ type SentenceQuestion = { items: SentenceItem[]; };
 type QuestionGroupType = "mcq" | "form-completion" | "note-completion" | "table-completion" | "flow-completion" | "sentence-completion" | "short-answer" | "matching" | "map";
 type QuestionGroup = { id: string; type: QuestionGroupType; label: string; wordLimit?: string; isSection4?: boolean; data: any; };
 type ExamSection = { id: string; number: number; audioFile: File | null; audioUrl: string; introFile?: File | null; introUrl?: string; questionGroups: QuestionGroup[]; };
-type PublishedEpisode = { id: string; title: string; level: string; episode_type: EpisodeType; };
+type PublishedPractice = { id: string; title: string; level: string; episode_type: EpisodeType; exam_type?: string; exam_section?: number; };
 type AdminTab = "new" | "manage" | "users";
 
 const PRACTICE_TYPES = [
@@ -76,6 +76,13 @@ const QUESTION_GROUP_TYPES: { id: QuestionGroupType; label: string; emoji: strin
   { id: "short-answer", label: "Short Answer", emoji: "✍️" },
   { id: "matching", label: "Matching", emoji: "🔗" },
   { id: "map", label: "Map Labelling", emoji: "🗺️" },
+];
+
+const IELTS_SECTIONS = [
+  { value: 1, label: "Section 1 — Form / Note / Table / Matching (A2–B1)" },
+  { value: 2, label: "Section 2 — Map / MCQ / Matching (B1–B2)" },
+  { value: 3, label: "Section 3 — MCQ / Matching / Sentence Completion (B2–C1)" },
+  { value: 4, label: "Section 4 — Note / Flow Chart / Table / Sentence (C1–C2)" },
 ];
 
 function createEmptyGroupData(type: QuestionGroupType): any {
@@ -288,7 +295,6 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         </div>
       )}
 
-      {/* MCQ */}
       {!bulkMode && group.type === "mcq" && (
         <div className="flex flex-col gap-4">
           {(Array.isArray(data) ? data : []).map((item: MCQQuestion, idx: number) => (
@@ -317,7 +323,6 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         </div>
       )}
 
-      {/* Note Completion */}
       {!bulkMode && group.type === "note-completion" && (
         <div>
           <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Title" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm mb-3" />
@@ -331,7 +336,6 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         </div>
       )}
 
-      {/* Form Completion */}
       {!bulkMode && group.type === "form-completion" && (
         <div>
           <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Form Title" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm mb-3" />
@@ -345,7 +349,6 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         </div>
       )}
 
-      {/* Sentence Completion */}
       {!bulkMode && group.type === "sentence-completion" && (
         <div>
           {(data?.items || []).map((item: SentenceItem, i: number) => (
@@ -358,7 +361,6 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         </div>
       )}
 
-      {/* Flow Completion */}
       {!bulkMode && group.type === "flow-completion" && (
         <div>
           <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Flow Chart Title" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm mb-3" />
@@ -373,7 +375,6 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         </div>
       )}
 
-      {/* Short Answer */}
       {!bulkMode && group.type === "short-answer" && (
         <div className="flex flex-col gap-3">
           {(Array.isArray(data) ? data : []).map((item: ShortAnswerQuestion, i: number) => (
@@ -391,7 +392,6 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         </div>
       )}
 
-      {/* Matching */}
       {!bulkMode && group.type === "matching" && (
         <div>
           <div className="grid grid-cols-2 gap-2 mb-2">
@@ -408,7 +408,6 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
         </div>
       )}
 
-      {/* Map */}
       {group.type === "map" && (
         <div>
           <div className="mb-3">
@@ -513,10 +512,7 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
       data: createEmptyGroupData(addingGroupType),
     };
     onChange({ ...section, questionGroups: [...section.questionGroups, newGroup] });
-    setAddingGroupType("");
-    setGroupLabel("");
-    setGroupWordLimit("");
-    setGroupIsSection4(false);
+    setAddingGroupType(""); setGroupLabel(""); setGroupWordLimit(""); setGroupIsSection4(false);
   }
 
   return (
@@ -525,31 +521,22 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
         <h3 className="text-xl font-bold">Section {section.number}</h3>
         <button onClick={onRemove} className="rounded-2xl border border-red-200 bg-white px-3 py-1 text-sm font-semibold text-red-600">Remove Section</button>
       </div>
-
-      {/* Intro Audio */}
       <div className="mb-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-        <label className="mb-2 block text-sm font-semibold">
-          🎙️ Intro Audio
-          <span className="ml-2 font-normal text-xs text-[#7a6258]">(yönlendirme cümleleri + sessizlikler)</span>
-        </label>
+        <label className="mb-2 block text-sm font-semibold">🎙️ Intro Audio <span className="font-normal text-xs text-[#7a6258]">(yönlendirme cümleleri + sessizlikler)</span></label>
         {section.introUrl && <p className="mb-1 text-xs text-green-600">✓ Intro audio uploaded</p>}
         <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, introFile: f, introUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
         <p className="mt-1 text-xs text-[#7a6258]">
-          {section.number === 1 && "Örnek: \"Now turn to Section 1. You will hear a conversation between two people. First you have some time to look at Questions 1 to 5.\" → 25sn sessizlik → konuşma → \"Before you hear the rest...\" → 20sn sessizlik → konuşma → \"That is the end of Section 1...\" → 30sn sessizlik"}
-          {section.number === 2 && "Örnek: \"Now turn to Section 2. You will hear a talk about local facilities. First you have some time to look at Questions 11 to 15.\" → 25sn sessizlik → konuşma → ara → konuşma → \"That is the end of Section 2...\" → 30sn sessizlik"}
-          {section.number === 3 && "Örnek: \"Now turn to Section 3. You will hear a discussion between students. First you have some time to look at Questions 21 to 25.\" → 25sn sessizlik → konuşma → ara → konuşma → \"That is the end of Section 3...\" → 30sn sessizlik"}
-          {section.number === 4 && "Örnek: \"Now turn to Section 4. You will hear a lecture. You now have some time to look at Questions 31 to 40.\" → 45sn sessizlik → ders başlar (ARA YOK) → \"That is the end of the listening test. You now have 10 minutes to transfer your answers.\""}
+          {section.number === 1 && "\"Now turn to Section 1...\" → 25sn sessizlik → Q1-5 konuşma → \"Before you hear the rest...\" → 20sn → Q6-10 → \"That is the end of Section 1...\" → 30sn"}
+          {section.number === 2 && "\"Now turn to Section 2...\" → 25sn → Q11-15 konuşma → ara → Q16-20 → \"That is the end of Section 2...\" → 30sn"}
+          {section.number === 3 && "\"Now turn to Section 3...\" → 25sn → Q21-25 konuşma → ara → Q26-30 → \"That is the end of Section 3...\" → 30sn"}
+          {section.number === 4 && "\"Now turn to Section 4...\" → 45sn → ders başlar (ARA YOK) → \"That is the end of the listening test. You now have 10 minutes...\""}
         </p>
       </div>
-
-      {/* Main Audio */}
       <div className="mb-5">
         <label className="mb-2 block text-sm font-semibold">🔊 Main Audio <span className="font-normal text-xs text-[#7a6258]">(sadece konuşma içeriği)</span></label>
         {section.audioUrl && <p className="mb-1 text-xs text-green-600">✓ Main audio uploaded</p>}
         <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, audioFile: f, audioUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
       </div>
-
-      {/* Question Groups */}
       <div className="flex flex-col gap-4">
         {section.questionGroups.map((group, gi) => (
           <QuestionGroupEditor key={group.id} group={group}
@@ -558,8 +545,6 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
           />
         ))}
       </div>
-
-      {/* Add Group */}
       <div className="mt-5 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
         <p className="mb-3 text-sm font-semibold text-[#7a6258]">Add Question Group to Section {section.number}</p>
         <div className="grid gap-2 md:grid-cols-2">
@@ -590,13 +575,15 @@ export default function AdminScreen({ onBack }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>("new");
   const [episodeType, setEpisodeType] = useState<EpisodeType>("practice-mcq");
   const [level, setLevel] = useState("Beginner");
+  const [examType, setExamType] = useState("");
+  const [examSection, setExamSection] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [existingAudioUrl, setExistingAudioUrl] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [existingPdfUrl, setExistingPdfUrl] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showNotes, setShowNotes] = useState(false);
   const [mcqQuestions, setMcqQuestions] = useState<MCQQuestion[]>([createEmptyMCQ()]);
   const [bulkMode, setBulkMode] = useState(false);
@@ -620,9 +607,10 @@ export default function AdminScreen({ onBack }: Props) {
   const [completionBulkText, setCompletionBulkText] = useState("");
   const [completionBulkMode, setCompletionBulkMode] = useState(false);
   const [examSections, setExamSections] = useState<ExamSection[]>([createEmptySection(1), createEmptySection(2), createEmptySection(3), createEmptySection(4)]);
-  const [publishedEpisodes, setPublishedEpisodes] = useState<PublishedEpisode[]>([]);
+  const [practices, setPractices] = useState<PublishedPractice[]>([]);
   const [filterType, setFilterType] = useState("all");
   const [filterLevel, setFilterLevel] = useState("all");
+  const [filterExamSection, setFilterExamSection] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<{ email: string; created_at: string }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -633,11 +621,11 @@ export default function AdminScreen({ onBack }: Props) {
   const isCompletion = episodeType.startsWith("practice-completion-");
   const isExam = episodeType.startsWith("exam-");
 
-  useEffect(() => { fetchEpisodes(); }, []);
+  useEffect(() => { fetchPractices(); }, []);
 
-  async function fetchEpisodes() {
-    const { data, error } = await supabase.from("episodes").select("id, title, level, episode_type").order("created_at", { ascending: false });
-    if (!error && data) setPublishedEpisodes(data);
+  async function fetchPractices() {
+    const { data, error } = await supabase.from("episodes").select("id, title, level, episode_type, exam_type, exam_section").order("created_at", { ascending: false });
+    if (!error && data) setPractices(data);
   }
 
   async function fetchUsers() {
@@ -678,8 +666,8 @@ export default function AdminScreen({ onBack }: Props) {
     setAddingPoint(false);
   }
 
-  async function publishEpisode() {
-    if (!title) { alert("Please enter episode title."); return; }
+  async function publishPractice() {
+    if (!title) { alert("Please enter a title."); return; }
     if ((episodeType === "practice-map" || episodeType.startsWith("practice-completion-")) && level === "Beginner") {
       alert("Map Labelling and Completions are not available for Beginner level."); return;
     }
@@ -737,27 +725,34 @@ export default function AdminScreen({ onBack }: Props) {
       } else if (episodeType === "practice-completion-sentence") { questions = [sentenceQuestion]; }
 
       const payload: Record<string, any> = {
-        level: isPractice ? level : null, title,
-        audio_url: isExam ? null : audioUrl, episode_type: episodeType,
+        level: isPractice ? level : null,
+        title,
+        audio_url: isExam ? null : audioUrl,
+        episode_type: episodeType,
         show_notes: episodeType === "practice-fill" ? showNotes : false,
-        questions: isExam ? null : questions, sections: isExam ? sections : null,
-        vocabulary: [], pdf_url: pdfUrl || null,
+        questions: isExam ? null : questions,
+        sections: isExam ? sections : null,
+        vocabulary: [],
+        pdf_url: pdfUrl || null,
+        exam_type: isPractice && examType ? examType : null,
+        exam_section: isPractice && examType === "ielts" && examSection ? examSection : null,
       };
 
       let dbError = null;
-      if (editingEpisodeId) { const { error } = await supabase.from("episodes").update(payload).eq("id", editingEpisodeId); dbError = error; }
+      if (editingId) { const { error } = await supabase.from("episodes").update(payload).eq("id", editingId); dbError = error; }
       else { const { error } = await supabase.from("episodes").insert([payload]); dbError = error; }
       if (dbError) throw new Error(dbError.message);
-      resetForm(); await fetchEpisodes();
-      alert(editingEpisodeId ? "Episode updated!" : "Episode published!");
+      resetForm(); await fetchPractices();
+      alert(editingId ? "Practice updated!" : "Practice published!");
     } catch (err) {
       alert("Failed: " + (err instanceof Error ? err.message : "Unknown error"));
     } finally { setUploading(false); }
   }
 
   function resetForm() {
-    setTitle(""); setEditingEpisodeId(null); setAudioFile(null); setExistingAudioUrl("");
+    setTitle(""); setEditingId(null); setAudioFile(null); setExistingAudioUrl("");
     setPdfFile(null); setExistingPdfUrl(""); setShowNotes(false);
+    setExamType(""); setExamSection(null);
     setMcqQuestions([createEmptyMCQ()]); setFillQuestions([createEmptyFill()]);
     setDictationQuestions([createEmptyDictation()]); setShortQuestions([createEmptyShort()]);
     setMatchingQuestions([createEmptyMatching()]);
@@ -769,11 +764,12 @@ export default function AdminScreen({ onBack }: Props) {
     setBulkMode(false); setBulkText(""); setBulkError("");
   }
 
-  async function handleEdit(epId: string) {
-    const { data, error } = await supabase.from("episodes").select("*").eq("id", epId).single();
+  async function handleEdit(id: string) {
+    const { data, error } = await supabase.from("episodes").select("*").eq("id", id).single();
     if (error || !data) return;
-    setEditingEpisodeId(data.id); setEpisodeType(data.episode_type || "practice-mcq");
+    setEditingId(data.id); setEpisodeType(data.episode_type || "practice-mcq");
     setLevel(data.level || "Beginner"); setTitle(data.title);
+    setExamType(data.exam_type || ""); setExamSection(data.exam_section || null);
     setExistingAudioUrl(data.audio_url || ""); setExistingPdfUrl(data.pdf_url || "");
     setShowNotes(data.show_notes || false); setAudioFile(null); setPdfFile(null);
     setBulkMode(false); setBulkText(""); setBulkError("");
@@ -803,11 +799,12 @@ export default function AdminScreen({ onBack }: Props) {
     setActiveTab("new"); window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const filteredEpisodes = publishedEpisodes.filter(ep => {
-    const matchType = filterType === "all" || ep.episode_type === filterType;
-    const matchLevel = filterLevel === "all" || ep.level === filterLevel;
-    const matchSearch = ep.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchType && matchLevel && matchSearch;
+  const filteredPractices = practices.filter(p => {
+    const matchType = filterType === "all" || p.episode_type === filterType;
+    const matchLevel = filterLevel === "all" || p.level === filterLevel;
+    const matchSection = filterExamSection === "all" || String(p.exam_section) === filterExamSection;
+    const matchSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchType && matchLevel && matchSection && matchSearch;
   });
 
   function applyCompletionBulk() {
@@ -835,15 +832,15 @@ export default function AdminScreen({ onBack }: Props) {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl font-bold md:text-5xl">Admin Panel</h1>
-            <p className="mt-2 text-[#7a6258]">Create and manage episodes.</p>
+            <p className="mt-2 text-[#7a6258]">Create and manage practices.</p>
           </div>
           <button onClick={onBack} className="rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
         </div>
 
         <div className="mt-8 flex gap-3 flex-wrap">
           {[
-            { id: "new", label: editingEpisodeId ? "✏️ Edit" : "➕ New Episode" },
-            { id: "manage", label: `📋 Manage (${publishedEpisodes.length})` },
+            { id: "new", label: editingId ? "✏️ Edit" : "➕ New Practice" },
+            { id: "manage", label: `📋 Manage (${practices.length})` },
             { id: "users", label: "👥 Users" },
           ].map(tab => (
             <button key={tab.id} onClick={() => { setActiveTab(tab.id as AdminTab); if (tab.id === "users") fetchUsers(); }}
@@ -853,10 +850,13 @@ export default function AdminScreen({ onBack }: Props) {
           ))}
         </div>
 
+        {/* ─── NEW PRACTICE TAB ─── */}
         {activeTab === "new" && (
           <div className="mt-8">
             <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
-              <h2 className="text-2xl font-bold">{editingEpisodeId ? "Edit Episode" : "New Episode"}</h2>
+              <h2 className="text-2xl font-bold">{editingId ? "Edit Practice" : "New Practice"}</h2>
+
+              {/* Practice Type Selection */}
               <div className="mt-6 grid gap-4 md:grid-cols-4">
                 {[
                   { label: "Practice", types: PRACTICE_TYPES },
@@ -868,7 +868,7 @@ export default function AdminScreen({ onBack }: Props) {
                     <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#7a6258]">{col.label}</p>
                     <div className="flex flex-col gap-2">
                       {col.types.map(t => (
-                        <button key={t.id} onClick={() => setEpisodeType(t.id as EpisodeType)}
+                        <button key={t.id} onClick={() => { setEpisodeType(t.id as EpisodeType); setExamType(""); setExamSection(null); }}
                           className={`rounded-2xl border px-3 py-2 text-left text-xs font-semibold transition ${episodeType === t.id ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
                           {t.emoji} {t.label}
                         </button>
@@ -877,7 +877,11 @@ export default function AdminScreen({ onBack }: Props) {
                   </div>
                 ))}
               </div>
+
+              {/* Fields */}
               <div className="mt-6 grid gap-4">
+
+                {/* Level */}
                 {isPractice && (
                   <div>
                     <label className="mb-2 block text-sm font-semibold">Level</label>
@@ -889,10 +893,45 @@ export default function AdminScreen({ onBack }: Props) {
                     )}
                   </div>
                 )}
+
+                {/* Exam Type */}
+                {isPractice && (
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Exam Type <span className="font-normal text-xs text-[#7a6258]">(optional — tag this practice for a specific exam)</span>
+                    </label>
+                    <select value={examType} onChange={e => { setExamType(e.target.value); setExamSection(null); }}
+                      className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                      <option value="">General — no exam tag</option>
+                      <option value="ielts">IELTS</option>
+                      <option value="toefl">TOEFL</option>
+                      <option value="toeic">TOEIC</option>
+                      <option value="celpip">CELPIP</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* IELTS Section */}
+                {isPractice && examType === "ielts" && (
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">IELTS Section</label>
+                    <select value={examSection || ""} onChange={e => setExamSection(Number(e.target.value))}
+                      className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                      <option value="">Select section...</option>
+                      {IELTS_SECTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {/* Title */}
                 <div>
-                  <label className="mb-2 block text-sm font-semibold">Episode Title</label>
-                  <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={isExam ? "IELTS Full Test #1" : "Episode 1 — The Job Interview"} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
+                  <label className="mb-2 block text-sm font-semibold">Title</label>
+                  <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+                    placeholder={isExam ? "IELTS Full Test #1" : examType === "ielts" ? `IELTS Section ${examSection || "?"} — Practice #1` : "Practice #1 — The Job Interview"}
+                    className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
                 </div>
+
+                {/* Audio */}
                 {!isExam && (
                   <div>
                     <label className="mb-2 block text-sm font-semibold">Main Audio</label>
@@ -900,6 +939,8 @@ export default function AdminScreen({ onBack }: Props) {
                     <input type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
                   </div>
                 )}
+
+                {/* PDF */}
                 {isExam && (
                   <div>
                     <label className="mb-2 block text-sm font-semibold">Question Paper PDF <span className="font-normal text-[#7a6258]">(optional)</span></label>
@@ -988,8 +1029,8 @@ export default function AdminScreen({ onBack }: Props) {
                 <label className="mt-5 flex items-center gap-3 text-sm font-semibold">
                   <input type="checkbox" checked={showNotes} onChange={e => setShowNotes(e.target.checked)} className="h-4 w-4" />Show notes field
                 </label>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-                  <pre className="text-xs leading-6">{`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled\nANS2) conference room|boardroom`}</pre>
+                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                  <pre className="text-xs leading-6 text-[#7a6258]">{`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled\nANS2) conference room|boardroom`}</pre>
                 </div>
                 <textarea placeholder={`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled|planned`} className="mt-4 min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
                   onChange={e => {
@@ -1026,8 +1067,8 @@ export default function AdminScreen({ onBack }: Props) {
             {episodeType === "practice-dictation" && (
               <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
                 <h2 className="text-2xl font-bold">Dictation</h2>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-                  <pre className="text-xs leading-6">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
+                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                  <pre className="text-xs leading-6 text-[#7a6258]">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
                 </div>
                 <textarea placeholder="S) The conference will be held next Monday." className="mt-4 min-h-[150px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
                   onChange={e => { const lines = e.target.value.split("\n").map(l => l.trim()).filter(l => /^S\)/i.test(l)); if (lines.length) setDictationQuestions(lines.map(l => ({ sentence: l.replace(/^S\)\s*/i, "").trim() }))); }}
@@ -1050,8 +1091,8 @@ export default function AdminScreen({ onBack }: Props) {
                   <h2 className="text-2xl font-bold">Short Answer</h2>
                   <button onClick={() => setShortQuestions([...shortQuestions, createEmptyShort()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Question</button>
                 </div>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-                  <pre className="text-xs leading-6">{`Q) What time does the library close?\nA) 9pm|nine o'clock\nH) Think about closing times`}</pre>
+                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                  <pre className="text-xs leading-6 text-[#7a6258]">{`Q) What time does the library close?\nA) 9pm|nine o'clock\nH) Think about closing times`}</pre>
                 </div>
                 <textarea placeholder={`Q) What time?\nA) 9pm|nine\nH) Hint`} className="mt-4 min-h-[150px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
                   onChange={e => {
@@ -1089,8 +1130,8 @@ export default function AdminScreen({ onBack }: Props) {
                   <h2 className="text-2xl font-bold">Matching</h2>
                   <button onClick={() => setMatchingQuestions([...matchingQuestions, createEmptyMatching()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Set</button>
                 </div>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-                  <pre className="text-xs leading-6">{`L) Monday\nR) First day\n\nL) Tuesday\nR) Second day`}</pre>
+                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                  <pre className="text-xs leading-6 text-[#7a6258]">{`L) Monday\nR) First day\n\nL) Tuesday\nR) Second day`}</pre>
                 </div>
                 <textarea placeholder={`L) Monday\nR) First day`} className="mt-4 min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
                   onChange={e => {
@@ -1265,19 +1306,19 @@ export default function AdminScreen({ onBack }: Props) {
               </div>
             )}
 
-            <button onClick={publishEpisode} disabled={uploading} className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white transition hover:bg-[#2f2424] disabled:opacity-40">
-              {uploading ? "Publishing..." : editingEpisodeId ? "Update Episode" : "Publish Episode"}
+            <button onClick={publishPractice} disabled={uploading} className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white transition hover:bg-[#2f2424] disabled:opacity-40">
+              {uploading ? "Publishing..." : editingId ? "Update Practice" : "Publish Practice"}
             </button>
-            {editingEpisodeId && <button onClick={resetForm} className="mt-3 w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">Cancel Edit</button>}
+            {editingId && <button onClick={resetForm} className="mt-3 w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">Cancel Edit</button>}
           </div>
         )}
 
-        {/* MANAGE TAB */}
+        {/* ─── MANAGE TAB ─── */}
         {activeTab === "manage" && (
           <div className="mt-8">
             <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
               <h2 className="text-2xl font-bold">Practices</h2>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                 <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setManagePage(0); }} placeholder="🔍 Search..." className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
                 <select value={filterType} onChange={e => { setFilterType(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
                   <option value="all">All Types</option>
@@ -1287,31 +1328,42 @@ export default function AdminScreen({ onBack }: Props) {
                   <option value="all">All Levels</option>
                   {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
+                <select value={filterExamSection} onChange={e => { setFilterExamSection(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
+                  <option value="all">All Sections</option>
+                  {IELTS_SECTIONS.map(s => <option key={s.value} value={String(s.value)}>IELTS S{s.value}</option>)}
+                </select>
               </div>
               {(() => {
                 const MANAGE_PAGE_SIZE = 15;
-                const totalPages = Math.ceil(filteredEpisodes.length / MANAGE_PAGE_SIZE);
-                const pagedEpisodes = filteredEpisodes.slice(managePage * MANAGE_PAGE_SIZE, (managePage + 1) * MANAGE_PAGE_SIZE);
+                const totalPages = Math.ceil(filteredPractices.length / MANAGE_PAGE_SIZE);
+                const paged = filteredPractices.slice(managePage * MANAGE_PAGE_SIZE, (managePage + 1) * MANAGE_PAGE_SIZE);
                 return (
                   <>
                     <div className="mt-3 flex items-center justify-between">
-                      <p className="text-sm text-[#7a6258]">{filteredEpisodes.length} practice found</p>
+                      <p className="text-sm text-[#7a6258]">{filteredPractices.length} practice found</p>
                       {totalPages > 1 && <p className="text-sm text-[#7a6258]">Page {managePage + 1} / {totalPages}</p>}
                     </div>
                     <div className="mt-4 flex flex-col gap-3">
-                      {pagedEpisodes.map(ep => (
-                        <div key={ep.id} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                      {paged.map(p => (
+                        <div key={p.id} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white p-4">
                           <div>
-                            <p className="text-xs text-[#7a6258]">{ep.level ? `${ep.level} — ` : ""}{ALL_TYPES.find(t => t.id === ep.episode_type)?.label || ep.episode_type}</p>
-                            <p className="font-bold">{ep.title}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-xs text-[#7a6258]">{p.level ? `${p.level} — ` : ""}{ALL_TYPES.find(t => t.id === p.episode_type)?.label || p.episode_type}</p>
+                              {p.exam_type === "ielts" && p.exam_section && (
+                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                                  IELTS S{p.exam_section}
+                                </span>
+                              )}
+                            </div>
+                            <p className="font-bold">{p.title}</p>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => handleEdit(ep.id)} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
-                            <button onClick={async () => { if (!confirm("Delete?")) return; await supabase.from("episodes").delete().eq("id", ep.id); fetchEpisodes(); }} className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
+                            <button onClick={() => handleEdit(p.id)} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
+                            <button onClick={async () => { if (!confirm("Delete?")) return; await supabase.from("episodes").delete().eq("id", p.id); fetchPractices(); }} className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
                           </div>
                         </div>
                       ))}
-                      {pagedEpisodes.length === 0 && <p className="py-8 text-center text-[#7a6258]">No episodes found.</p>}
+                      {paged.length === 0 && <p className="py-8 text-center text-[#7a6258]">No practices found.</p>}
                     </div>
                     {totalPages > 1 && (
                       <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
@@ -1329,7 +1381,7 @@ export default function AdminScreen({ onBack }: Props) {
           </div>
         )}
 
-        {/* USERS TAB */}
+        {/* ─── USERS TAB ─── */}
         {activeTab === "users" && (
           <div className="mt-8">
             <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
