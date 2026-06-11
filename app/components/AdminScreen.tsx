@@ -9,6 +9,7 @@ type Props = { onBack: () => void; };
 type EpisodeType =
   | "practice-mcq" | "practice-fill" | "practice-dictation" | "practice-short" | "practice-matching" | "practice-map"
   | "practice-completion-note" | "practice-completion-form" | "practice-completion-table" | "practice-completion-flow" | "practice-completion-sentence"
+  || "ielts-section"
   | "exam-ielts" | "exam-toefl" | "exam-toeic" | "exam-celpip"
   | "quiz-ielts" | "quiz-toefl" | "quiz-toeic" | "quiz-celpip";
 
@@ -46,6 +47,7 @@ type PublishedPractice = { id: string; title: string; level: string; episode_typ
 type AdminTab = "new" | "manage" | "users";
 
 const PRACTICE_TYPES = [
+  { id: "ielts-section", label: "IELTS Section (Mixed)", emoji: "🎧" },
   { id: "practice-mcq", label: "Multiple Choice", emoji: "🔤" },
   { id: "practice-fill", label: "Fill in the Blank", emoji: "✏️" },
   { id: "practice-dictation", label: "Dictation", emoji: "🎙️" },
@@ -151,7 +153,15 @@ const createEmptyForm = (): FormQuestion => ({ title: "", fields: [{ label: "", 
 const createEmptyTable = (): TableQuestion => ({ title: "", headers: ["", "", ""], rows: [{ cells: ["", "", ""], answerIndices: [], answers: [] }] });
 const createEmptyFlow = (): FlowQuestion => ({ title: "", steps: [{ text: "", answer: "", hasBlank: false }, { text: "", answer: "", hasBlank: false }] });
 const createEmptySentence = (): SentenceQuestion => ({ items: [{ text: "", answer: "" }, { text: "", answer: "" }] });
+type IELTSSectionPart = {
+  audioFile: File | null;
+  audioUrl: string;
+  questionGroups: QuestionGroup[];
+};
 
+function createEmptyPart(): IELTSSectionPart {
+  return { audioFile: null, audioUrl: "", questionGroups: [] };
+}
 function parseBulkMCQ(raw: string): MCQQuestion[] {
   const blocks = raw.trim().split(/\n{2,}/);
   const parsed: MCQQuestion[] = [];
@@ -540,7 +550,49 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
 }
 
 // ─── Exam Section Editor ──────────────────────────────────────────────────────
+function AddGroupPanel({ onAdd }: { onAdd: (group: QuestionGroup) => void }) {
+  const [type, setType] = useState<QuestionGroupType | "">("");
+  const [label, setLabel] = useState("");
+  const [wordLimit, setWordLimit] = useState("");
 
+  function add() {
+    if (!type) return;
+    const group: QuestionGroup = {
+      id: `group-${Date.now()}`,
+      type,
+      label: label || `Questions`,
+      wordLimit: wordLimit || "NO MORE THAN TWO WORDS AND/OR A NUMBER",
+      data: createEmptyGroupData(type),
+    };
+    onAdd(group);
+    setType(""); setLabel(""); setWordLimit("");
+  }
+
+  return (
+    <div>
+      <p className="mb-2 text-sm font-semibold text-[#7a6258]">Add Question Group</p>
+      <div className="grid gap-2 md:grid-cols-2">
+        <select value={type} onChange={e => setType(e.target.value as QuestionGroupType)}
+          className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+          <option value="">Select type...</option>
+          {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
+        </select>
+        <input type="text" value={label} onChange={e => setLabel(e.target.value)}
+          placeholder="e.g. Questions 1–5"
+          className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+      </div>
+      <div className="mt-2 flex gap-2">
+        <input type="text" value={wordLimit} onChange={e => setWordLimit(e.target.value)}
+          placeholder="Word limit — e.g. NO MORE THAN TWO WORDS AND/OR A NUMBER"
+          className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+        <button onClick={add} disabled={!type}
+          className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
+          + Add
+        </button>
+      </div>
+    </div>
+  );
+}
 function ExamSectionEditor({ section, onChange, onRemove }: {
   section: ExamSectionType;
   onChange: (s: ExamSectionType) => void;
@@ -663,6 +715,8 @@ export default function AdminScreen({ onBack }: Props) {
   const [users, setUsers] = useState<{ email: string; created_at: string }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sectionParts, setSectionParts] = useState<IELTSSectionPart[]>([createEmptyPart(), createEmptyPart()]);
+  const [sectionNumber, setSectionNumber] = useState<number>(1);
   const [managePage, setManagePage] = useState(0);
 
   const isPractice = episodeType.startsWith("practice-");
@@ -741,7 +795,7 @@ export default function AdminScreen({ onBack }: Props) {
           return { number: section.number, audioUrl: sectionAudioUrl, introUrl, questionGroups: processedGroups };
         }));
         sections = processedSections;
-      } else if (!audioUrl) {
+    } else if (!isIELTSSection && !audioUrl) {
         alert("Please upload main audio."); setUploading(false); return;
       }
 
@@ -766,17 +820,35 @@ export default function AdminScreen({ onBack }: Props) {
       } else if (episodeType === "practice-completion-form") { questions = [formQuestion];
       } else if (episodeType === "practice-completion-table") { questions = [tableQuestion];
       } else if (episodeType === "practice-completion-flow") { questions = [flowQuestion];
-      } else if (episodeType === "practice-completion-sentence") { questions = [sentenceQuestion]; }
+   } else if (episodeType === "practice-completion-sentence") { questions = [sentenceQuestion];
+      } else if (episodeType === "ielts-section") {
+        const processedParts = await Promise.all(sectionParts.map(async (part, pi) => {
+          let audioUrl = part.audioUrl;
+          if (part.audioFile) audioUrl = await uploadFile(part.audioFile, "episode");
+          const processedGroups = await Promise.all(part.questionGroups.map(async group => {
+            if (group.type === "map" && group.data?._imageFile) {
+              const imageUrl = await uploadFile(group.data._imageFile, "map");
+              const { _imageFile, ...cleanData } = group.data;
+              return { ...group, data: { ...cleanData, imageUrl } };
+            }
+            return group;
+          }));
+          return { part: pi + 1, audioUrl, groups: processedGroups };
+        }));
+        questions = processedParts;
+      }
 
-    const autoLevel = isPractice
-  ? examSection === 1 ? "Beginner"
-  : examSection === 2 ? "Intermediate"
-  : examSection === 3 ? "Intermediate"
-  : examSection === 4 ? "Advanced"
-  : "Intermediate"
-  : null;
+  const effectiveSection = episodeType === "ielts-section" ? sectionNumber : examSection;
 
-const sectionLabel = examSection ? `IELTS S${examSection} — ` : "";
+      const autoLevel = isPractice
+        ? effectiveSection === 1 ? "Beginner"
+        : effectiveSection === 2 ? "Intermediate"
+        : effectiveSection === 3 ? "Intermediate"
+        : effectiveSection === 4 ? "Advanced"
+        : "Intermediate"
+        : null;
+
+      const sectionLabel = effectiveSection ? `IELTS S${effectiveSection} — ` : "";
 const typeLabel = PRACTICE_TYPES.find(t => t.id === episodeType)?.label
   || COMPLETION_TYPES.find(t => t.id === episodeType)?.label
   || "";
@@ -784,18 +856,22 @@ const autoTitle = isExam
   ? `${episodeType.replace("exam-", "").toUpperCase()} Full Test #${Date.now().toString().slice(-4)}`
   : `${sectionLabel}${typeLabel} #${Date.now().toString().slice(-4)}`;
 
+     const isIELTSSection = episodeType === "ielts-section";
+
       const payload: Record<string, any> = {
         level: autoLevel,
         title: autoTitle,
-        audio_url: isExam ? null : audioUrl,
+        audio_url: isExam || isIELTSSection ? null : audioUrl,
+        audio_part1_url: isIELTSSection ? (sectionParts[0].audioUrl || null) : null,
+        audio_part2_url: isIELTSSection && sectionNumber !== 4 ? (sectionParts[1].audioUrl || null) : null,
         episode_type: episodeType,
         show_notes: episodeType === "practice-fill" ? showNotes : false,
         questions: isExam ? null : questions,
         sections: isExam ? sections : null,
         vocabulary: [],
         pdf_url: pdfUrl || null,
-       exam_type: isPractice && examSection ? "ielts" : null,
-exam_section: isPractice && examSection ? examSection : null,
+       exam_type: isPractice && (examSection || episodeType === "ielts-section") ? "ielts" : null,
+        exam_section: isPractice ? (episodeType === "ielts-section" ? sectionNumber : examSection) || null : null,
       };
 
       let dbError = null;
@@ -821,6 +897,8 @@ exam_section: isPractice && examSection ? examSection : null,
     setTableQuestion(createEmptyTable()); setFlowQuestion(createEmptyFlow()); setSentenceQuestion(createEmptySentence());
     setCompletionBulkText(""); setCompletionBulkMode(false);
     setExamSections([createEmptySection(1), createEmptySection(2), createEmptySection(3), createEmptySection(4)]);
+    setSectionParts([createEmptyPart(), createEmptyPart()]);
+    setSectionNumber(1);
     setBulkMode(false); setBulkText(""); setBulkError("");
   }
 
@@ -854,6 +932,13 @@ exam_section: isPractice && examSection ? examSection : null,
       else if (et === "practice-completion-flow") setFlowQuestion(data.questions[0]);
       else if (et === "practice-completion-sentence") setSentenceQuestion(data.questions[0]);
       else setMcqQuestions(data.questions.map((q: MCQQuestion) => ({ question: q.question, options: q.options, correctAnswer: q.correctAnswer, explanation: q.explanation || "" })));
+    }
+    if (data.episode_type === "ielts-section" && data.audio_part1_url !== undefined) {
+      setSectionNumber(data.exam_section || 1);
+      setSectionParts([
+        { audioFile: null, audioUrl: data.audio_part1_url || "", questionGroups: data.questions?.[0]?.groups || [] },
+        { audioFile: null, audioUrl: data.audio_part2_url || "", questionGroups: data.questions?.[1]?.groups || [] },
+      ]);
     }
     setActiveTab("new"); window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1441,7 +1526,110 @@ exam_section: isPractice && examSection ? examSection : null,
             {editingId && <button onClick={resetForm} className="mt-3 w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">Cancel Edit</button>}
           </div>
         )}
+{/* IELTS Section */}
+            {episodeType === "ielts-section" && (
+              <div className="mt-6 flex flex-col gap-6">
+                <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+                  <h2 className="text-2xl font-bold">🎧 IELTS Section Practice</h2>
+                  <p className="mt-2 text-sm text-[#7a6258]">2 audio parçası + karışık soru grupları. Section 4 seçersen 2. parça gizlenir.</p>
 
+                  {/* Section Number */}
+                  <div className="mt-5">
+                    <label className="mb-2 block text-sm font-semibold">Section Number</label>
+                    <select value={sectionNumber} onChange={e => setSectionNumber(Number(e.target.value))}
+                      className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                      <option value={1}>Section 1 — Form/Note/Table Completion (A2–B1)</option>
+                      <option value={2}>Section 2 — MCQ Single + Map Labelling (B1–B2)</option>
+                      <option value={3}>Section 3 — MCQ Single + Matching (B2–C1)</option>
+                      <option value={4}>Section 4 — Note/Sentence Completion only, NO pause (C1–C2)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Part 1 */}
+                <div className="rounded-3xl border-2 border-[#3b2f2f] bg-[#fffaf7] p-6">
+                  <h3 className="text-xl font-bold mb-1">
+                    {sectionNumber === 4 ? "🔊 Audio (full, no pause)" : "🔊 Part 1 Audio"}
+                  </h3>
+                  <p className="text-xs text-[#7a6258] mb-4">
+                    {sectionNumber === 1 && "Q1–5 konuşması"}
+                    {sectionNumber === 2 && "Q11–16 konuşması (MCQ single kısmı)"}
+                    {sectionNumber === 3 && "Q21–26 konuşması (MCQ single kısmı)"}
+                    {sectionNumber === 4 && "Q31–40 konuşmasının tamamı (ara yok)"}
+                  </p>
+                  {sectionParts[0].audioUrl && !sectionParts[0].audioFile && (
+                    <p className="mb-2 text-xs text-green-600">✓ Audio uploaded</p>
+                  )}
+                  <input type="file" accept="audio/*"
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      if (f) setSectionParts(prev => [{ ...prev[0], audioFile: f, audioUrl: "" }, prev[1]]);
+                    }}
+                    className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+
+                  {/* Part 1 Question Groups */}
+                  <div className="mt-5 flex flex-col gap-4">
+                    {sectionParts[0].questionGroups.map((group, gi) => (
+                      <QuestionGroupEditor key={group.id} group={group}
+                        onChange={newData => {
+                          const updated = [...sectionParts[0].questionGroups];
+                          updated[gi] = { ...group, data: newData };
+                          setSectionParts(prev => [{ ...prev[0], questionGroups: updated }, prev[1]]);
+                        }}
+                        onRemove={() => {
+                          const updated = sectionParts[0].questionGroups.filter((_, i) => i !== gi);
+                          setSectionParts(prev => [{ ...prev[0], questionGroups: updated }, prev[1]]);
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
+                    <AddGroupPanel onAdd={(group) => setSectionParts(prev => [{ ...prev[0], questionGroups: [...prev[0].questionGroups, group] }, prev[1]])} />
+                  </div>
+                </div>
+
+                {/* Part 2 — Section 4'te gösterme */}
+                {sectionNumber !== 4 && (
+                  <div className="rounded-3xl border-2 border-[#c9a99a] bg-[#fffaf7] p-6">
+                    <h3 className="text-xl font-bold mb-1">🔊 Part 2 Audio</h3>
+                    <p className="text-xs text-[#7a6258] mb-4">
+                      {sectionNumber === 1 && "Q6–10 konuşması"}
+                      {sectionNumber === 2 && "Q17–20 konuşması (Map labelling kısmı)"}
+                      {sectionNumber === 3 && "Q27–30 konuşması (Matching kısmı)"}
+                    </p>
+                    {sectionParts[1].audioUrl && !sectionParts[1].audioFile && (
+                      <p className="mb-2 text-xs text-green-600">✓ Audio uploaded</p>
+                    )}
+                    <input type="file" accept="audio/*"
+                      onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) setSectionParts(prev => [prev[0], { ...prev[1], audioFile: f, audioUrl: "" }]);
+                      }}
+                      className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+
+                    {/* Part 2 Question Groups */}
+                    <div className="mt-5 flex flex-col gap-4">
+                      {sectionParts[1].questionGroups.map((group, gi) => (
+                        <QuestionGroupEditor key={group.id} group={group}
+                          onChange={newData => {
+                            const updated = [...sectionParts[1].questionGroups];
+                            updated[gi] = { ...group, data: newData };
+                            setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: updated }]);
+                          }}
+                          onRemove={() => {
+                            const updated = sectionParts[1].questionGroups.filter((_, i) => i !== gi);
+                            setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: updated }]);
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
+                      <AddGroupPanel onAdd={(group) => setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: [...prev[1].questionGroups, group] }])} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
         {/* ─── MANAGE TAB ─── */}
         {activeTab === "manage" && (
           <div className="mt-8">
