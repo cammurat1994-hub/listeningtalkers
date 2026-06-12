@@ -231,6 +231,53 @@ function parseBulkSentence(raw: string): SentenceQuestion {
   return { items: sentLines.map((l, i) => ({ text: l.replace(/^S\)\s*/i, "").trim(), answer: ansLines[i]?.replace(/^ANS\d+\)\s*/i, "").trim() || "" })) };
 }
 
+// Helper: apply bulk text to a given IELTS part (0 or 1)
+function applyBulkToPart(partIndex: number, type: QuestionGroupType | "", raw: string) {
+  if (!raw.trim() || !type) return null;
+  switch (type) {
+    case "mcq": return parseBulkMCQ(raw);
+    case "note-completion": return parseBulkNote(raw);
+    case "form-completion": return parseBulkForm(raw);
+    case "table-completion": return parseBulkTable(raw);
+    case "flow-completion": return parseBulkFlow(raw);
+    case "sentence-completion": return parseBulkSentence(raw);
+    case "short-answer": {
+      const blocks = raw.trim().split(/\n{2,}/);
+      const parsed: ShortAnswerQuestion[] = [];
+      for (const block of blocks) {
+        const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
+        const qLine = lines.find(l => /^Q\)/i.test(l));
+        const aLine = lines.find(l => /^A\)/i.test(l));
+        const hLine = lines.find(l => /^H\)/i.test(l));
+        if (!qLine || !aLine) continue;
+        parsed.push({ question: qLine.replace(/^Q\)\s*/i, "").trim(), answer: aLine.replace(/^A\)\s*/i, "").trim(), hint: hLine ? hLine.replace(/^H\)\s*/i, "").trim() : "" });
+      }
+      return parsed;
+    }
+    case "matching": {
+      const lines = raw.trim().split("\n").map(l => l.trim()).filter(Boolean);
+      const items: string[] = [];
+      const options: { key: string; label: string }[] = [];
+      const answers: Record<string, string> = {};
+      for (const line of lines) {
+        if (/^Q\d+\)/i.test(line)) {
+          const match = line.match(/^Q(\d+)\)\s*(.*)/i);
+          if (match) items.push(match[2].trim());
+        } else if (/^[A-G]\)/i.test(line)) {
+          const key = line[0].toUpperCase();
+          const label = line.replace(/^[A-G]\)\s*/i, "").trim();
+          options.push({ key, label });
+        } else if (/^ANS\d+\)/i.test(line)) {
+          const match = line.match(/^ANS(\d+)\)\s*([A-G])/i);
+          if (match) answers[String(parseInt(match[1]) - 1)] = match[2].toUpperCase();
+        }
+      }
+      return { items, options, answers } as any;
+    }
+    default: return null;
+  }
+}
+
 // ─── Question Group Editor ────────────────────────────────────────────────────
 
 function QuestionGroupEditor({ group, onChange, onRemove }: {
@@ -715,6 +762,12 @@ export default function AdminScreen({ onBack }: Props) {
   const [sectionParts, setSectionParts] = useState<IELTSSectionPart[]>([createEmptyPart(), createEmptyPart()]);
   const [sectionNumber, setSectionNumber] = useState<number>(1);
   const [managePage, setManagePage] = useState(0);
+  const [partBulkType1, setPartBulkType1] = useState<QuestionGroupType | "">("");
+  const [partBulkText1, setPartBulkText1] = useState("");
+  const [partBulkError1, setPartBulkError1] = useState("");
+  const [partBulkType2, setPartBulkType2] = useState<QuestionGroupType | "">("");
+  const [partBulkText2, setPartBulkText2] = useState("");
+  const [partBulkError2, setPartBulkError2] = useState("");
 
  const isIELTSSection = episodeType === "ielts-section";
   const isPractice = episodeType.startsWith("practice-") || isIELTSSection;
@@ -1649,6 +1702,31 @@ const autoTitle = isExam
                     }}
                     className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
 
+                  {/* Part 1 Bulk Paste (add question group from text) */}
+                  <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
+                    <p className="mb-2 text-sm font-semibold text-[#7a6258]">Bulk Paste for Part 1</p>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <select value={partBulkType1} onChange={e => setPartBulkType1(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+                        <option value="">Select group type...</option>
+                        {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
+                      </select>
+                      <button onClick={() => { setPartBulkText1(""); setPartBulkError1(""); setPartBulkType1(""); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
+                    </div>
+                    <textarea value={partBulkText1} onChange={e => setPartBulkText1(e.target.value)} placeholder="Paste questions for Part 1..." className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
+                    {partBulkError1 && <p className="mt-2 text-sm text-red-600">{partBulkError1}</p>}
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={() => {
+                        setPartBulkError1("");
+                        if (!partBulkType1) { setPartBulkError1("Select a type"); return; }
+                        const parsed = applyBulkToPart(0, partBulkType1, partBulkText1);
+                        if (!parsed) { setPartBulkError1("No data parsed"); return; }
+                        const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType1 as QuestionGroupType, label: `Bulk ${partBulkType1}`, wordLimit: "", data: parsed };
+                        setSectionParts(prev => [{ ...prev[0], questionGroups: [...prev[0].questionGroups, group] }, prev[1]]);
+                        setPartBulkText1(""); setPartBulkType1("");
+                      }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Apply to Part 1</button>
+                    </div>
+                  </div>
+
                   {/* Part 1 Question Groups */}
                   <div className="mt-5 flex flex-col gap-4">
                     {sectionParts[0].questionGroups.map((group, gi) => (
@@ -1688,6 +1766,31 @@ const autoTitle = isExam
                         if (f) setSectionParts(prev => [prev[0], { ...prev[1], audioFile: f, audioUrl: "" }]);
                       }}
                       className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+
+                    {/* Part 2 Bulk Paste (add question group from text) */}
+                    <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
+                      <p className="mb-2 text-sm font-semibold text-[#7a6258]">Bulk Paste for Part 2</p>
+                      <div className="grid gap-2 md:grid-cols-2">
+                        <select value={partBulkType2} onChange={e => setPartBulkType2(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+                          <option value="">Select group type...</option>
+                          {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
+                        </select>
+                        <button onClick={() => { setPartBulkText2(""); setPartBulkError2(""); setPartBulkType2(""); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
+                      </div>
+                      <textarea value={partBulkText2} onChange={e => setPartBulkText2(e.target.value)} placeholder="Paste questions for Part 2..." className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
+                      {partBulkError2 && <p className="mt-2 text-sm text-red-600">{partBulkError2}</p>}
+                      <div className="mt-2 flex gap-2">
+                        <button onClick={() => {
+                          setPartBulkError2("");
+                          if (!partBulkType2) { setPartBulkError2("Select a type"); return; }
+                          const parsed = applyBulkToPart(1, partBulkType2, partBulkText2);
+                          if (!parsed) { setPartBulkError2("No data parsed"); return; }
+                          const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType2 as QuestionGroupType, label: `Bulk ${partBulkType2}`, wordLimit: "", data: parsed };
+                          setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: [...prev[1].questionGroups, group] }]);
+                          setPartBulkText2(""); setPartBulkType2("");
+                        }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Apply to Part 2</button>
+                      </div>
+                    </div>
 
                     {/* Part 2 Question Groups */}
                     <div className="mt-5 flex flex-col gap-4">
