@@ -6,7 +6,7 @@ import { supabase } from "./lib/supabase";
 import LoginScreen from "./components/LoginScreen";
 import HomeScreen from "./components/HomeScreen";
 import EpisodeScreen from "./components/EpisodeScreen";
-import QuizScreen from "./components/QuizScreen";
+import PracticeScreen from "./components/PracticeScreen";
 import AdminScreen from "./components/AdminScreen";
 import ModeSelectionScreen from "./components/ModeSelectionScreen";
 import CompletionTypeScreen from "./components/CompletionTypeScreen";
@@ -264,13 +264,12 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <QuizScreen
+        <PracticeScreen
           episodeId={selectedPracticeId}
           practiceMode={practiceMode}
           isQuizMode={false}
           onBack={() => selectedIELTSSection ? goTo("ielts-sections") : goTo("episodes")}
           onNextEpisode={(nextId) => { setSelectedPracticeId(nextId); goTo("practice"); }}
-          onStudyVocabulary={() => {}}
         />
       </>
     );
@@ -280,13 +279,12 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <QuizScreen
+        <PracticeScreen
           episodeId={selectedPracticeId}
           practiceMode={null}
           isQuizMode={true}
           onBack={() => goTo("episodes")}
           onNextEpisode={(nextId) => { setSelectedPracticeId(nextId); goTo("quiz"); }}
-          onStudyVocabulary={() => {}}
         />
       </>
     );
@@ -301,7 +299,7 @@ export default function Home() {
           practiceMode={selectedIELTSSection ? null : practiceMode}
           isQuizMode={isQuizMode}
           ieltsSection={selectedIELTSSection}
-          onSelectEpisode={(id) => { setSelectedPracticeId(id); isQuizMode ? goTo("quiz") : goTo("practice"); }}
+          onSelectEpisode={(id) => { setSelectedPracticeId(id); if (isQuizMode) { goTo("quiz"); } else { goTo("practice"); } }}
           onBack={() => {
             if (selectedIELTSSection) return goTo("ielts-sections");
             if (isQuizMode) return goTo("exam-selection");

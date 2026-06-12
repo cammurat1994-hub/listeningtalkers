@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 type Props = {
@@ -59,7 +60,7 @@ export default function IELTSInfoModal({ onClose }: Props) {
         <div className="bg-[#3b2f2f] px-8 py-6 text-white">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
-              <img src="/cat-logo.svg" alt="" className="h-8 w-8 object-contain" />
+              <Image src="/cat-logo.svg" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
             </div>
             <div>
               <h2 className="text-xl font-bold">How IELTS Listening Works</h2>
@@ -141,7 +142,7 @@ export default function IELTSInfoModal({ onClose }: Props) {
                   ← Back
                 </button>
                 <button onClick={onClose} className="rounded-2xl bg-[#3b2f2f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2f2424]">
-                  Got it, let's practice! →
+                  Got it, let us practice! →
                 </button>
               </>
             )}

@@ -140,7 +140,7 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
   const motivationMessage = getMotivationMessage(streak, overallAccuracy, completedCount);
 
   const lastActivity = results[0] ? (() => {
-    const diff = Math.floor((Date.now() - new Date(results[0].created_at).getTime()) / 86400000);
+    const diff = Math.floor((new Date().getTime() - new Date(results[0].created_at).getTime()) / 86400000);
     if (diff === 0) return "Today";
     if (diff === 1) return "Yesterday";
     return `${diff} days ago`;
@@ -356,7 +356,7 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
             <div className="mt-5 flex flex-col gap-3">
               {pagedActivity.map((result) => {
                 const acc = result.total_questions > 0 ? Math.round((result.score / result.total_questions) * 100) : 0;
-                const diff = Math.floor((Date.now() - new Date(result.created_at).getTime()) / 86400000);
+                const diff = Math.floor((new Date().getTime() - new Date(result.created_at).getTime()) / 86400000);
                 const dateLabel = diff === 0 ? "Today" : diff === 1 ? "Yesterday" : `${diff}d ago`;
                 return (
                   <button key={result.id} onClick={() => onSelectEpisode(result.episode_id)}

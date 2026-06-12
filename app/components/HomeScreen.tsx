@@ -178,7 +178,7 @@ export default function HomeScreen({ onSelectPractice, onSelectQuiz }: Props) {
       {/* Question types */}
       <section className="mx-auto max-w-5xl px-6 py-12">
         <h2 className="text-center text-3xl font-bold">All question types covered</h2>
-        <p className="mt-3 text-center text-[#7a6258]">Practice every format you'll see on exam day.</p>
+        <p className="mt-3 text-center text-[#7a6258]">Practice every format you will see on exam day.</p>
         <div className="mt-10 grid gap-4 grid-cols-2 md:grid-cols-4">
           {questionTypes.map((t) => (
             <div key={t.label + t.desc} className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 text-center shadow-sm">

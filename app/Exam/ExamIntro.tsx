@@ -13,12 +13,6 @@ type Props = {
   onBack: () => void;
 };
 
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 const SECTION_INFO = [
   { title: "Section 1", context: "Social context", speakers: "2 speakers", topic: "Everyday situation (e.g. booking, registration)", difficulty: "Easiest", color: "bg-green-100 text-green-700" },
   { title: "Section 2", context: "Social context", speakers: "1 speaker", topic: "Monologue about local facilities, tours, events", difficulty: "Easy", color: "bg-green-100 text-green-700" },
@@ -70,7 +64,7 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
           <div className="mt-4 flex flex-col gap-3">
             {[
               { icon: "🔊", text: "Each audio recording plays ONCE only. You cannot pause or rewind." },
-              { icon: "⏱️", text: "You have 30 seconds to read each section's questions before the audio starts." },
+              { icon: "⏱️", text: "You have 30 seconds to read each section questions before the audio starts." },
               { icon: "📝", text: "Write your answers while listening. You can review them at the end." },
               { icon: "🔡", text: "Answers can be 1–3 words. Spelling must be correct." },
               { icon: "🌍", text: "You may hear British, Australian, or North American accents." },
@@ -136,7 +130,7 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
             {[
               { phase: "Start of each section", time: "30 sec", desc: "Read the questions before audio starts" },
               { phase: "Audio plays", time: "~7 min", desc: "Listen and write answers simultaneously" },
-              { phase: "Between sections", time: "30 sec", desc: "Read next section's questions" },
+              { phase: "Between sections", time: "30 sec", desc: "Read next section questions" },
               { phase: "Review time", time: "10 min", desc: "Check and edit all your answers" },
             ].map((row, i) => (
               <div key={i} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3">
@@ -169,11 +163,11 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
         {/* Start button */}
         <button onClick={onStart}
           className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:bg-[#2f2424]">
-          I'm ready — Start Test →
+          I am ready — Start Test →
         </button>
 
         <p className="mt-4 text-center text-xs text-[#7a6258]">
-          Once you start, the timer begins. Make sure you're in a quiet environment.
+          Once you start, the timer begins. Make sure you are in a quiet environment.
         </p>
 
       </section>

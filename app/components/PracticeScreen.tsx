@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type Props = {
@@ -9,7 +11,6 @@ type Props = {
   isQuizMode: boolean;
   onBack: () => void;
   onNextEpisode: (nextEpisodeId: string) => void;
-  onStudyVocabulary: () => void;
 };
 
 type IELTSSectionPart = {
@@ -55,28 +56,26 @@ function formatDate(dateStr: string) {
 
 // ─── Audio Player ─────────────────────────────────────────────────────────────
 
-function AudioPlayer({ isPlaying, progress, duration, audioRef, onToggle, title, level }: {
-  isPlaying: boolean; progress: number; duration: number;
-  audioRef: React.RefObject<HTMLAudioElement | null>;
-  onToggle: () => void; title: string; level: string;
+function AudioPlayer({ isPlaying, progress, duration, currentTime, onSeek, onToggle, title, level }: {
+  isPlaying: boolean; progress: number; duration: number; currentTime: number;
+  onSeek: (percent: number) => void; onToggle: () => void; title: string; level: string;
 }) {
   return (
     <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
       <div className="flex flex-col items-center gap-5">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#3b2f2f] shadow-lg">
-          <img src="/cat-logo.svg" alt="" className="h-11 w-11 object-contain" />
+          <Image src="/cat-logo.svg" alt="ListeningTalkers" width={44} height={44} className="object-contain" />
         </div>
         <div className="text-center"><p className="font-bold">{title}</p><p className="text-sm text-[#7a6258]">{level}</p></div>
         <div className="w-full">
           <div className="relative h-2 w-full cursor-pointer rounded-full bg-[#ead7cc]" onClick={e => {
-            const audio = audioRef.current; if (!audio) return;
             const rect = e.currentTarget.getBoundingClientRect();
-            audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+            onSeek(((e.clientX - rect.left) / rect.width) * 100);
           }}>
             <div className="h-2 rounded-full bg-[#3b2f2f] transition-all" style={{ width: `${progress}%` }} />
           </div>
           <div className="mt-1 flex justify-between text-xs text-[#7a6258]">
-            <span>{audioRef.current ? formatTime(audioRef.current.currentTime) : "0:00"}</span>
+            <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
@@ -341,6 +340,7 @@ function MapView({ question, userAnswers, checked, playsUsed, maxPlays, isPlayin
         <>
           <p className="mb-3 text-sm text-[#7a6258]">{!checked ? (selectedPoint ? `Point ${selectedPoint} selected — choose an option below` : "Tap a numbered point on the map, then select an answer") : `${correctCount}/${question.points.length} correct`}</p>
           <div className="relative w-full overflow-hidden rounded-[2rem] border-2 border-[#e0c7bb] bg-white" style={{ paddingBottom: "65%" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={question.imageUrl} alt="Map" className="absolute inset-0 h-full w-full object-contain" draggable={false} />
             {question.points.map(point => (
               <button key={point.id} disabled={checked} onClick={() => setSelectedPoint(selectedPoint === point.id ? null : point.id)}
@@ -439,13 +439,17 @@ function CommentsPanel({ episodeId, userEmail }: { episodeId: string; userEmail:
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { fetchComments(); }, [episodeId]);
-
-  async function fetchComments() {
+  const fetchComments = useCallback(async () => {
     const { data, error } = await supabase.from("comments").select("*").eq("episode_id", episodeId).order("created_at", { ascending: true });
     if (!error && data) setComments(data);
     setLoading(false);
-  }
+  }, [episodeId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => { fetchComments(); });
+    return () => clearTimeout(timer);
+  }, [fetchComments]);
+
   async function submitComment() {
     if (!newComment.trim()) return; setSubmitting(true);
     await supabase.from("comments").insert([{ episode_id: episodeId, user_email: userEmail, content: newComment.trim(), parent_id: null }]);
@@ -512,9 +516,9 @@ function CommentsPanel({ episodeId, userEmail }: { episodeId: string; userEmail:
   );
 }
 
-// ─── Main QuizScreen ──────────────────────────────────────────────────────────
+// ─── Main PracticeScreen ───────────────────────────────────────────────────────
 
-export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) {
+export default function PracticeScreen({ episodeId, onBack, onNextEpisode }: Props) {
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [nextEpisode, setNextEpisode] = useState<Episode | null>(null);
   const [loading, setLoading] = useState(true);
@@ -528,6 +532,7 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [mcqAnswers, setMcqAnswers] = useState<Record<number, string[]>>({});
@@ -697,10 +702,10 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
         {isMCQ && !testStarted && (
           <div className="mt-8">
             <audio ref={audioRef} src={episode.audio_url}
-              onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioProgress((a.currentTime / a.duration) * 100); }}
-              onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
+              onTimeUpdate={() => { const a = audioRef.current; if (a) { setAudioProgress((a.currentTime / a.duration) * 100); setAudioCurrentTime(a.currentTime); } }}
+              onLoadedMetadata={() => { const a = audioRef.current; if (a) { setAudioDuration(a.duration); setAudioCurrentTime(a.currentTime); } }}
               onEnded={() => setIsPlaying(false)} />
-            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
+            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} currentTime={audioCurrentTime} onSeek={percent => { const audio = audioRef.current; if (!audio) return; audio.currentTime = (percent / 100) * audio.duration; }} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
             {!showStartWarning ? (
               <button onClick={() => setShowStartWarning(true)} className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">I have listened — Start Questions</button>
             ) : (
@@ -709,7 +714,7 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
                 <p className="mt-2 text-sm text-[#7a6258]">Audio will not be available during questions. Make sure you have taken your notes.</p>
                 <div className="mt-4 flex gap-3">
                   <button onClick={() => setShowStartWarning(false)} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold">Go Back</button>
-                  <button onClick={() => setTestStarted(true)} className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white">Yes, I'm Ready</button>
+                  <button onClick={() => setTestStarted(true)} className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white">Yes, I am Ready</button>
                 </div>
               </div>
             )}
@@ -754,10 +759,10 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
         {isFill && !showResults && (
           <div className="mt-8">
             <audio ref={audioRef} src={episode.audio_url}
-              onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioProgress((a.currentTime / a.duration) * 100); }}
-              onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
+              onTimeUpdate={() => { const a = audioRef.current; if (a) { setAudioProgress((a.currentTime / a.duration) * 100); setAudioCurrentTime(a.currentTime); } }}
+              onLoadedMetadata={() => { const a = audioRef.current; if (a) { setAudioDuration(a.duration); setAudioCurrentTime(a.currentTime); } }}
               onEnded={() => setIsPlaying(false)} />
-            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef}
+            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} currentTime={audioCurrentTime} onSeek={percent => { const audio = audioRef.current; if (!audio) return; audio.currentTime = (percent / 100) * audio.duration; }}
               onToggle={() => { if (!testStarted) setTestStarted(true); toggleMainAudio(); }}
               title={episode.title} level={episode.level} />
             {testStarted && (
@@ -835,10 +840,10 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
               <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start</button>
             </div>
             <audio ref={audioRef} src={episode.audio_url}
-              onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioProgress((a.currentTime / a.duration) * 100); }}
-              onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
+              onTimeUpdate={() => { const a = audioRef.current; if (a) { setAudioProgress((a.currentTime / a.duration) * 100); setAudioCurrentTime(a.currentTime); } }}
+              onLoadedMetadata={() => { const a = audioRef.current; if (a) { setAudioDuration(a.duration); setAudioCurrentTime(a.currentTime); } }}
               onEnded={() => setIsPlaying(false)} />
-            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
+            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} currentTime={audioCurrentTime} onSeek={percent => { const audio = audioRef.current; if (!audio) return; audio.currentTime = (percent / 100) * audio.duration; }} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
           </div>
         )}
 
@@ -879,10 +884,10 @@ export default function QuizScreen({ episodeId, onBack, onNextEpisode }: Props) 
               <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start Matching</button>
             </div>
             <audio ref={audioRef} src={episode.audio_url}
-              onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioProgress((a.currentTime / a.duration) * 100); }}
-              onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioDuration(a.duration); }}
+              onTimeUpdate={() => { const a = audioRef.current; if (a) { setAudioProgress((a.currentTime / a.duration) * 100); setAudioCurrentTime(a.currentTime); } }}
+              onLoadedMetadata={() => { const a = audioRef.current; if (a) { setAudioDuration(a.duration); setAudioCurrentTime(a.currentTime); } }}
               onEnded={() => setIsPlaying(false)} />
-            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} audioRef={audioRef} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
+            <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} currentTime={audioCurrentTime} onSeek={percent => { const audio = audioRef.current; if (!audio) return; audio.currentTime = (percent / 100) * audio.duration; }} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
           </div>
         )}
 

@@ -59,16 +59,13 @@ const sections = [
 
 export default function IELTSSectionScreen({ onSelectSection, onBack, userEmail }: Props) {
   const [counts, setCounts] = useState<Record<number, number>>({});
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (!userEmail) return true;
+    return !localStorage.getItem(`ielts_info_seen_${userEmail}`);
+  });
 
   useEffect(() => {
-    if (!userEmail) {
-      setShowModal(true);
-    } else {
-      const key = `ielts_info_seen_${userEmail}`;
-      if (!localStorage.getItem(key)) setShowModal(true);
-    }
-
     async function fetchCounts() {
       const { data } = await supabase
         .from("episodes")
@@ -85,7 +82,7 @@ export default function IELTSSectionScreen({ onSelectSection, onBack, userEmail 
       }
     }
     fetchCounts();
-  }, [userEmail]);
+  }, []);
 
   function handleModalClose() {
     setShowModal(false);

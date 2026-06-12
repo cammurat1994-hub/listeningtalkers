@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type Props = {
@@ -95,15 +95,7 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    setPractices([]);
-    setPage(0);
-    setHasMore(true);
-    fetchPractices(0, true);
-    fetchCompleted();
-  }, [selectedLevel, practiceMode, isQuizMode, isExamMode, ieltsSection]);
-
-  async function buildQuery(from: number, to: number) {
+  const buildQuery = useCallback(async (from: number, to: number) => {
     let query = supabase
       .from("episodes")
       .select("id, title, level, episode_type", { count: "exact" })
@@ -131,9 +123,9 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
       else if (practiceMode === "completion-sentence") query = query.eq("episode_type", "practice-completion-sentence");
     }
     return query;
-  }
+  }, [selectedLevel, practiceMode, isQuizMode, isExamMode, ieltsSection]);
 
-  async function fetchPractices(pageNum: number, reset = false) {
+  const fetchPractices = useCallback(async (pageNum: number, reset = false) => {
     if (reset) setLoading(true); else setLoadingMore(true);
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
@@ -146,9 +138,9 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
       setPage(pageNum);
     }
     if (reset) setLoading(false); else setLoadingMore(false);
-  }
+  }, [buildQuery]);
 
-  async function fetchCompleted() {
+  const fetchCompleted = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user?.email) {
       const { data } = await supabase
@@ -157,7 +149,12 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
         .eq("user_email", user.email);
       if (data) setCompleted(data);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => { fetchPractices(0, true); fetchCompleted(); });
+    return () => clearTimeout(timer);
+  }, [fetchPractices, fetchCompleted]);
 
   function getTitle() {
     if (isExamMode) return "Full Exam Tests";

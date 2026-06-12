@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -41,7 +42,7 @@ export default function LoginScreen({ onGuestLogin }: Props) {
           {/* Left — branding */}
           <div>
             <div className="flex items-center gap-3">
-              <img src="/cat-logo.svg" alt="ListeningTalkers" className="h-14 w-14 object-contain" />
+              <Image src="/cat-logo.svg" alt="ListeningTalkers" width={56} height={56} className="h-14 w-14 object-contain" />
               <span className="text-xl font-bold">ListeningTalkers</span>
             </div>
 
@@ -136,7 +137,7 @@ export default function LoginScreen({ onGuestLogin }: Props) {
               <>
                 <h2 className="text-2xl font-bold">Sign in with email</h2>
                 <p className="mt-2 text-sm text-[#7a6258]">
-                  We'll send you a magic link — no password needed.
+                  We will send you a magic link — no password needed.
                 </p>
 
                 <div className="mt-6 flex flex-col gap-3">

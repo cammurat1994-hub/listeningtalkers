@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export default function LoadingScreen() {
@@ -14,7 +15,7 @@ export default function LoadingScreen() {
 
   return (
     <main className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#f7eee8]">
-      <img
+      <Image
         src="/cat-logo.svg"
         alt="Loading"
         width={160}

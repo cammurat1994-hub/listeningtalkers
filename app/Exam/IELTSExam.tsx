@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 type Section = {
@@ -237,6 +238,7 @@ function MapRenderer({ group, sectionNum, answers, onAnswer, locked }: {
     <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
       {data?.imageUrl && (
         <div className="relative w-full overflow-hidden rounded-2xl border border-[#e0c7bb]" style={{ paddingBottom: "60%" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={data.imageUrl} alt="Map" className="absolute inset-0 h-full w-full object-contain bg-white" draggable={false} />
           {points.map(point => {
             const key = `${sectionNum}-${group.label}-map-${point.id}`;
@@ -379,7 +381,7 @@ function QuestionGroupView({ group, sectionNum, answers, onAnswer, locked }: {
   locked: boolean;
 }) {
   return (
-    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 shadow-sm">
+    <div className="rounded-4xl border border-[#e0c7bb] bg-[#fffaf7] p-5 shadow-sm">
       <p className="text-xs font-bold uppercase tracking-wide text-[#7a6258] mb-4">{group.label}</p>
       {group.type === "mcq" && <MCQRenderer group={group} sectionNum={sectionNum} answers={answers} onAnswer={onAnswer} locked={locked} />}
       {(group.type === "note-completion" || group.type === "form-completion") && <NoteFormRenderer group={group} sectionNum={sectionNum} answers={answers} onAnswer={onAnswer} locked={locked} />}
@@ -430,17 +432,16 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [sections.length]);
+  }, [sections.length, onFinish]);
 
   useEffect(() => {
-    if (phase.type === "listening") {
-      const section = sections[phase.sectionIndex];
-      if (section?.audioUrl && audioRef.current) {
-        audioRef.current.src = section.audioUrl;
-        audioRef.current.play().catch(() => {});
-      }
+    if (phase.type !== "listening") return;
+    const section = sections[phase.sectionIndex];
+    if (section?.audioUrl && audioRef.current) {
+      audioRef.current.src = section.audioUrl;
+      audioRef.current.play().catch(() => {});
     }
-  }, [phase.type, phase.type === "listening" ? (phase as { type: "listening"; sectionIndex: number }).sectionIndex : 0]);
+  }, [phase, sections]);
 
   function handleAudioEnded() {
     const currentSectionIndex = phase.type === "listening" ? phase.sectionIndex : 0;
@@ -487,6 +488,13 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+      <div className="mx-auto max-w-3xl px-6 py-5 flex items-center justify-between">
+        <button onClick={onBack} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold hover:bg-[#f1ded5]">← Back</button>
+        <div className="text-right">
+          <p className="font-bold">{title}</p>
+          <p className="text-sm text-[#7a6258]">{examType}</p>
+        </div>
+      </div>
       <audio ref={audioRef} onEnded={handleAudioEnded} />
 
       {/* Top bar */}
@@ -536,7 +544,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
         {/* Reading phase */}
         {phase.type === "reading" && currentSection && (
           <div>
-            <div className="mb-6 rounded-[2rem] border border-blue-200 bg-blue-50 p-5">
+            <div className="mb-6 rounded-4xl border border-blue-200 bg-blue-50 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-bold text-blue-700 text-lg">
@@ -571,11 +579,11 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
         {/* Listening phase */}
         {phase.type === "listening" && currentSection && (
           <div>
-            <div className="mb-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5">
+            <div className="mb-6 rounded-4xl border border-[#e0c7bb] bg-[#fffaf7] p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#3b2f2f] animate-pulse">
-                    <img src="/cat-logo.svg" alt="" className="h-8 w-8 object-contain" />
+                    <Image src="/cat-logo.svg" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
                   </div>
                   <div>
                     <p className="font-bold">Section {currentSection.number} — Now Playing</p>
@@ -598,7 +606,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
         {/* Checking phase */}
         {phase.type === "checking" && currentSection && (
           <div>
-            <div className="mb-6 rounded-[2rem] border border-yellow-200 bg-yellow-50 p-5">
+            <div className="mb-6 rounded-4xl border border-yellow-200 bg-yellow-50 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-bold text-yellow-700 text-lg">
@@ -632,7 +640,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
         {/* Review phase */}
         {phase.type === "review" && (
           <div>
-            <div className="mb-6 rounded-[2rem] border border-green-200 bg-green-50 p-5">
+            <div className="mb-6 rounded-4xl border border-green-200 bg-green-50 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-bold text-green-700 text-lg">

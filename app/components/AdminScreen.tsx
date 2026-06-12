@@ -55,6 +55,12 @@ const PRACTICE_TYPES = [
   { id: "practice-matching", label: "Matching", emoji: "🔗" },
   { id: "practice-map", label: "Map Labelling", emoji: "🗺️" },
 ];
+const PRACTICE_EXAM_TYPES = [
+  { id: "ielts", label: "IELTS", emoji: "🎧" },
+  { id: "toefl", label: "TOEFL", emoji: "🎓" },
+  { id: "toeic", label: "TOEIC", emoji: "💼" },
+  { id: "celpip", label: "CELPIP", emoji: "🍁" },
+];
 const COMPLETION_TYPES = [
   { id: "practice-completion-note", label: "Note Completion", emoji: "📝" },
   { id: "practice-completion-form", label: "Form Completion", emoji: "📄" },
@@ -94,26 +100,6 @@ const IELTS_SECTIONS = [
   { value: 3, label: "Section 3 — MCQ / Matching / Sentence Completion (B2–C1)" },
   { value: 4, label: "Section 4 — Note / Flow Chart / Table / Sentence (C1–C2)" },
 ];
-
-function getAutoLevel(examType: string, examSection: number | null): string {
-  if (examType === "ielts") {
-    if (examSection === 1) return "Beginner";
-    if (examSection === 2) return "Intermediate";
-    if (examSection === 3) return "Intermediate";
-    if (examSection === 4) return "Advanced";
-  }
-  return "Intermediate";
-}
-
-function getAutoTitle(examType: string, examSection: number | null, episodeType: string): string {
-  if (examType === "ielts" && examSection) {
-    return `IELTS S${examSection} — Practice #${Date.now().toString().slice(-4)}`;
-  }
-  if (episodeType.startsWith("exam-")) {
-    return `${episodeType.replace("exam-", "").toUpperCase()} Full Test #${Date.now().toString().slice(-4)}`;
-  }
-  return `Practice #${Date.now().toString().slice(-4)}`;
-}
 
 function createEmptyGroupData(type: QuestionGroupType): any {
   switch (type) {
@@ -516,7 +502,17 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
                 onChange({ ...data, points: [...(data?.points || []), { id: newId, x, y, answer: "", explanation: "" }] });
                 setAddingPoint(false);
               }} className={`relative w-full overflow-hidden rounded-2xl border-2 ${addingPoint ? "border-blue-400 cursor-crosshair" : "border-[#e0c7bb]"}`} style={{ paddingBottom: "55%" }}>
-                <img src={mapPreview || data?.imageUrl} alt="Map" className="absolute inset-0 h-full w-full object-contain bg-white" draggable={false} />
+                <div
+                  role="img"
+                  aria-label="Map"
+                  className="absolute inset-0 bg-white"
+                  style={{
+                    backgroundImage: `url(${mapPreview || data?.imageUrl})`,
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                    backgroundSize: "contain",
+                  }}
+                />
                 {(data?.points || []).map((point: MapPoint) => (
                   <div key={point.id} className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#3b2f2f] text-xs font-bold text-white shadow-lg cursor-pointer hover:bg-red-600" style={{ left: `${point.x}%`, top: `${point.y}%` }}
                     onClick={e => { e.stopPropagation(); if (!addingPoint) onChange({ ...data, points: (data?.points || []).filter((p: MapPoint) => p.id !== point.id).map((p: MapPoint, i: number) => ({ ...p, id: i + 1 })) }); }}>{point.id}</div>
@@ -676,8 +672,9 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
 export default function AdminScreen({ onBack }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>("new");
   const [episodeType, setEpisodeType] = useState<EpisodeType>("practice-mcq");
-  const [examType, setExamType] = useState("");
   const [examSection, setExamSection] = useState<number | null>(null);
+  const [creationMode, setCreationMode] = useState<"practice" | "exam">("practice");
+  const [practiceExamType, setPracticeExamType] = useState<"ielts" | "toefl" | "toeic" | "celpip" | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [existingAudioUrl, setExistingAudioUrl] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -771,6 +768,11 @@ export default function AdminScreen({ onBack }: Props) {
 
   async function publishPractice() {
     setUploading(true);
+    if (creationMode === "practice" && !practiceExamType) {
+      alert("Please select a practice exam type before publishing.");
+      setUploading(false);
+      return;
+    }
     try {
       let audioUrl = existingAudioUrl;
       if (audioFile) audioUrl = await uploadFile(audioFile, "episode");
@@ -789,6 +791,7 @@ export default function AdminScreen({ onBack }: Props) {
             if (group.type === "map" && group.data?._imageFile) {
               const imageUrl = await uploadFile(group.data._imageFile, "map");
               const { _imageFile, ...cleanData } = group.data;
+              void _imageFile;
               return { ...group, data: { ...cleanData, imageUrl } };
             }
             return group;
@@ -830,6 +833,7 @@ export default function AdminScreen({ onBack }: Props) {
             if (group.type === "map" && group.data?._imageFile) {
               const imageUrl = await uploadFile(group.data._imageFile, "map");
               const { _imageFile, ...cleanData } = group.data;
+              void _imageFile;
               return { ...group, data: { ...cleanData, imageUrl } };
             }
             return group;
@@ -871,7 +875,7 @@ const autoTitle = isExam
         sections: isExam ? sections : null,
         vocabulary: [],
         pdf_url: pdfUrl || null,
-       exam_type: isPractice && (examSection || episodeType === "ielts-section") ? "ielts" : null,
+        exam_type: isExam ? episodeType.replace("exam-", "") : isPractice ? (practiceExamType || (episodeType === "ielts-section" ? "ielts" : null)) : null,
         exam_section: isPractice ? (episodeType === "ielts-section" ? sectionNumber : examSection) || null : null,
       };
 
@@ -880,7 +884,7 @@ const autoTitle = isExam
       else { const { error } = await supabase.from("episodes").insert([payload]); dbError = error; }
       if (dbError) throw new Error(dbError.message);
       resetForm(); await fetchPractices();
-      alert(editingId ? "Practice updated!" : "Practice published!");
+      alert(editingId ? "Content updated!" : "Content published!");
     } catch (err) {
       alert("Failed: " + (err instanceof Error ? err.message : "Unknown error"));
     } finally { setUploading(false); }
@@ -889,7 +893,7 @@ const autoTitle = isExam
   function resetForm() {
     setEditingId(null); setAudioFile(null); setExistingAudioUrl("");
     setPdfFile(null); setExistingPdfUrl(""); setShowNotes(false);
-    setExamType(""); setExamSection(null);
+    setExamSection(null);
     setMcqQuestions([createEmptyMCQ()]); setFillQuestions([createEmptyFill()]);
     setDictationQuestions([createEmptyDictation()]); setShortQuestions([createEmptyShort()]);
     setMatchingQuestions([createEmptyMatching()]);
@@ -901,13 +905,14 @@ const autoTitle = isExam
     setSectionParts([createEmptyPart(), createEmptyPart()]);
     setSectionNumber(1);
     setBulkMode(false); setBulkText(""); setBulkError("");
+    setCreationMode("practice"); setPracticeExamType(null);
   }
 
   async function handleEdit(id: string) {
     const { data, error } = await supabase.from("episodes").select("*").eq("id", id).single();
     if (error || !data) return;
     setEditingId(data.id); setEpisodeType(data.episode_type || "practice-mcq");
-    setExamType(data.exam_type || ""); setExamSection(data.exam_section || null);
+    setExamSection(data.exam_section || null);
     setExistingAudioUrl(data.audio_url || ""); setExistingPdfUrl(data.pdf_url || "");
     setShowNotes(data.show_notes || false); setAudioFile(null); setPdfFile(null);
     setBulkMode(false); setBulkText(""); setBulkError("");
@@ -1001,19 +1006,81 @@ const autoTitle = isExam
             <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
               <h2 className="text-2xl font-bold">{editingId ? "Edit Practice" : "New Practice"}</h2>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-4">
-                {[
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a6258]">Create</p>
+                  <div className="flex flex-col gap-2">
+                    {[
+                      { id: "practice", label: "Practice", description: "Create practice content" },
+                      { id: "exam", label: "Exam", description: "Create full exam content" },
+                    ].map(mode => (
+                      <button key={mode.id} onClick={() => {
+                        setCreationMode(mode.id as "practice" | "exam");
+                        if (mode.id === "exam") { setPracticeExamType(null); setEpisodeType("exam-ielts"); setExamSection(null); }
+                        else { setEpisodeType("practice-mcq"); }
+                      }}
+                        className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${creationMode === mode.id ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+                        <div className="font-bold">{mode.label}</div>
+                        <div className="mt-1 text-xs text-[#7a6258]">{mode.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#e0c7eb] bg-white p-4">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a6258]">Exam Type</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PRACTICE_EXAM_TYPES.map(type => (
+                      <button key={type.id} onClick={() => setPracticeExamType(type.id as "ielts" | "toefl" | "toeic" | "celpip")}
+                        className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${practiceExamType === type.id ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7eb] bg-white hover:bg-[#f1ded5]"}`}>
+                        {type.emoji} {type.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#e0c7eb] bg-white p-4">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a6258]">Section</p>
+                  <select value={practiceExamType === "ielts" ? (examSection || "") : ""}
+                    onChange={e => setExamSection(e.target.value ? Number(e.target.value) : null)}
+                    disabled={practiceExamType !== "ielts"}
+                    className="w-full rounded-2xl border border-[#e0c7eb] bg-white p-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
+                    <option value="">Select IELTS section</option>
+                    {IELTS_SECTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                  {practiceExamType !== "ielts" && <p className="mt-2 text-xs text-[#7a6258]">Section selection is only for IELTS.</p>}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 text-sm text-[#7a6258]">
+                {creationMode === "practice" && !practiceExamType && <p>Select a practice exam type before picking practice content.</p>}
+                {creationMode === "practice" && practiceExamType && (
+                  <p>Practice exam type selected: <strong>{practiceExamType.toUpperCase()}</strong>{practiceExamType === "ielts" && examSection ? ` · Section ${examSection}` : ""}</p>
+                )}
+                {creationMode === "exam" && <p>Exam creation mode selected. Choose a full exam type below.</p>}
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                {(creationMode === "practice" ? [
                   { label: "Practice", types: PRACTICE_TYPES },
                   { label: "Completions", types: COMPLETION_TYPES },
-                  { label: "🎓 Full Exam", types: EXAM_TYPES_LIST },
-                  { label: "Quiz", types: QUIZ_TYPES },
-                ].map(col => (
+                  { label: "Practice Style", types: QUIZ_TYPES },
+                ] : [
+                  { label: "Full Exam", types: EXAM_TYPES_LIST },
+                ]).map(col => (
                   <div key={col.label}>
                     <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#7a6258]">{col.label}</p>
                     <div className="flex flex-col gap-2">
                       {col.types.map(t => (
-                        <button key={t.id} onClick={() => { setEpisodeType(t.id as EpisodeType); setExamType(""); setExamSection(null); }}
-                          className={`rounded-2xl border px-3 py-2 text-left text-xs font-semibold transition ${episodeType === t.id ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+                        <button key={t.id} onClick={() => {
+                          if (creationMode === "practice" && !practiceExamType) return;
+                          setEpisodeType(t.id as EpisodeType);
+                          if (creationMode === "practice" && practiceExamType === "ielts" && t.id === "ielts-section") {
+                            setExamSection(examSection || 1);
+                          }
+                          if (creationMode === "exam") setExamSection(null);
+                        }}
+                          className={`rounded-2xl border px-3 py-2 text-left text-xs font-semibold transition ${episodeType === t.id ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"} ${creationMode === "practice" && !practiceExamType ? "cursor-not-allowed opacity-60" : ""}`}>
                           {t.emoji} {t.label}
                         </button>
                       ))}
@@ -1021,7 +1088,11 @@ const autoTitle = isExam
                   </div>
                 ))}
               </div>
-
+              {creationMode === "exam" && (
+                <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 text-sm text-[#7a6258]">
+                  <p>Full exam mode selected. Choose a full exam type from the exam selector above.</p>
+                </div>
+              )}
               <div className="mt-6 grid gap-4">
               
 
@@ -1415,7 +1486,17 @@ const autoTitle = isExam
                       <button onClick={() => setAddingPoint(!addingPoint)} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${addingPoint ? "bg-blue-600 text-white" : "border border-[#e0c7bb] bg-white"}`}>{addingPoint ? "🎯 Click map..." : "➕ Add Point"}</button>
                     </div>
                     <div ref={mapContainerRef} onClick={handleMapClick} className={`relative w-full overflow-hidden rounded-3xl border-2 ${addingPoint ? "border-blue-400 cursor-crosshair" : "border-[#e0c7bb]"}`} style={{ paddingBottom: "60%" }}>
-                      <img src={mapImagePreview} alt="Map" className="absolute inset-0 h-full w-full object-contain bg-white" draggable={false} />
+                      <div
+                        role="img"
+                        aria-label="Map"
+                        className="absolute inset-0 bg-white"
+                        style={{
+                          backgroundImage: `url(${mapImagePreview})`,
+                          backgroundPosition: "center",
+                          backgroundRepeat: "no-repeat",
+                          backgroundSize: "contain",
+                        }}
+                      />
                       {mapQuestion.points.map(point => (
                         <div key={point.id} className="absolute flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#3b2f2f] text-xs font-bold text-white shadow-lg cursor-pointer hover:bg-red-600 transition" style={{ left: `${point.x}%`, top: `${point.y}%` }}
                           onClick={e => { e.stopPropagation(); if (!addingPoint) setMapQuestion(prev => ({ ...prev, points: prev.points.filter(p => p.id !== point.id).map((p, i) => ({ ...p, id: i + 1 })) })); }}>{point.id}</div>
@@ -1514,7 +1595,7 @@ const autoTitle = isExam
                 )}
                 {!completionBulkMode && episodeType === "practice-completion-table" && (
                   <div className="mt-6">
-                    <p className="text-sm text-[#7a6258]">Use Bulk Paste for tables — it's much easier.</p>
+                    <p className="text-sm text-[#7a6258]">Use Bulk Paste for tables — it is much easier.</p>
                     <pre className="mt-2 rounded-2xl bg-[#f7eee8] p-3 text-xs text-[#7a6258]">{getBulkFormat()}</pre>
                   </div>
                 )}
