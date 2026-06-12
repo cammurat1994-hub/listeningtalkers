@@ -9,7 +9,7 @@ type Props = { onBack: () => void; };
 type EpisodeType =
   | "practice-mcq" | "practice-fill" | "practice-dictation" | "practice-short" | "practice-matching" | "practice-map"
   | "practice-completion-note" | "practice-completion-form" | "practice-completion-table" | "practice-completion-flow" | "practice-completion-sentence"
-  || "ielts-section"
+  | "ielts-section"
   | "exam-ielts" | "exam-toefl" | "exam-toeic" | "exam-celpip"
   | "quiz-ielts" | "quiz-toefl" | "quiz-toeic" | "quiz-celpip";
 
@@ -719,7 +719,8 @@ export default function AdminScreen({ onBack }: Props) {
   const [sectionNumber, setSectionNumber] = useState<number>(1);
   const [managePage, setManagePage] = useState(0);
 
-  const isPractice = episodeType.startsWith("practice-");
+ const isIELTSSection = episodeType === "ielts-section";
+  const isPractice = episodeType.startsWith("practice-") || isIELTSSection;
   const isCompletion = episodeType.startsWith("practice-completion-");
   const isExam = episodeType.startsWith("exam-");
 
@@ -856,7 +857,7 @@ const autoTitle = isExam
   ? `${episodeType.replace("exam-", "").toUpperCase()} Full Test #${Date.now().toString().slice(-4)}`
   : `${sectionLabel}${typeLabel} #${Date.now().toString().slice(-4)}`;
 
-     const isIELTSSection = episodeType === "ielts-section";
+   
 
       const payload: Record<string, any> = {
         level: autoLevel,
@@ -1044,9 +1045,9 @@ const autoTitle = isExam
 )}
 
                 {/* Audio */}
-                {!isExam && (
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">Main Audio</label>
+               {!isExam && !isIELTSSection && (
+  <div>
+    <label className="mb-2 block text-sm font-semibold">Main Audio</label>
                     {existingAudioUrl && !audioFile && <p className="mb-2 text-sm text-green-600">✓ Current audio kept.</p>}
                     <input type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
                   </div>
