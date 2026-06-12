@@ -143,10 +143,13 @@ type IELTSSectionPart = {
   audioFile: File | null;
   audioUrl: string;
   questionGroups: QuestionGroup[];
+  mapImageFile?: File | null;
+  mapImageUrl?: string;
+  mapImagePreview?: string;
 };
 
 function createEmptyPart(): IELTSSectionPart {
-  return { audioFile: null, audioUrl: "", questionGroups: [] };
+  return { audioFile: null, audioUrl: "", questionGroups: [], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" };
 }
 function parseBulkMCQ(raw: string): MCQQuestion[] {
   const blocks = raw.trim().split(/\n{2,}/);
@@ -275,6 +278,36 @@ function applyBulkToPart(partIndex: number, type: QuestionGroupType | "", raw: s
       return { items, options, answers } as any;
     }
     default: return null;
+  }
+}
+
+function getQuestionTypeDescription(type: QuestionGroupType) {
+  switch (type) {
+    case "mcq": return "MCQ bulk format: Q) Question, A) Option A, B) Option B, C) Option C, Correct) A, Explanation) ...";
+    case "matching": return "Matching bulk format: use Q1) item, A) option A, B) option B, ANS1) A, ANS2) B.";
+    case "form-completion": return "Form completion bulk: TITLE) form title, FIELD) field text, ANS1) answer.";
+    case "note-completion": return "Note completion bulk: TITLE) note title, NOTE) text, ANS1) answer.";
+    case "table-completion": return "Table bulk format: TITLE) name, HEADERS) col1|col2|col3, ROW) cell1|cell2|cell3, ANS1) answer.";
+    case "flow-completion": return "Flow chart bulk: TITLE) title, STEP) text, ANS1) answer.";
+    case "sentence-completion": return "Sentence bulk: S) sentence with ___ blank, ANS1) answer.";
+    case "short-answer": return "Short answer bulk: Q) question, A) answer, H) optional hint.";
+    case "map": return "Map Labelling bulk requires a map image upload and coordinates in the question data.";
+    default: return "Paste bulk text in the selected question format.";
+  }
+}
+
+function getQuestionTypePlaceholder(type: QuestionGroupType, partLabel: string) {
+  switch (type) {
+    case "mcq": return `${partLabel}: Q) Question\nA) Option A\nB) Option B\nC) Option C\nD) Option D\nCorrect) A`;
+    case "matching": return `${partLabel}: Q1) item\nQ2) item\nA) option A\nB) option B\nANS1) A\nANS2) B`;
+    case "form-completion": return `${partLabel}: TITLE) Form\nFIELD) Name: ___\nANS1) Answer`;
+    case "note-completion": return `${partLabel}: TITLE) Notes\nNOTE) Speaker: ___\nANS1) Answer`;
+    case "table-completion": return `${partLabel}: TITLE) Table\nHEADERS) Col1|Col2|Col3\nROW) Cell1|Cell2|Cell3\nANS1) Answer`;
+    case "flow-completion": return `${partLabel}: TITLE) Flow\nSTEP) Text with ___\nANS1) Answer`;
+    case "sentence-completion": return `${partLabel}: S) The ___ is ready\nANS1) answer`;
+    case "short-answer": return `${partLabel}: Q) Question\nA) Answer`;
+    case "map": return `${partLabel}: Paste map question coordinates and option labels.`;
+    default: return `${partLabel}: Paste questions here...`;
   }
 }
 
@@ -811,6 +844,23 @@ export default function AdminScreen({ onBack }: Props) {
     setMapImageFile(file);
     const reader = new FileReader();
     reader.onload = e => setMapImagePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function handleIeltsMapImageSelect(partIndex: number, file: File) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      setSectionParts(prev => {
+        const next = [...prev];
+        next[partIndex] = {
+          ...next[partIndex],
+          mapImageFile: file,
+          mapImageUrl: "",
+          mapImagePreview: e.target?.result as string,
+        };
+        return next;
+      });
+    };
     reader.readAsDataURL(file);
   }
 
@@ -1725,41 +1775,45 @@ const autoTitle = isExam
                         <option value="">Select question type...</option>
                         {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
                       </select>
-                      <button onClick={() => { setPartBulkText1(""); setPartBulkError1(""); setPartBulkType1(""); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
+                      <button onClick={() => { setPartBulkText1(""); setPartBulkError1(""); setPartBulkType1(""); setSectionParts(prev => [{ ...prev[0], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" }, prev[1]]); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
                     </div>
-                    <textarea value={partBulkText1} onChange={e => setPartBulkText1(e.target.value)} placeholder={sectionNumber === 4 ? "Paste questions for the section..." : "Paste questions for Part 1..."} className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
+                    {partBulkType1 && (
+                      <p className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm text-[#7a6258]">
+                        {getQuestionTypeDescription(partBulkType1)}
+                      </p>
+                    )}
+                    {partBulkType1 === "map" && (
+                      <div className="mt-4 rounded-2xl border border-[#e0c7eb] bg-white p-4">
+                        <label className="mb-2 block text-sm font-semibold">Map Image</label>
+                        <input type="file" accept="image/png,image/jpeg,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) handleIeltsMapImageSelect(0, f); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+                        {sectionParts[0].mapImageFile && (
+                          <div className="mt-3 text-sm text-[#3b2f2f]">
+                            {sectionParts[0].mapImageFile.type.startsWith("image/") && sectionParts[0].mapImagePreview ? (
+                              <img src={sectionParts[0].mapImagePreview} alt="Map preview" className="mt-2 max-h-40 w-full rounded-2xl object-contain" />
+                            ) : (
+                              <p>Selected file: {sectionParts[0].mapImageFile.name}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <textarea value={partBulkText1} onChange={e => setPartBulkText1(e.target.value)} placeholder={getQuestionTypePlaceholder(partBulkType1 as QuestionGroupType, sectionNumber === 4 ? "Section" : "Part 1")} className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
                     {partBulkError1 && <p className="mt-2 text-sm text-red-600">{partBulkError1}</p>}
                     <div className="mt-2 flex gap-2">
                       <button onClick={() => {
                         setPartBulkError1("");
                         if (!partBulkType1) { setPartBulkError1("Select a type"); return; }
+                        if (partBulkType1 === "map" && !sectionParts[0].mapImageFile && !sectionParts[0].mapImageUrl) { setPartBulkError1("Upload a map image for Map Labelling."); return; }
                         const parsed = applyBulkToPart(0, partBulkType1, partBulkText1);
                         if (!parsed) { setPartBulkError1("No data parsed"); return; }
-                        const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType1 as QuestionGroupType, label: `Bulk ${partBulkType1}`, wordLimit: "", data: parsed };
+                        const groupData = typeof parsed === "object" && partBulkType1 === "map"
+                          ? { ...parsed, _imageFile: sectionParts[0].mapImageFile || undefined, imageUrl: sectionParts[0].mapImageUrl || undefined }
+                          : parsed;
+                        const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType1 as QuestionGroupType, label: `Bulk ${partBulkType1}`, wordLimit: "", data: groupData };
                         setSectionParts(prev => [{ ...prev[0], questionGroups: [...prev[0].questionGroups, group] }, prev[1]]);
                         setPartBulkText1(""); setPartBulkType1("");
                       }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">{sectionNumber === 4 ? "Apply" : "Apply to Part 1"}</button>
                     </div>
-                  </div>
-
-                  {/* Part 1 Question Groups */}
-                  <div className="mt-5 flex flex-col gap-4">
-                    {sectionParts[0].questionGroups.map((group, gi) => (
-                      <QuestionGroupEditor key={group.id} group={group}
-                        onChange={newData => {
-                          const updated = [...sectionParts[0].questionGroups];
-                          updated[gi] = { ...group, data: newData };
-                          setSectionParts(prev => [{ ...prev[0], questionGroups: updated }, prev[1]]);
-                        }}
-                        onRemove={() => {
-                          const updated = sectionParts[0].questionGroups.filter((_, i) => i !== gi);
-                          setSectionParts(prev => [{ ...prev[0], questionGroups: updated }, prev[1]]);
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
-                    <AddGroupPanel onAdd={(group) => setSectionParts(prev => [{ ...prev[0], questionGroups: [...prev[0].questionGroups, group] }, prev[1]])} />
                   </div>
                 </div>
 
@@ -1790,41 +1844,45 @@ const autoTitle = isExam
                           <option value="">Select question type...</option>
                           {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
                         </select>
-                        <button onClick={() => { setPartBulkText2(""); setPartBulkError2(""); setPartBulkType2(""); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
+                        <button onClick={() => { setPartBulkText2(""); setPartBulkError2(""); setPartBulkType2(""); setSectionParts(prev => [prev[0], { ...prev[1], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" }]); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
                       </div>
-                      <textarea value={partBulkText2} onChange={e => setPartBulkText2(e.target.value)} placeholder="Paste questions for Part 2..." className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
+                      {partBulkType2 && (
+                        <p className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm text-[#7a6258]">
+                          {getQuestionTypeDescription(partBulkType2)}
+                        </p>
+                      )}
+                      {partBulkType2 === "map" && (
+                        <div className="mt-4 rounded-2xl border border-[#e0c7eb] bg-white p-4">
+                          <label className="mb-2 block text-sm font-semibold">Map Image</label>
+                          <input type="file" accept="image/png,image/jpeg,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) handleIeltsMapImageSelect(1, f); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+                          {sectionParts[1].mapImageFile && (
+                            <div className="mt-3 text-sm text-[#3b2f2f]">
+                              {sectionParts[1].mapImageFile.type.startsWith("image/") && sectionParts[1].mapImagePreview ? (
+                                <img src={sectionParts[1].mapImagePreview} alt="Map preview" className="mt-2 max-h-40 w-full rounded-2xl object-contain" />
+                              ) : (
+                                <p>Selected file: {sectionParts[1].mapImageFile.name}</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <textarea value={partBulkText2} onChange={e => setPartBulkText2(e.target.value)} placeholder={getQuestionTypePlaceholder(partBulkType2 as QuestionGroupType, "Part 2")} className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
                       {partBulkError2 && <p className="mt-2 text-sm text-red-600">{partBulkError2}</p>}
                       <div className="mt-2 flex gap-2">
                         <button onClick={() => {
                           setPartBulkError2("");
                           if (!partBulkType2) { setPartBulkError2("Select a type"); return; }
+                          if (partBulkType2 === "map" && !sectionParts[1].mapImageFile && !sectionParts[1].mapImageUrl) { setPartBulkError2("Upload a map image for Map Labelling."); return; }
                           const parsed = applyBulkToPart(1, partBulkType2, partBulkText2);
                           if (!parsed) { setPartBulkError2("No data parsed"); return; }
-                          const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType2 as QuestionGroupType, label: `Bulk ${partBulkType2}`, wordLimit: "", data: parsed };
+                          const groupData = typeof parsed === "object" && partBulkType2 === "map"
+                            ? { ...parsed, _imageFile: sectionParts[1].mapImageFile || undefined, imageUrl: sectionParts[1].mapImageUrl || undefined }
+                            : parsed;
+                          const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType2 as QuestionGroupType, label: `Bulk ${partBulkType2}`, wordLimit: "", data: groupData };
                           setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: [...prev[1].questionGroups, group] }]);
                           setPartBulkText2(""); setPartBulkType2("");
                         }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Apply to Part 2</button>
                       </div>
-                    </div>
-
-                    {/* Part 2 Question Groups */}
-                    <div className="mt-5 flex flex-col gap-4">
-                      {sectionParts[1].questionGroups.map((group, gi) => (
-                        <QuestionGroupEditor key={group.id} group={group}
-                          onChange={newData => {
-                            const updated = [...sectionParts[1].questionGroups];
-                            updated[gi] = { ...group, data: newData };
-                            setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: updated }]);
-                          }}
-                          onRemove={() => {
-                            const updated = sectionParts[1].questionGroups.filter((_, i) => i !== gi);
-                            setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: updated }]);
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
-                      <AddGroupPanel onAdd={(group) => setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: [...prev[1].questionGroups, group] }])} />
                     </div>
                   </div>
                 )}
