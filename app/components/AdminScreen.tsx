@@ -311,6 +311,23 @@ function getQuestionTypePlaceholder(type: QuestionGroupType, partLabel: string) 
   }
 }
 
+function getGroupTypeLabel(type: QuestionGroupType) {
+  return QUESTION_GROUP_TYPES.find(t => t.id === type)?.label || type;
+}
+
+function getQuestionGroupItemCount(group: QuestionGroup) {
+  const data = group.data;
+  if (Array.isArray(data)) return data.length;
+  if (group.type === "matching") return data?.items?.length ?? 0;
+  if (group.type === "form-completion") return data?.fields?.length ?? 0;
+  if (group.type === "note-completion") return data?.items?.length ?? 0;
+  if (group.type === "table-completion") return data?.rows?.length ?? 0;
+  if (group.type === "flow-completion") return data?.steps?.length ?? 0;
+  if (group.type === "sentence-completion") return data?.items?.length ?? 0;
+  if (group.type === "map") return data?.points?.length ?? 0;
+  return 0;
+}
+
 // ─── Question Group Editor ────────────────────────────────────────────────────
 
 function QuestionGroupEditor({ group, onChange, onRemove }: {
@@ -1815,6 +1832,22 @@ const autoTitle = isExam
                       }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">{sectionNumber === 4 ? "Apply" : "Apply to Part 1"}</button>
                     </div>
                   </div>
+                  {sectionParts[0].questionGroups.length > 0 && (
+                    <div className="mt-5 space-y-3">
+                      <p className="text-sm font-semibold text-[#3b2f2f]">Added groups</p>
+                      {sectionParts[0].questionGroups.map((group, gi) => (
+                        <div key={group.id} className="flex flex-col gap-2 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <p className="font-semibold">{getGroupTypeLabel(group.type)}</p>
+                              <p className="text-xs text-[#7a6258]">{getQuestionGroupItemCount(group)} item(s)</p>
+                            </div>
+                            <button onClick={() => setSectionParts(prev => [{ ...prev[0], questionGroups: prev[0].questionGroups.filter((_, i) => i !== gi) }, prev[1]])} className="rounded-2xl border border-[#e0c7eb] bg-white px-3 py-1 text-xs font-semibold">Remove</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Part 2 — Section 4'te gösterme */}
@@ -1884,6 +1917,22 @@ const autoTitle = isExam
                         }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Apply to Part 2</button>
                       </div>
                     </div>
+                    {sectionParts[1].questionGroups.length > 0 && (
+                      <div className="mt-5 space-y-3">
+                        <p className="text-sm font-semibold text-[#3b2f2f]">Added groups</p>
+                        {sectionParts[1].questionGroups.map((group, gi) => (
+                          <div key={group.id} className="flex flex-col gap-2 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="font-semibold">{getGroupTypeLabel(group.type)}</p>
+                                <p className="text-xs text-[#7a6258]">{getQuestionGroupItemCount(group)} item(s)</p>
+                              </div>
+                              <button onClick={() => setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: prev[1].questionGroups.filter((_, i) => i !== gi) }])} className="rounded-2xl border border-[#e0c7eb] bg-white px-3 py-1 text-xs font-semibold">Remove</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
