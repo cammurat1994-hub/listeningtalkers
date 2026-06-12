@@ -774,6 +774,12 @@ export default function AdminScreen({ onBack }: Props) {
   const isCompletion = episodeType.startsWith("practice-completion-");
   const isExam = episodeType.startsWith("exam-");
 
+  useEffect(() => {
+    if (isIELTSSection && practiceExamType === "ielts" && examSection) {
+      setSectionNumber(examSection);
+    }
+  }, [isIELTSSection, practiceExamType, examSection]);
+
   useEffect(() => { fetchPractices(); }, []);
 
   async function fetchPractices() {
@@ -1095,7 +1101,13 @@ const autoTitle = isExam
                 <div className="rounded-2xl border border-[#e0c7eb] bg-white p-4">
                   <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a6258]">Section</p>
                   <select value={practiceExamType === "ielts" ? (examSection || "") : ""}
-                    onChange={e => setExamSection(e.target.value ? Number(e.target.value) : null)}
+                    onChange={e => {
+                      const section = e.target.value ? Number(e.target.value) : null;
+                      setExamSection(section);
+                      if (episodeType === "ielts-section" && section) {
+                        setSectionNumber(section);
+                      }
+                    }}
                     disabled={practiceExamType !== "ielts"}
                     className="w-full rounded-2xl border border-[#e0c7eb] bg-white p-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                     <option value="">Select IELTS section</option>
@@ -1129,7 +1141,9 @@ const autoTitle = isExam
                           if (creationMode === "practice" && !practiceExamType) return;
                           setEpisodeType(t.id as EpisodeType);
                           if (creationMode === "practice" && practiceExamType === "ielts" && t.id === "ielts-section") {
-                            setExamSection(examSection || 1);
+                            const section = examSection || 1;
+                            setExamSection(section);
+                            setSectionNumber(section);
                           }
                           if (creationMode === "exam") setExamSection(null);
                         }}
