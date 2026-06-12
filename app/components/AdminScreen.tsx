@@ -1666,7 +1666,7 @@ const autoTitle = isExam
               <div className="mt-6 flex flex-col gap-6">
                 <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
                   <h2 className="text-2xl font-bold">🎧 IELTS Section Practice</h2>
-                  <p className="mt-2 text-sm text-[#7a6258]">2 audio parçası + karışık soru grupları. Section 4 seçersen 2. parça gizlenir.</p>
+                  <p className="mt-2 text-sm text-[#7a6258]">Section 1-3 için Part 1 + Part 2 audio, her part için soru tipi seçimi ve bulk paste. Section 4 seçildiğinde tek audio + tek soru tipi/bulk paste alanı gösterilir.</p>
 
                   {/* Section Number */}
                   <div className="mt-5">
@@ -1702,17 +1702,18 @@ const autoTitle = isExam
                     }}
                     className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
 
-                  {/* Part 1 Bulk Paste (add question group from text) */}
                   <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
-                    <p className="mb-2 text-sm font-semibold text-[#7a6258]">Bulk Paste for Part 1</p>
+                    <p className="mb-2 text-sm font-semibold text-[#7a6258]">
+                      {sectionNumber === 4 ? "Question type + bulk paste" : "Part 1 question type + bulk paste"}
+                    </p>
                     <div className="grid gap-2 md:grid-cols-2">
                       <select value={partBulkType1} onChange={e => setPartBulkType1(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
-                        <option value="">Select group type...</option>
+                        <option value="">Select question type...</option>
                         {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
                       </select>
                       <button onClick={() => { setPartBulkText1(""); setPartBulkError1(""); setPartBulkType1(""); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
                     </div>
-                    <textarea value={partBulkText1} onChange={e => setPartBulkText1(e.target.value)} placeholder="Paste questions for Part 1..." className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
+                    <textarea value={partBulkText1} onChange={e => setPartBulkText1(e.target.value)} placeholder={sectionNumber === 4 ? "Paste questions for the section..." : "Paste questions for Part 1..."} className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
                     {partBulkError1 && <p className="mt-2 text-sm text-red-600">{partBulkError1}</p>}
                     <div className="mt-2 flex gap-2">
                       <button onClick={() => {
@@ -1723,7 +1724,7 @@ const autoTitle = isExam
                         const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType1 as QuestionGroupType, label: `Bulk ${partBulkType1}`, wordLimit: "", data: parsed };
                         setSectionParts(prev => [{ ...prev[0], questionGroups: [...prev[0].questionGroups, group] }, prev[1]]);
                         setPartBulkText1(""); setPartBulkType1("");
-                      }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Apply to Part 1</button>
+                      }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">{sectionNumber === 4 ? "Apply" : "Apply to Part 1"}</button>
                     </div>
                   </div>
 
@@ -1769,10 +1770,10 @@ const autoTitle = isExam
 
                     {/* Part 2 Bulk Paste (add question group from text) */}
                     <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
-                      <p className="mb-2 text-sm font-semibold text-[#7a6258]">Bulk Paste for Part 2</p>
+                      <p className="mb-2 text-sm font-semibold text-[#7a6258]">Part 2 question type + bulk paste</p>
                       <div className="grid gap-2 md:grid-cols-2">
                         <select value={partBulkType2} onChange={e => setPartBulkType2(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
-                          <option value="">Select group type...</option>
+                          <option value="">Select question type...</option>
                           {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
                         </select>
                         <button onClick={() => { setPartBulkText2(""); setPartBulkError2(""); setPartBulkType2(""); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
