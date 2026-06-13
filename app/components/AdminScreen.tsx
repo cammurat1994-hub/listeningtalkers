@@ -42,7 +42,7 @@ type SentenceItem = { text: string; answer: string; };
 type SentenceQuestion = { items: SentenceItem[]; };
 type QuestionGroupType = "mcq" | "form-completion" | "note-completion" | "table-completion" | "flow-completion" | "sentence-completion" | "short-answer" | "matching" | "map";
 type QuestionGroup = { id: string; type: QuestionGroupType; label: string; wordLimit?: string; isSection4?: boolean; data: any; };
-type ExamSectionType = { id: string; number: number; audioFile: File | null; audioUrl: string; introFile?: File | null; introUrl?: string; questionGroups: QuestionGroup[]; };
+type ExamSectionType = { id: string; number: number; audioFile: File | null; audioUrl: string; audio2File?: File | null; audio2Url?: string; descFile?: File | null; descUrl?: string; introFile?: File | null; introUrl?: string; questionGroups: QuestionGroup[]; };
 type PublishedPractice = { id: string; title: string; level: string; episode_type: EpisodeType; exam_type?: string; exam_section?: number; };
 type AdminTab = "new" | "manage" | "users";
 
@@ -117,7 +117,7 @@ function createEmptyGroupData(type: QuestionGroupType): any {
 }
 
 function createEmptySection(number: number): ExamSectionType {
-  return { id: `section-${Date.now()}-${number}`, number, audioFile: null, audioUrl: "", introFile: null, introUrl: "", questionGroups: [] };
+  return { id: `section-${Date.now()}-${number}`, number, audioFile: null, audioUrl: "", audio2File: null, audio2Url: "", descFile: null, descUrl: "", introFile: null, introUrl: "", questionGroups: [] };
 }
 
 const createEmptyMCQ = (): MCQQuestion => ({ question: "", options: { A: "", B: "", C: "" }, correctAnswer: "A", explanation: "" });
@@ -727,11 +727,25 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
           {section.number === 4 && "\"Now turn to Section 4...\" → 45sn → ders başlar (ARA YOK) → \"That is the end of the listening test. You now have 10 minutes...\""}
         </p>
       </div>
-      <div className="mb-5">
-        <label className="mb-2 block text-sm font-semibold">🔊 Main Audio <span className="font-normal text-xs text-[#7a6258]">(sadece konuşma içeriği)</span></label>
-        {section.audioUrl && <p className="mb-1 text-xs text-green-600">✓ Main audio uploaded</p>}
+      <div className="mb-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+        <label className="mb-2 block text-sm font-semibold">🗣️ Section Description Audio <span className="font-normal text-xs text-[#7a6258]">(&quot;You will hear a conversation between...&quot;)</span></label>
+        {section.descUrl && <p className="mb-1 text-xs text-green-600">✓ Description audio uploaded</p>}
+        <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, descFile: f, descUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+        <p className="mt-1 text-xs text-[#7a6258]">Narrator çalar: intro → Section {section.number} → <strong>bu açıklama</strong> → &quot;look at the questions&quot; → ...</p>
+      </div>
+      <div className="mb-4">
+        <label className="mb-2 block text-sm font-semibold">🔊 Main Audio — Part 1 <span className="font-normal text-xs text-[#7a6258]">(sadece konuşma içeriği)</span></label>
+        {section.audioUrl && <p className="mb-1 text-xs text-green-600">✓ Part 1 audio uploaded</p>}
         <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, audioFile: f, audioUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
       </div>
+      {section.number !== 4 && (
+        <div className="mb-5">
+          <label className="mb-2 block text-sm font-semibold">🔊 Main Audio — Part 2 <span className="font-normal text-xs text-[#7a6258]">(opsiyonel — Section 1-3 ikinci yarı)</span></label>
+          {section.audio2Url && <p className="mb-1 text-xs text-green-600">✓ Part 2 audio uploaded</p>}
+          <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, audio2File: f, audio2Url: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+          <p className="mt-1 text-xs text-[#7a6258]">Yüklenirse: Part 1 sonrası &quot;sorulara bakma v2&quot; → 30sn → &quot;now listen&quot; → Part 2 çalar.</p>
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         {section.questionGroups.map((group, gi) => (
           <QuestionGroupEditor key={group.id} group={group}
@@ -911,6 +925,10 @@ export default function AdminScreen({ onBack }: Props) {
         const processedSections = await Promise.all(examSections.map(async section => {
           let sectionAudioUrl = section.audioUrl;
           if (section.audioFile) sectionAudioUrl = await uploadFile(section.audioFile, "section");
+          let sectionAudio2Url = section.audio2Url || "";
+          if (section.audio2File) sectionAudio2Url = await uploadFile(section.audio2File, "section");
+          let descUrl = section.descUrl || "";
+          if (section.descFile) descUrl = await uploadFile(section.descFile, "section");
           let introUrl = section.introUrl || "";
           if (section.introFile) introUrl = await uploadFile(section.introFile, "intro");
           const processedGroups = await Promise.all(section.questionGroups.map(async group => {
@@ -922,7 +940,7 @@ export default function AdminScreen({ onBack }: Props) {
             }
             return group;
           }));
-          return { number: section.number, audioUrl: sectionAudioUrl, introUrl, questionGroups: processedGroups };
+          return { number: section.number, audioUrl: sectionAudioUrl, audio2Url: sectionAudio2Url, descUrl, introUrl, questionGroups: processedGroups };
         }));
         sections = processedSections;
     } else if (!isIELTSSection && !audioUrl) {
@@ -1047,6 +1065,8 @@ const autoTitle = isExam
       setExamSections(data.sections.map((s: any) => ({
         id: `section-${s.number}`, number: s.number,
         audioFile: null, audioUrl: s.audioUrl || "",
+        audio2File: null, audio2Url: s.audio2Url || "",
+        descFile: null, descUrl: s.descUrl || "",
         introFile: null, introUrl: s.introUrl || "",
         questionGroups: s.questionGroups || []
       })));

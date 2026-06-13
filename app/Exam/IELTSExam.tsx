@@ -1,11 +1,29 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+// ─── Narrator audio (fixed CDN files) ─────────────────────────────────────────
+const NARRATOR = {
+  intro: "https://audio.listeningtalkers.com/NARRATOR/1-%20you%20will%20hear%20a%20number.mp3",
+  section1: "https://audio.listeningtalkers.com/NARRATOR/2-%20section-1.mp3",
+  section2: "https://audio.listeningtalkers.com/NARRATOR/3-%20section-2.mp3",
+  section3: "https://audio.listeningtalkers.com/NARRATOR/4-%20section-3.mp3",
+  section4: "https://audio.listeningtalkers.com/NARRATOR/5-%20section-4.mp3",
+  readQuestionsV1: "https://audio.listeningtalkers.com/NARRATOR/6-%20sorulara%20bakma%20v1.mp3",
+  readQuestionsV2: "https://audio.listeningtalkers.com/NARRATOR/7-%20sorulara%20bakma%20v2.mp3",
+  nowListen: "https://audio.listeningtalkers.com/NARRATOR/8-%20now%20listen%20carefully.mp3",
+  endSection1: "https://audio.listeningtalkers.com/NARRATOR/9-%20end%20section1.mp3",
+  endSection2: "https://audio.listeningtalkers.com/NARRATOR/10-%20end%20section2.mp3",
+  endSection3: "https://audio.listeningtalkers.com/NARRATOR/11-%20end%20section3.mp3",
+  end: "https://audio.listeningtalkers.com/NARRATOR/12-%20end.mp3",
+} as const;
 
 type Section = {
   number: number;
-  audioUrl: string;
+  audioUrl: string;       // main speech — Part 1
+  audio2Url?: string;     // Part 2 speech (Sections 1–3, optional)
+  descUrl?: string;       // admin's "You will hear a conversation between..." description
   questionGroups: { type: string; label: string; data: unknown }[];
 };
 
@@ -19,12 +37,62 @@ type Props = {
   onBack: () => void;
 };
 
-type Phase =
-  | { type: "reading"; sectionIndex: number; countdown: number }
-  | { type: "listening"; sectionIndex: number }
-  | { type: "checking"; sectionIndex: number; countdown: number }
-  | { type: "review"; countdown: number }
-  | { type: "done" };
+// ─── Narrator-driven step engine ──────────────────────────────────────────────
+type StepUi = "intro" | "section-start" | "reading" | "listening" | "checking";
+type Step =
+  | { kind: "audio"; url: string; ui: StepUi; sectionIndex: number }
+  | { kind: "silence"; seconds: number; ui: StepUi; sectionIndex: number }
+  | { kind: "review" };
+
+const SECTION_NARR: Record<number, string> = {
+  1: NARRATOR.section1, 2: NARRATOR.section2, 3: NARRATOR.section3, 4: NARRATOR.section4,
+};
+const END_NARR: Record<number, string> = {
+  1: NARRATOR.endSection1, 2: NARRATOR.endSection2, 3: NARRATOR.endSection3,
+};
+
+// Builds the full ordered narration/audio sequence for the whole exam.
+function buildSteps(sections: Section[]): Step[] {
+  const steps: Step[] = [];
+  // 1. Exam intro — once
+  steps.push({ kind: "audio", url: NARRATOR.intro, ui: "intro", sectionIndex: 0 });
+
+  sections.forEach((section, i) => {
+    const n = section.number;
+    const isLast = i === sections.length - 1;
+
+    // 2. "Section N" announcement
+    if (SECTION_NARR[n]) steps.push({ kind: "audio", url: SECTION_NARR[n], ui: "section-start", sectionIndex: i });
+    // 3. Admin's section description ("You will hear a conversation between...")
+    if (section.descUrl) steps.push({ kind: "audio", url: section.descUrl, ui: "section-start", sectionIndex: i });
+    // 4. "Look at the questions" + 20s silence
+    steps.push({ kind: "audio", url: NARRATOR.readQuestionsV1, ui: "reading", sectionIndex: i });
+    steps.push({ kind: "silence", seconds: 20, ui: "reading", sectionIndex: i });
+    // 5. "Now listen carefully"
+    steps.push({ kind: "audio", url: NARRATOR.nowListen, ui: "listening", sectionIndex: i });
+    // 6. Main speech — Part 1
+    if (section.audioUrl) steps.push({ kind: "audio", url: section.audioUrl, ui: "listening", sectionIndex: i });
+
+    // 7-8. Part 2 (Sections 1-3 only, when a second audio is provided)
+    if (n !== 4 && section.audio2Url) {
+      steps.push({ kind: "audio", url: NARRATOR.readQuestionsV2, ui: "reading", sectionIndex: i });
+      steps.push({ kind: "silence", seconds: 30, ui: "reading", sectionIndex: i });
+      steps.push({ kind: "audio", url: NARRATOR.nowListen, ui: "listening", sectionIndex: i });
+      steps.push({ kind: "audio", url: section.audio2Url, ui: "listening", sectionIndex: i });
+    }
+
+    // 9-10. End of section
+    if (!isLast) {
+      if (END_NARR[n]) steps.push({ kind: "audio", url: END_NARR[n], ui: "checking", sectionIndex: i });
+      steps.push({ kind: "silence", seconds: 30, ui: "checking", sectionIndex: i });
+    } else {
+      steps.push({ kind: "audio", url: NARRATOR.end, ui: "checking", sectionIndex: i });
+    }
+  });
+
+  steps.push({ kind: "review" });
+  return steps;
+}
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -397,94 +465,118 @@ function QuestionGroupView({ group, sectionNum, answers, onAnswer, locked }: {
 
 // ─── Main Exam Screen ─────────────────────────────────────────────────────────
 
+const TONE: Record<string, { border: string; bg: string; title: string; desc: string; bar: string; barBg: string; pill: string }> = {
+  brown:  { border: "border-[#e0c7bb]", bg: "bg-[#fffaf7]", title: "text-[#3b2f2f]", desc: "text-[#7a6258]", bar: "bg-[#3b2f2f]", barBg: "bg-[#ead7cc]", pill: "bg-[#ead7cc] text-[#3b2f2f]" },
+  blue:   { border: "border-blue-200",  bg: "bg-blue-50",   title: "text-blue-700",  desc: "text-blue-600",  bar: "bg-blue-500",  barBg: "bg-blue-200",  pill: "bg-blue-100 text-blue-600" },
+  purple: { border: "border-[#e0c7bb]", bg: "bg-[#fffaf7]", title: "text-[#3b2f2f]", desc: "text-[#7a6258]", bar: "bg-[#3b2f2f]", barBg: "bg-[#ead7cc]", pill: "bg-blue-100 text-blue-600" },
+  yellow: { border: "border-yellow-200", bg: "bg-yellow-50", title: "text-yellow-700", desc: "text-yellow-600", bar: "bg-yellow-500", barBg: "bg-yellow-200", pill: "bg-yellow-100 text-yellow-700" },
+  green:  { border: "border-green-200", bg: "bg-green-50",  title: "text-green-700", desc: "text-green-600", bar: "bg-green-500", barBg: "bg-green-200", pill: "bg-green-100 text-green-600" },
+};
+
+const REVIEW_TIME = 600;
+
 export default function IELTSExam({ title, examType, sections, answers, onUpdateAnswers, onFinish, onBack }: Props) {
-  const [phase, setPhase] = useState<Phase>({ type: "reading", sectionIndex: 0, countdown: 45 });
+  const steps = useMemo(() => buildSteps(sections), [sections]);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [silenceLeft, setSilenceLeft] = useState(0);
+  const [reviewLeft, setReviewLeft] = useState(REVIEW_TIME);
   const [totalElapsed, setTotalElapsed] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const READING_TIME = 45;
-  const CHECKING_TIME = 30;
-  const REVIEW_TIME = 600;
+  const step = steps[stepIndex];
+  const isReview = step?.kind === "review";
 
+  const advance = useCallback(() => {
+    setStepIndex(i => Math.min(i + 1, steps.length - 1));
+  }, [steps.length]);
+
+  // Refs so the single 1s ticker always reads fresh values without re-subscribing.
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  const silenceRef = useRef(0);
+  const advanceRef = useRef(advance);
+  advanceRef.current = advance;
+  const onFinishRef = useRef(onFinish);
+  onFinishRef.current = onFinish;
+
+  // Start audio playback / silence timer whenever we enter a new step.
+  useEffect(() => {
+    const s = steps[stepIndex];
+    if (!s) return;
+    if (s.kind === "audio") {
+      if (audioRef.current) {
+        audioRef.current.src = s.url;
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+      }
+    } else if (s.kind === "silence") {
+      silenceRef.current = s.seconds;
+      setSilenceLeft(s.seconds);
+    }
+  }, [stepIndex, steps]);
+
+  // Single 1-second ticker: total clock + silence countdown + review countdown.
   useEffect(() => {
     const interval = setInterval(() => {
-      setTotalElapsed(prev => prev + 1);
-      setPhase(prev => {
-        if (prev.type === "reading") {
-          if (prev.countdown <= 1) return { type: "listening", sectionIndex: prev.sectionIndex };
-          return { ...prev, countdown: prev.countdown - 1 };
-        }
-        if (prev.type === "checking") {
-          if (prev.countdown <= 1) {
-            if (prev.sectionIndex < sections.length - 1) {
-              return { type: "reading", sectionIndex: prev.sectionIndex + 1, countdown: READING_TIME };
-            } else {
-              return { type: "review", countdown: REVIEW_TIME };
-            }
-          }
-          return { ...prev, countdown: prev.countdown - 1 };
-        }
-        if (prev.type === "review") {
-          if (prev.countdown <= 1) { onFinish(); return { type: "done" }; }
-          return { ...prev, countdown: prev.countdown - 1 };
-        }
-        return prev;
-      });
+      setTotalElapsed(p => p + 1);
+      const s = stepRef.current;
+      if (!s) return;
+      if (s.kind === "silence") {
+        const next = silenceRef.current - 1;
+        if (next <= 0) { silenceRef.current = 0; setSilenceLeft(0); advanceRef.current(); }
+        else { silenceRef.current = next; setSilenceLeft(next); }
+      } else if (s.kind === "review") {
+        setReviewLeft(prev => {
+          if (prev <= 1) { onFinishRef.current(); return 0; }
+          return prev - 1;
+        });
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [sections.length, onFinish]);
+  }, []);
 
-  useEffect(() => {
-    if (phase.type !== "listening") return;
-    const section = sections[phase.sectionIndex];
-    if (section?.audioUrl && audioRef.current) {
-      audioRef.current.src = section.audioUrl;
-      audioRef.current.play().catch(() => {});
-    }
-  }, [phase, sections]);
-
-  function handleAudioEnded() {
-    const currentSectionIndex = phase.type === "listening" ? phase.sectionIndex : 0;
-    setPhase({ type: "checking", sectionIndex: currentSectionIndex, countdown: CHECKING_TIME });
-  }
+  function handleAudioEnded() { advance(); }
 
   function handleAnswer(key: string, val: string) {
     onUpdateAnswers({ ...answers, [key]: val });
   }
 
-  function skipReading() {
-    if (phase.type === "reading") {
-      setPhase({ type: "listening", sectionIndex: phase.sectionIndex });
-    }
+  // Skip the current narration / silence step.
+  function handleSkip() {
+    const s = steps[stepIndex];
+    if (!s || s.kind === "review") return;
+    if (audioRef.current) audioRef.current.pause();
+    advance();
   }
 
-  function skipToChecking() {
-    if (phase.type === "listening") {
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
-      handleAudioEnded();
-    }
-  }
-
-  function skipChecking() {
-    if (phase.type === "checking") {
-      if (phase.sectionIndex < sections.length - 1) {
-        setPhase({ type: "reading", sectionIndex: phase.sectionIndex + 1, countdown: READING_TIME });
-      } else {
-        setPhase({ type: "review", countdown: REVIEW_TIME });
-      }
-    }
-  }
-
-  if (phase.type === "done") {
-    return <div className="flex min-h-screen items-center justify-center bg-[#f7eee8]"><p>Loading results...</p></div>;
-  }
-
-  const currentSectionIndex =
-    phase.type === "reading" ? phase.sectionIndex :
-    phase.type === "listening" ? phase.sectionIndex :
-    phase.type === "checking" ? phase.sectionIndex : 0;
-
+  const currentSectionIndex = step && step.kind !== "review" ? step.sectionIndex : 0;
   const currentSection = sections[currentSectionIndex];
+  const activeUi = step && step.kind !== "review" ? step.ui : null;
+
+  // Banner descriptor for the active step.
+  const info = (() => {
+    if (!step || step.kind === "review") return null;
+    const n = currentSection?.number;
+    if (step.ui === "intro")
+      return { tone: "brown", icon: "🎧", title: "Introduction", desc: "Listen carefully to the test instructions.", playing: true as const };
+    if (step.ui === "section-start")
+      return { tone: "brown", icon: "🎧", title: `Section ${n}`, desc: "Get ready — listen to what this section is about.", playing: true as const };
+    if (step.ui === "reading") {
+      if (step.kind === "silence")
+        return { tone: "blue", icon: "📖", title: `Section ${n} — Read the questions`, desc: "You have some time to read the questions before the audio.", timer: silenceLeft, timerMax: step.seconds };
+      return { tone: "blue", icon: "📖", title: `Section ${n} — Read the questions`, desc: "Listen to the instructions...", playing: true as const };
+    }
+    if (step.ui === "listening")
+      return { tone: "purple", icon: "🔊", title: `Section ${n} — Now playing`, desc: "Audio plays once only. Write your answers as you listen.", playing: true as const };
+    if (step.ui === "checking") {
+      if (step.kind === "silence")
+        return { tone: "yellow", icon: "✏️", title: `That is the end of Section ${n}`, desc: "Check your answers for this section.", timer: silenceLeft, timerMax: step.seconds };
+      return { tone: "yellow", icon: "✏️", title: `That is the end of Section ${n}`, desc: "Listen...", playing: true as const };
+    }
+    return null;
+  })();
+
+  const tone = TONE[info?.tone || "brown"];
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
@@ -495,7 +587,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
           <p className="text-sm text-[#7a6258]">{examType}</p>
         </div>
       </div>
-      <audio ref={audioRef} onEnded={handleAudioEnded} />
+      <audio ref={audioRef} onEnded={handleAudioEnded} onError={handleAudioEnded} />
 
       {/* Top bar */}
       <div className="sticky top-0 z-50 border-b border-[#e0c7bb] bg-white shadow-sm">
@@ -504,34 +596,24 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
             <div className="flex gap-1">
               {sections.map((_, i) => (
                 <div key={i} className={`h-2 w-8 rounded-full transition-all ${
-                  i < currentSectionIndex ? "bg-green-400" :
+                  isReview || i < currentSectionIndex ? "bg-green-400" :
                   i === currentSectionIndex ? "bg-[#3b2f2f]" : "bg-[#e0c7bb]"
                 }`} />
               ))}
             </div>
             <span className="text-sm font-semibold">
-              {phase.type === "review" ? "📋 Review" : `Section ${currentSection?.number || ""}`}
+              {isReview ? "📋 Review" : `Section ${currentSection?.number || ""}`}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {phase.type === "reading" && (
-              <div className={`rounded-full px-4 py-1.5 text-sm font-bold ${phase.countdown <= 10 ? "bg-red-100 text-red-600" : "bg-[#ead7cc] text-[#3b2f2f]"}`}>
-                📖 {formatTime(phase.countdown)}
+            {info && (
+              <div className={`rounded-full px-4 py-1.5 text-sm font-bold ${info.timer !== undefined && info.timer <= 10 ? "bg-red-100 text-red-600" : tone.pill} ${info.playing ? "animate-pulse" : ""}`}>
+                {info.icon} {info.timer !== undefined ? formatTime(info.timer) : (activeUi === "listening" ? "Listening..." : "Playing...")}
               </div>
             )}
-            {phase.type === "listening" && (
-              <div className="rounded-full bg-blue-100 px-4 py-1.5 text-sm font-bold text-blue-600 animate-pulse">
-                🔊 Listening...
-              </div>
-            )}
-            {phase.type === "checking" && (
-              <div className={`rounded-full px-4 py-1.5 text-sm font-bold ${phase.countdown <= 10 ? "bg-red-100 text-red-600" : "bg-yellow-100 text-yellow-700"}`}>
-                ✏️ {formatTime(phase.countdown)}
-              </div>
-            )}
-            {phase.type === "review" && (
-              <div className={`rounded-full px-4 py-1.5 text-sm font-bold ${phase.countdown <= 60 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
-                ✅ {formatTime(phase.countdown)}
+            {isReview && (
+              <div className={`rounded-full px-4 py-1.5 text-sm font-bold ${reviewLeft <= 60 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
+                ✅ {formatTime(reviewLeft)}
               </div>
             )}
             <span className="text-xs text-[#7a6258]">{formatTime(totalElapsed)}</span>
@@ -541,93 +623,36 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
 
       <section className="mx-auto max-w-3xl px-6 py-8">
 
-        {/* Reading phase */}
-        {phase.type === "reading" && currentSection && (
+        {/* Active narration / listening / checking phase */}
+        {info && currentSection && (
           <div>
-            <div className="mb-6 rounded-4xl border border-blue-200 bg-blue-50 p-5">
+            <div className={`mb-6 rounded-4xl border ${tone.border} ${tone.bg} p-5`}>
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-bold text-blue-700 text-lg">
-                    Section {currentSection.number} — Read the questions
-                  </p>
-                  <p className="mt-1 text-sm text-blue-600">
-                    You have <strong>{phase.countdown} seconds</strong> to read the questions before the audio starts. Read carefully.
-                  </p>
-                  <p className="mt-1 text-xs text-blue-500 italic">
-                    {currentSection.number === 1 && "You will hear a conversation between two people."}
-                    {currentSection.number === 2 && "You will hear a monologue about a local topic."}
-                    {currentSection.number === 3 && "You will hear a discussion between students or academics."}
-                    {currentSection.number === 4 && "You will hear an academic lecture or talk."}
-                  </p>
-                </div>
-                <button onClick={skipReading} className="shrink-0 rounded-2xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">
-                  Ready →
-                </button>
-              </div>
-              <div className="mt-3 h-1.5 w-full rounded-full bg-blue-200">
-                <div className="h-1.5 rounded-full bg-blue-500 transition-all duration-1000" style={{ width: `${(phase.countdown / READING_TIME) * 100}%` }} />
-              </div>
-            </div>
-            <div className="flex flex-col gap-4">
-              {currentSection.questionGroups.map((group, gi) => (
-                <QuestionGroupView key={gi} group={group} sectionNum={currentSection.number} answers={answers} onAnswer={handleAnswer} locked={false} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Listening phase */}
-        {phase.type === "listening" && currentSection && (
-          <div>
-            <div className="mb-6 rounded-4xl border border-[#e0c7bb] bg-[#fffaf7] p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#3b2f2f] animate-pulse">
-                    <Image src="/cat-logo.svg" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
-                  </div>
+                <div className="flex items-start gap-3">
+                  {activeUi === "listening" ? (
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] animate-pulse">
+                      <Image src="/cat-logo.svg" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+                    </div>
+                  ) : (
+                    <div className={`text-2xl ${info.playing ? "animate-pulse" : ""}`}>{info.icon}</div>
+                  )}
                   <div>
-                    <p className="font-bold">Section {currentSection.number} — Now Playing</p>
-                    <p className="text-xs text-[#7a6258]">🔊 Audio plays once only. Write your answers as you listen.</p>
+                    <p className={`font-bold text-lg ${tone.title}`}>{info.title}</p>
+                    <p className={`mt-1 text-sm ${tone.desc}`}>{info.desc}</p>
+                    {info.timer !== undefined && (
+                      <p className={`mt-1 text-xs font-bold ${tone.desc}`}>{info.timer}s remaining</p>
+                    )}
                   </div>
                 </div>
-                <button onClick={skipToChecking} className="rounded-2xl border border-[#e0c7bb] bg-white px-3 py-2 text-xs font-semibold hover:bg-[#f1ded5]">
+                <button onClick={handleSkip} className="shrink-0 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-xs font-bold hover:bg-[#f1ded5]">
                   Skip →
                 </button>
               </div>
-            </div>
-            <div className="flex flex-col gap-4">
-              {currentSection.questionGroups.map((group, gi) => (
-                <QuestionGroupView key={gi} group={group} sectionNum={currentSection.number} answers={answers} onAnswer={handleAnswer} locked={false} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Checking phase */}
-        {phase.type === "checking" && currentSection && (
-          <div>
-            <div className="mb-6 rounded-4xl border border-yellow-200 bg-yellow-50 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-bold text-yellow-700 text-lg">
-                    That is the end of Section {currentSection.number}.
-                  </p>
-                  <p className="mt-1 text-sm text-yellow-600">
-                    You have <strong>{phase.countdown} seconds</strong> to check your answers for this section.
-                  </p>
-                  {phase.sectionIndex < sections.length - 1 && (
-                    <p className="mt-1 text-xs text-yellow-600">
-                      Now turn to Section {currentSection.number + 1}...
-                    </p>
-                  )}
+              {info.timer !== undefined && info.timerMax ? (
+                <div className={`mt-3 h-1.5 w-full rounded-full ${tone.barBg}`}>
+                  <div className={`h-1.5 rounded-full ${tone.bar} transition-all duration-1000`} style={{ width: `${(info.timer / info.timerMax) * 100}%` }} />
                 </div>
-                <button onClick={skipChecking} className="shrink-0 rounded-2xl bg-yellow-500 px-4 py-2 text-xs font-bold text-white hover:bg-yellow-600">
-                  {phase.sectionIndex < sections.length - 1 ? `Next Section →` : "Review All →"}
-                </button>
-              </div>
-              <div className="mt-3 h-1.5 w-full rounded-full bg-yellow-200">
-                <div className="h-1.5 rounded-full bg-yellow-500 transition-all duration-1000" style={{ width: `${(phase.countdown / CHECKING_TIME) * 100}%` }} />
-              </div>
+              ) : null}
             </div>
             <div className="flex flex-col gap-4">
               {currentSection.questionGroups.map((group, gi) => (
@@ -638,7 +663,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
         )}
 
         {/* Review phase */}
-        {phase.type === "review" && (
+        {isReview && (
           <div>
             <div className="mb-6 rounded-4xl border border-green-200 bg-green-50 p-5">
               <div className="flex items-start justify-between gap-4">
@@ -647,7 +672,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
                     That is the end of the listening test.
                   </p>
                   <p className="mt-1 text-sm text-green-600">
-                    You now have <strong>{formatTime(phase.countdown)}</strong> to transfer your answers to the answer sheet.
+                    You now have <strong>{formatTime(reviewLeft)}</strong> to transfer your answers to the answer sheet.
                   </p>
                   <p className="mt-1 text-xs text-green-500">Review and edit any answers before submitting.</p>
                 </div>
@@ -656,7 +681,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
                 </button>
               </div>
               <div className="mt-3 h-1.5 w-full rounded-full bg-green-200">
-                <div className="h-1.5 rounded-full bg-green-500 transition-all duration-1000" style={{ width: `${(phase.countdown / REVIEW_TIME) * 100}%` }} />
+                <div className="h-1.5 rounded-full bg-green-500 transition-all duration-1000" style={{ width: `${(reviewLeft / REVIEW_TIME) * 100}%` }} />
               </div>
             </div>
             {sections.map((section, si) => (
