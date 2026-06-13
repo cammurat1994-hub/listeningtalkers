@@ -553,6 +553,12 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
   const currentSection = sections[currentSectionIndex];
   const activeUi = step && step.kind !== "review" ? step.ui : null;
 
+  // Questions appear from the reading phase onward. During "reading" they are
+  // visible but read-only (no answers entered yet); they become editable once
+  // the audio starts ("listening") and stay editable through "checking".
+  const showQuestions = activeUi === "reading" || activeUi === "listening" || activeUi === "checking";
+  const questionsReadonly = activeUi === "reading";
+
   // Banner descriptor for the active step.
   const info = (() => {
     if (!step || step.kind === "review") return null;
@@ -624,7 +630,7 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
       <section className="mx-auto max-w-3xl px-6 py-8">
 
         {/* Active narration / listening / checking phase */}
-        {info && currentSection && (
+        {info && (
           <div>
             <div className={`mb-6 rounded-4xl border ${tone.border} ${tone.bg} p-5`}>
               <div className="flex items-start justify-between gap-4">
@@ -654,11 +660,20 @@ export default function IELTSExam({ title, examType, sections, answers, onUpdate
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-col gap-4">
-              {currentSection.questionGroups.map((group, gi) => (
-                <QuestionGroupView key={gi} group={group} sectionNum={currentSection.number} answers={answers} onAnswer={handleAnswer} locked={false} />
-              ))}
-            </div>
+
+            {/* Questions: hidden during intro/section-start, read-only during reading, editable while listening/checking */}
+            {showQuestions && currentSection && (
+              <div className="flex flex-col gap-4">
+                {questionsReadonly && (
+                  <p className="text-xs font-semibold text-[#7a6258]">👀 Read the questions now — you&apos;ll be able to answer once the audio starts.</p>
+                )}
+                <div className={`flex flex-col gap-4 ${questionsReadonly ? "pointer-events-none select-none opacity-95" : ""}`}>
+                  {currentSection.questionGroups.map((group, gi) => (
+                    <QuestionGroupView key={gi} group={group} sectionNum={currentSection.number} answers={answers} onAnswer={handleAnswer} locked={false} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
