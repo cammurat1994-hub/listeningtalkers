@@ -1241,11 +1241,14 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                             const userAns = ieltsAnswers[key] || "";
                             const isCorrect = checked && checkAnswer(userAns, item.answer);
                             return (
-                              <div key={bi} className="flex items-center gap-3">
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{bi + 1}</span>
-                                <span className="text-sm flex-1">{item.label.replace("___", "")}</span>
-                                <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
-                                  className={`w-32 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                              <div key={bi}>
+                                <div className="flex items-center gap-3">
+                                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{bi + 1}</span>
+                                  <span className="text-sm flex-1">{item.label.replace("___", "")}</span>
+                                  <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
+                                    className={`w-32 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                                </div>
+                                {checked && !isCorrect && <p className="mt-1 ml-9 text-xs font-semibold text-green-600">✓ Correct answer: {item.answer.split("|")[0]}</p>}
                               </div>
                             );
                           })}
@@ -1270,7 +1273,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                                 <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
                                   className={`w-28 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
                                 {parts2[1] && <span>{parts2[1]}</span>}
-                                {checked && !isCorrect && <span className="text-xs text-red-600 ml-1">→ {item.answer.split("|")[0]}</span>}
+                                {checked && !isCorrect && <span className="ml-1 text-xs font-semibold text-green-600">✓ Correct answer: {item.answer.split("|")[0]}</span>}
                               </div>
                             );
                           })}
