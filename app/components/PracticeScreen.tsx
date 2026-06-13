@@ -11,6 +11,8 @@ type Props = {
   isQuizMode: boolean;
   onBack: () => void;
   onNextEpisode: (nextEpisodeId: string) => void;
+  onNavigateToSection?: (section: number) => void;
+  onNavigateHome?: () => void;
 };
 
 type IELTSSectionPart = {
@@ -35,7 +37,8 @@ type MapQuestion = { points: MapPoint[]; options: MapOption[]; imageUrl: string;
 
 type Episode = {
   id: string; title: string; level: string; audio_url: string; episode_type: string; show_notes: boolean;
-  questions: (MCQQuestion | FillQuestion | DictationQuestion | ShortAnswerQuestion | MatchingQuestion | MapQuestion)[];
+  exam_section?: number;
+  questions: (MCQQuestion | FillQuestion | DictationQuestion | ShortAnswerQuestion | MatchingQuestion | MapQuestion | IELTSSectionPart)[];
 };
 
 type Comment = { id: string; episode_id: string; user_email: string; content: string; created_at: string; parent_id: string | null; };
@@ -52,6 +55,85 @@ function formatTime(seconds: number) {
 }
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function renderIeltsGroupPreview(group: any, index: number) {
+  const label = group.label || `Group ${index + 1}`;
+  switch (group.type) {
+    case "mcq": {
+      const questions = group.data || [];
+      return (
+        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#3b2f2f]">{label}</p>
+          <div className="mt-4 space-y-4">
+            {questions.map((q: any, qi: number) => (
+              <div key={qi} className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4">
+                <p className="font-semibold">{qi + 1}. {q.question}</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {Object.entries(q.options).filter(([, v]) => v).map(([key, value]) => (
+                    <div key={key} className="rounded-2xl border border-[#dcd0c5] bg-white p-3 text-sm">{key}) {String(value)}</div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    case "note-completion":
+    case "form-completion":
+      return (
+        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#3b2f2f]">{label}</p>
+          {group.data?.title && <p className="mt-2 text-sm text-[#7a6258]">{group.data.title}</p>}
+          <div className="mt-4 space-y-3 text-sm text-[#3b2f2f]">
+            {(group.data?.items || group.data?.fields || []).map((item: any, bi: number) => (
+              <div key={bi} className="rounded-2xl border border-[#dcd0c5] bg-[#fffaf7] p-3">
+                <p className="font-semibold">{bi + 1}. {item.label || item.title || item.field || item.text || "Question"}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    case "sentence-completion":
+      return (
+        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#3b2f2f]">{label}</p>
+          <div className="mt-4 space-y-3 text-sm text-[#3b2f2f]">
+            {(group.data?.items || []).map((item: any, bi: number) => (
+              <div key={bi} className="rounded-2xl border border-[#dcd0c5] bg-[#fffaf7] p-3">{bi + 1}. {item.text}</div>
+            ))}
+          </div>
+        </div>
+      );
+    case "matching":
+      return (
+        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#3b2f2f]">{label}</p>
+          <div className="mt-4 text-sm text-[#3b2f2f]">
+            <p className="font-semibold">Items</p>
+            <ul className="ml-4 list-disc">{(group.data?.items || []).map((item: any, bi: number) => <li key={bi}>{item}</li>)}</ul>
+            <p className="mt-3 font-semibold">Options</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">{(group.data?.options || []).map((opt: any) => <div key={opt.key} className="rounded-2xl border border-[#dcd0c5] bg-[#fffaf7] p-3 text-sm">{opt.key}) {opt.label}</div>)}</div>
+          </div>
+        </div>
+      );
+    case "map":
+      return (
+        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#3b2f2f]">{label}</p>
+          {group.data?.imageUrl && <img src={group.data.imageUrl} alt="Map preview" className="mt-4 w-full rounded-2xl border border-[#dcd0c5] object-contain" />}
+          <p className="mt-4 text-sm text-[#7a6258]">Points: {(group.data?.points || []).length}</p>
+        </div>
+      );
+    default:
+      return (
+        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#3b2f2f]">{label}</p>
+          <p className="mt-2 text-sm text-[#7a6258]">Preview questions for this group.</p>
+        </div>
+      );
+  }
 }
 
 // ─── Audio Player ─────────────────────────────────────────────────────────────
@@ -518,7 +600,7 @@ function CommentsPanel({ episodeId, userEmail }: { episodeId: string; userEmail:
 
 // ─── Main PracticeScreen ───────────────────────────────────────────────────────
 
-export default function PracticeScreen({ episodeId, onBack, onNextEpisode }: Props) {
+export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNavigateToSection, onNavigateHome }: Props) {
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [nextEpisode, setNextEpisode] = useState<Episode | null>(null);
   const [loading, setLoading] = useState(true);
@@ -557,11 +639,11 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode }: Pro
   const mapAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // IELTS Section state
-  const [ieltsPartIndex, setIeltsPartIndex] = useState(0);
-  const [ieltsGroupIndex, setIeltsGroupIndex] = useState(0);
+  const [ieltsStage, setIeltsStage] = useState<"part1-preview" | "part1-audio" | "part2-preview" | "part2-audio">("part1-preview");
   const [ieltsAnswers, setIeltsAnswers] = useState<Record<string, any>>({});
   const [ieltsChecked, setIeltsChecked] = useState<Record<string, boolean>>({});
   const [ieltsAudioPlaying, setIeltsAudioPlaying] = useState(false);
+  const [ieltsAudioPlays, setIeltsAudioPlays] = useState<Record<number, number>>({});
   const ieltsAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [showResults, setShowResults] = useState(false);
@@ -686,6 +768,13 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode }: Pro
   const isMatching = episodeType === "practice-matching";
   const isMap = episodeType === "practice-map";
   const isIELTSSection = episodeType === "ielts-section";
+  const ieltsParts = isIELTSSection ? (episode.questions as IELTSSectionPart[]) : [];
+  const ieltsPartIndex = ieltsStage.startsWith("part1") ? 0 : 1;
+  const currentIeltsPart = ieltsParts[ieltsPartIndex];
+  const isSection4 = ieltsParts.length === 1;
+  const ieltsAudioStage = ieltsStage === "part1-audio" || ieltsStage === "part2-audio";
+  const ieltsPreviewStage = ieltsStage === "part1-preview" || ieltsStage === "part2-preview";
+  const currentIeltsPlays = ieltsAudioPlays[ieltsPartIndex] || 0;
 
   return (
     <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
@@ -934,176 +1023,198 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode }: Pro
           </div>
         )}
 
-        {/* ─── IELTS Section — Intro ─── */}
-        {isIELTSSection && !testStarted && (
-          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
-            <p className="text-lg font-bold">🎧 IELTS Listening Practice</p>
-            <p className="mt-2 text-sm text-[#7a6258]">Listen to the audio carefully. You will answer questions as you listen.</p>
-            <p className="mt-2 text-xs text-[#7a6258]">💡 Read the questions before pressing play.</p>
-            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start Practice</button>
-          </div>
-        )}
+        {/* ─── IELTS Section — Practice Flow ─── */}
+        {isIELTSSection && !showResults && (() => {
+          const parts = ieltsParts;
+          const currentPart = currentIeltsPart;
+          if (!currentPart) return null;
+          const partNumber = ieltsPartIndex + 1;
+          const partLabel = partNumber === 1 ? "Part 1" : "Part 2";
 
-        {/* ─── IELTS Section — Questions ─── */}
-        {isIELTSSection && testStarted && !showResults && (() => {
-          const parts = (episode.questions as unknown as IELTSSectionPart[]) || [];
-          const part = parts[ieltsPartIndex];
-          if (!part) return null;
-          const group = part.groups?.[ieltsGroupIndex];
-          const isLastGroup = ieltsGroupIndex >= (part.groups?.length || 0) - 1;
-          const isLastPart = ieltsPartIndex >= parts.length - 1;
-          const isSection4 = parts.length === 1;
+          const handlePauseAudio = () => {
+            const audio = ieltsAudioRef.current;
+            if (audio) audio.pause();
+            setIeltsAudioPlaying(false);
+          };
 
-          function nextGroup() {
-            if (!isLastGroup) { setIeltsGroupIndex(i => i + 1); }
-            else if (!isLastPart) { setIeltsPartIndex(i => i + 1); setIeltsGroupIndex(0); setIeltsAudioPlaying(false); if (ieltsAudioRef.current) ieltsAudioRef.current.pause(); }
-            else { setShowResults(true); saveResult(); }
+          const handleContinue = async () => {
+            handlePauseAudio();
+            if (!isSection4 && ieltsPartIndex === 0) {
+              setIeltsStage("part2-preview");
+            } else {
+              setShowResults(true);
+              await saveResult();
+            }
+          };
+
+          if (ieltsPreviewStage) {
+            return (
+              <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+                <div className="text-center">
+                  <p className="text-lg font-bold">🎧 IELTS Listening Practice</p>
+                  <p className="mt-2 text-sm text-[#7a6258]">Read the questions for {partLabel} before you listen.</p>
+                  <p className="mt-2 text-xs text-[#7a6258]">You will have up to 2 plays for each audio section.</p>
+                </div>
+                <div className="mt-6 space-y-4">
+                  {currentPart.groups?.map((group, index) => renderIeltsGroupPreview(group, index))}
+                </div>
+                <button onClick={() => setIeltsStage(ieltsStage === "part1-preview" ? "part1-audio" : "part2-audio")}
+                  className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
+                  I&apos;m ready — Start Listening
+                </button>
+              </div>
+            );
           }
 
           return (
             <div className="mt-8">
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm font-semibold text-[#7a6258]">Part {ieltsPartIndex + 1} of {parts.length} — Group {ieltsGroupIndex + 1} of {part.groups?.length || 1}</p>
-                {!isSection4 && <span className={`rounded-full px-3 py-1 text-xs font-bold ${ieltsPartIndex === 0 ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"}`}>{ieltsPartIndex === 0 ? "Part 1" : "Part 2"}</span>}
+                <div>
+                  <p className="text-sm font-semibold text-[#7a6258]">{partLabel}</p>
+                  <p className="text-xs text-[#7a6258]">You have {currentIeltsPlays}/2 plays</p>
+                </div>
+                {!isSection4 && <span className={`rounded-full px-3 py-1 text-xs font-bold ${ieltsPartIndex === 0 ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"}`}>{partLabel}</span>}
               </div>
 
-              <audio ref={ieltsAudioRef} src={part.audioUrl} onEnded={() => setIeltsAudioPlaying(false)} />
+              <audio ref={ieltsAudioRef} src={currentPart.audioUrl} onEnded={() => setIeltsAudioPlaying(false)} />
               <button onClick={() => {
-                const audio = ieltsAudioRef.current; if (!audio) return;
-                if (ieltsAudioPlaying) { audio.pause(); setIeltsAudioPlaying(false); } else { audio.play(); setIeltsAudioPlaying(true); }
+                const audio = ieltsAudioRef.current;
+                if (!audio || currentIeltsPlays >= 2) return;
+                if (ieltsAudioPlaying) {
+                  audio.pause();
+                  setIeltsAudioPlaying(false);
+                } else {
+                  audio.currentTime = 0;
+                  audio.play();
+                  setIeltsAudioPlaying(true);
+                  setIeltsAudioPlays(prev => ({ ...prev, [ieltsPartIndex]: (prev[ieltsPartIndex] || 0) + 1 }));
+                }
               }} className={`mb-5 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${ieltsAudioPlaying ? "bg-[#c9a99a] text-white" : "bg-[#3b2f2f] text-white hover:bg-[#2f2424]"}`}>
-                {ieltsAudioPlaying ? "⏸ Pause Audio" : "▶ Play Audio"}
+                {ieltsAudioPlaying ? "⏸ Pause Audio" : currentIeltsPlays >= 2 ? "No plays left" : "▶ Play Audio"}
               </button>
 
-              {group?.wordLimit && <div className="mb-4 rounded-2xl bg-[#ead7cc] px-4 py-2 text-sm font-semibold text-[#3b2f2f]">✏️ Write {group.wordLimit}</div>}
-              <p className="mb-3 text-sm font-bold text-[#7a6258] uppercase tracking-wide">{group?.label}</p>
-
-              {/* Note/Form Completion */}
-              {(group?.type === "note-completion" || group?.type === "form-completion") && (() => {
-                const items = group.data?.items || group.data?.fields || [];
+              {currentPart.groups?.map((group, groupIndex) => {
+                const groupKey = `${currentPart.part}-${group.id}`;
                 return (
-                  <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-                    {group.data?.title && <p className="font-bold mb-4">{group.data.title}</p>}
-                    <div className="flex flex-col gap-3">
-                      {items.map((item: any, bi: number) => {
-                        const key = `${part.part}-${group.id}-${bi}`;
-                        const checked = ieltsChecked[key];
-                        const userAns = ieltsAnswers[key] || "";
-                        const isCorrect = checked && checkAnswer(userAns, item.answer);
-                        return (
-                          <div key={bi} className="flex items-center gap-3">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{bi + 1}</span>
-                            <span className="text-sm flex-1">{item.label.replace("___", "")}</span>
-                            <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
-                              className={`w-32 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
+                  <div key={groupKey} className="mb-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+                    {group.wordLimit && <div className="mb-4 rounded-2xl bg-[#ead7cc] px-4 py-2 text-sm font-semibold text-[#3b2f2f]">✏️ Write {group.wordLimit}</div>}
+                    <p className="mb-3 text-sm font-bold text-[#7a6258] uppercase tracking-wide">{group.label}</p>
 
-              {/* Sentence Completion */}
-              {group?.type === "sentence-completion" && (() => {
-                const items = group.data?.items || [];
-                return (
-                  <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-                    <div className="flex flex-col gap-4">
-                      {items.map((item: any, bi: number) => {
-                        const key = `${part.part}-${group.id}-${bi}`;
-                        const checked = ieltsChecked[key];
-                        const userAns = ieltsAnswers[key] || "";
-                        const isCorrect = checked && checkAnswer(userAns, item.answer);
-                        const parts2 = item.text.split("___");
-                        return (
-                          <div key={bi} className="flex items-center flex-wrap gap-1 text-sm">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white mr-1">{bi + 1}</span>
-                            <span>{parts2[0]}</span>
-                            <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
-                              className={`w-28 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
-                            {parts2[1] && <span>{parts2[1]}</span>}
-                            {checked && !isCorrect && <span className="text-xs text-red-600 ml-1">→ {item.answer.split("|")[0]}</span>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
+                    {(group.type === "note-completion" || group.type === "form-completion") && (() => {
+                      const items = group.data?.items || group.data?.fields || [];
+                      return (
+                        <div className="flex flex-col gap-3">
+                          {items.map((item: any, bi: number) => {
+                            const key = `${currentPart.part}-${group.id}-${bi}`;
+                            const checked = ieltsChecked[key];
+                            const userAns = ieltsAnswers[key] || "";
+                            const isCorrect = checked && checkAnswer(userAns, item.answer);
+                            return (
+                              <div key={bi} className="flex items-center gap-3">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{bi + 1}</span>
+                                <span className="text-sm flex-1">{item.label.replace("___", "")}</span>
+                                <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
+                                  className={`w-32 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
 
-              {/* MCQ */}
-              {group?.type === "mcq" && (
-                <div className="flex flex-col gap-4">
-                  {(group.data || []).map((q: any, qi: number) => {
-                    const key = `${part.part}-${group.id}-${qi}`;
-                    const confirmed = ieltsChecked[key] || false;
-                    const selected = ieltsAnswers[key] || [];
-                    return (
-                      <MCQQuestionView key={qi} question={q as MCQQuestion} selectedAnswers={selected} confirmed={confirmed}
-                        onToggle={letter => {
-                          if (confirmed) return;
-                          const correctArr = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
-                          const current = selected;
-                          let next: string[];
-                          if (correctArr.length === 1) { next = [letter]; }
-                          else { next = current.includes(letter) ? current.filter((a: string) => a !== letter) : current.length < correctArr.length ? [...current, letter].sort() : current; }
-                          setIeltsAnswers(prev => ({ ...prev, [key]: next }));
-                        }}
-                        onConfirm={() => setIeltsChecked(prev => ({ ...prev, [key]: true }))}
+                    {group.type === "sentence-completion" && (() => {
+                      const items = group.data?.items || [];
+                      return (
+                        <div className="flex flex-col gap-4">
+                          {items.map((item: any, bi: number) => {
+                            const key = `${currentPart.part}-${group.id}-${bi}`;
+                            const checked = ieltsChecked[key];
+                            const userAns = ieltsAnswers[key] || "";
+                            const isCorrect = checked && checkAnswer(userAns, item.answer);
+                            const parts2 = item.text.split("___");
+                            return (
+                              <div key={bi} className="flex flex-wrap items-center gap-1 text-sm">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white mr-1">{bi + 1}</span>
+                                <span>{parts2[0]}</span>
+                                <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
+                                  className={`w-28 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                                {parts2[1] && <span>{parts2[1]}</span>}
+                                {checked && !isCorrect && <span className="text-xs text-red-600 ml-1">→ {item.answer.split("|")[0]}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {group.type === "mcq" && (
+                      <div className="flex flex-col gap-4">
+                        {(group.data || []).map((q: any, qi: number) => {
+                          const key = `${currentPart.part}-${group.id}-${qi}`;
+                          const confirmed = ieltsChecked[key] || false;
+                          const selected = ieltsAnswers[key] || [];
+                          return (
+                            <MCQQuestionView key={qi} question={q as MCQQuestion} selectedAnswers={selected} confirmed={confirmed}
+                              onToggle={letter => {
+                                if (confirmed) return;
+                                const correctArr = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+                                const current = selected;
+                                let next: string[];
+                                if (correctArr.length === 1) { next = [letter]; }
+                                else { next = current.includes(letter) ? current.filter((a: string) => a !== letter) : current.length < correctArr.length ? [...current, letter].sort() : current; }
+                                setIeltsAnswers(prev => ({ ...prev, [key]: next }));
+                              }}
+                              onConfirm={() => setIeltsChecked(prev => ({ ...prev, [key]: true }))}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {group.type === "matching" && (
+                      <MatchingView
+                        question={group.data as MatchingQuestion}
+                        userAnswers={(() => {
+                          const ans: Record<number, string> = {};
+                          (group.data?.items || []).forEach((_: any, ii: number) => {
+                            const val = ieltsAnswers[`${currentPart.part}-${group.id}-${ii}`];
+                            if (val) ans[ii] = val;
+                          });
+                          return ans;
+                        })()}
+                        checked={ieltsChecked[`${currentPart.part}-${group.id}-checked`] || false}
+                        onAnswer={(itemIndex, optionKey) => setIeltsAnswers(prev => ({ ...prev, [`${currentPart.part}-${group.id}-${itemIndex}`]: optionKey }))}
+                        onCheck={() => setIeltsChecked(prev => ({ ...prev, [`${currentPart.part}-${group.id}-checked`]: true }))}
                       />
-                    );
-                  })}
-                </div>
-              )}
+                    )}
 
-              {/* Matching */}
-              {group?.type === "matching" && (
-                <MatchingView
-                  question={group.data as MatchingQuestion}
-                  userAnswers={(() => {
-                    const ans: Record<number, string> = {};
-                    (group.data?.items || []).forEach((_: any, ii: number) => {
-                      const val = ieltsAnswers[`${part.part}-${group.id}-${ii}`];
-                      if (val) ans[ii] = val;
-                    });
-                    return ans;
-                  })()}
-                  checked={ieltsChecked[`${part.part}-${group.id}-checked`] || false}
-                  onAnswer={(itemIndex, optionKey) => setIeltsAnswers(prev => ({ ...prev, [`${part.part}-${group.id}-${itemIndex}`]: optionKey }))}
-                  onCheck={() => setIeltsChecked(prev => ({ ...prev, [`${part.part}-${group.id}-checked`]: true }))}
-                />
-              )}
+                    {group.type === "map" && (
+                      <MapView
+                        question={group.data as MapQuestion}
+                        userAnswers={Object.fromEntries((group.data?.points || []).map((p: any) => [p.id, ieltsAnswers[`${currentPart.part}-${group.id}-${p.id}`] || ""]))}
+                        checked={ieltsChecked[`${currentPart.part}-${group.id}-checked`] || false}
+                        playsUsed={0} maxPlays={99} isPlaying={false}
+                        onAnswer={(pointId, optionKey) => setIeltsAnswers(prev => ({ ...prev, [`${currentPart.part}-${group.id}-${pointId}`]: optionKey }))}
+                        onCheck={() => setIeltsChecked(prev => ({ ...prev, [`${currentPart.part}-${group.id}-checked`]: true }))}
+                        onPlay={() => {}}
+                      />
+                    )}
 
-              {/* Map */}
-              {group?.type === "map" && (
-                <MapView
-                  question={group.data as MapQuestion}
-                  userAnswers={Object.fromEntries(
-                    (group.data?.points || []).map((p: any) => [p.id, ieltsAnswers[`${part.part}-${group.id}-${p.id}`] || ""])
-                  )}
-                  checked={ieltsChecked[`${part.part}-${group.id}-checked`] || false}
-                  playsUsed={0} maxPlays={99} isPlaying={false}
-                  onAnswer={(pointId, optionKey) => setIeltsAnswers(prev => ({ ...prev, [`${part.part}-${group.id}-${pointId}`]: optionKey }))}
-                  onCheck={() => setIeltsChecked(prev => ({ ...prev, [`${part.part}-${group.id}-checked`]: true }))}
-                  onPlay={() => {}}
-                />
-              )}
+                    {(group.type === "note-completion" || group.type === "form-completion" || group.type === "sentence-completion") && (
+                      <button onClick={() => {
+                        const items = group.data?.items || group.data?.fields || [];
+                        const newChecked = { ...ieltsChecked };
+                        items.forEach((_: any, bi: number) => { newChecked[`${currentPart.part}-${group.id}-${bi}`] = true; });
+                        setIeltsChecked(newChecked);
+                      }} className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold text-sm">Check Answers</button>
+                    )}
+                  </div>
+                );
+              })}
 
-              {/* Check + Next buttons */}
-              <div className="mt-6 flex gap-3">
-                {(group?.type === "note-completion" || group?.type === "form-completion" || group?.type === "sentence-completion") && (
-                  <button onClick={() => {
-                    const items = group.data?.items || group.data?.fields || [];
-                    const newChecked = { ...ieltsChecked };
-                    items.forEach((_: any, bi: number) => { newChecked[`${part.part}-${group.id}-${bi}`] = true; });
-                    setIeltsChecked(newChecked);
-                  }} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold text-sm">Check Answers</button>
-                )}
-                <button onClick={nextGroup} className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white text-sm">
-                  {isLastGroup && isLastPart ? "Finish ✓" : isLastGroup && !isLastPart ? "Next Part →" : "Next Group →"}
-                </button>
-              </div>
+              <button onClick={handleContinue} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
+                {(!isSection4 && ieltsPartIndex === 0) ? "Submit Part 1" : "Finish & See Results"}
+              </button>
             </div>
           );
         })()}
@@ -1124,6 +1235,25 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode }: Pro
               );
             })()}
             <div className="mt-8 flex flex-col gap-3">
+              {episode?.episode_type === "ielts-section" && typeof episode.exam_section === "number" && onNavigateToSection && (() => {
+                const sectionNumber = episode.exam_section;
+                return (
+                  <>
+                    <button onClick={() => onNavigateToSection(sectionNumber)} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
+                      Continue with Section {sectionNumber}
+                    </button>
+                    {sectionNumber < 4 ? (
+                      <button onClick={() => onNavigateToSection(sectionNumber + 1)} className="w-full rounded-2xl bg-[#c9a99a] px-6 py-4 font-semibold text-[#3b2f2f]">
+                        Move to Section {sectionNumber + 1}
+                      </button>
+                    ) : (
+                      <button onClick={() => onNavigateHome?.()} className="w-full rounded-2xl bg-white border border-[#e0c7cc] px-6 py-4 font-semibold text-[#3b2f2f]">
+                        Back to Home
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
               {nextEpisode && <button onClick={() => onNextEpisode(nextEpisode.id)} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Next Practice →</button>}
               <button onClick={onBack} className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">Back to Practices</button>
             </div>

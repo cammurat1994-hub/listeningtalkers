@@ -120,6 +120,16 @@ export default function Home() {
   function goTo(s: Screen) { setScreen(s); }
   function navigateTo(s: Screen) { setScreen(s); }
 
+  function handleNavigateToSection(section: number) {
+    setSelectedIELTSSection(section);
+    goTo("episodes");
+  }
+
+  function handleNavigateHome() {
+    setSelectedIELTSSection(null);
+    goTo("home");
+  }
+
   async function loadExam(practiceId: string) {
     const { data, error } = await supabase.from("episodes").select("*").eq("id", practiceId).single();
     if (!error && data) {
@@ -270,6 +280,8 @@ export default function Home() {
           isQuizMode={false}
           onBack={() => selectedIELTSSection ? goTo("ielts-sections") : goTo("episodes")}
           onNextEpisode={(nextId) => { setSelectedPracticeId(nextId); goTo("practice"); }}
+          onNavigateToSection={handleNavigateToSection}
+          onNavigateHome={handleNavigateHome}
         />
       </>
     );
@@ -285,6 +297,8 @@ export default function Home() {
           isQuizMode={true}
           onBack={() => goTo("episodes")}
           onNextEpisode={(nextId) => { setSelectedPracticeId(nextId); goTo("quiz"); }}
+          onNavigateToSection={handleNavigateToSection}
+          onNavigateHome={handleNavigateHome}
         />
       </>
     );
