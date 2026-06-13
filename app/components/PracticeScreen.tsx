@@ -107,6 +107,36 @@ function renderIeltsGroupPreview(group: any, index: number) {
           </div>
         </div>
       );
+    case "table-completion": {
+      const headers = group.data?.headers || [];
+      const rows = group.data?.rows || [];
+      return (
+        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#3b2f2f]">{label}</p>
+          {group.data?.title && <p className="mt-2 text-sm text-[#7a6258]">{group.data.title}</p>}
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              {headers.length > 0 && (
+                <thead><tr>{headers.map((h: string, i: number) => <th key={i} className="border border-[#dcd0c5] bg-[#f7eee8] px-3 py-2 text-left font-semibold">{h}</th>)}</tr></thead>
+              )}
+              <tbody>
+                {rows.map((row: any, ri: number) => (
+                  <tr key={ri}>
+                    {row.cells.map((cell: string, ci: number) => (
+                      <td key={ci} className="border border-[#dcd0c5] px-3 py-2">
+                        {cell === "___"
+                          ? <input type="text" disabled className="w-24 rounded-lg border border-[#e0c7bb] bg-[#f7eee8] px-2 py-1 text-sm" />
+                          : cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
     case "matching":
       return (
         <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
@@ -743,6 +773,18 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
               const correctAns = group.data?.items?.[bi]?.answer || "";
               if (checkAnswer(userAns, correctAns)) correct++;
             });
+          } else if (group.type === "table-completion") {
+            let idx = 0;
+            (group.data?.rows || []).forEach((row: any) => {
+              row.cells.forEach((cell: string, ci: number) => {
+                if (cell !== "___") return;
+                total++;
+                const key = `${part.part}-${group.id}-table-${idx}`;
+                const correctAns = row.answers[row.answerIndices.indexOf(ci)] || "";
+                if (checkAnswer(ieltsAnswers[key] || "", correctAns)) correct++;
+                idx++;
+              });
+            });
           } else if (group.type === "mcq") {
             (group.data || []).forEach((q: any, qi: number) => {
               total++;
@@ -1236,6 +1278,48 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                       );
                     })()}
 
+                    {group.type === "table-completion" && (() => {
+                      const headers = group.data?.headers || [];
+                      const rows = group.data?.rows || [];
+                      let globalAnsIdx = 0;
+                      return (
+                        <div className="overflow-x-auto">
+                          {group.data?.title && <p className="font-bold mb-3 text-center">{group.data.title}</p>}
+                          <table className="w-full text-sm border-collapse">
+                            {headers.length > 0 && (
+                              <thead><tr>{headers.map((h: string, hi: number) => <th key={hi} className="border border-[#e0c7bb] bg-[#f7eee8] px-3 py-2 text-left font-semibold">{h}</th>)}</tr></thead>
+                            )}
+                            <tbody>
+                              {rows.map((row: any, ri: number) => (
+                                <tr key={ri}>
+                                  {row.cells.map((cell: string, ci: number) => {
+                                    const isBlank = cell === "___";
+                                    const ansIdx = isBlank ? globalAnsIdx++ : -1;
+                                    const key = isBlank ? `${currentPart.part}-${group.id}-table-${ansIdx}` : "";
+                                    const checked = key ? ieltsChecked[key] : false;
+                                    const userAns = key ? (ieltsAnswers[key] || "") : "";
+                                    const correctAns = isBlank ? (row.answers[row.answerIndices.indexOf(ci)] || "") : "";
+                                    const isCorrect = isBlank && checked && checkAnswer(userAns, correctAns);
+                                    return (
+                                      <td key={ci} className="border border-[#e0c7bb] px-3 py-2">
+                                        {isBlank ? (
+                                          <div className="flex items-center gap-1">
+                                            <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
+                                              className={`w-24 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                                            {checked && !isCorrect && <span className="text-xs text-green-600 font-semibold">✓{correctAns.split("|")[0]}</span>}
+                                          </div>
+                                        ) : cell}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    })()}
+
                     {group.type === "mcq" && (
                       <div className="flex flex-col gap-4">
                         {(group.data || []).map((q: any, qi: number) => {
@@ -1294,6 +1378,16 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                         const items = group.data?.items || group.data?.fields || [];
                         const newChecked = { ...ieltsChecked };
                         items.forEach((_: any, bi: number) => { newChecked[`${currentPart.part}-${group.id}-${bi}`] = true; });
+                        setIeltsChecked(newChecked);
+                      }} className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold text-sm">Check Answers</button>
+                    )}
+
+                    {group.type === "table-completion" && (
+                      <button onClick={() => {
+                        const rows = group.data?.rows || [];
+                        const newChecked = { ...ieltsChecked };
+                        let idx = 0;
+                        rows.forEach((row: any) => row.cells.forEach((cell: string) => { if (cell === "___") { newChecked[`${currentPart.part}-${group.id}-table-${idx}`] = true; idx++; } }));
                         setIeltsChecked(newChecked);
                       }} className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold text-sm">Check Answers</button>
                     )}
