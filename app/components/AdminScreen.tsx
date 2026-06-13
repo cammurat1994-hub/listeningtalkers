@@ -142,6 +142,8 @@ const createEmptySentence = (): SentenceQuestion => ({ items: [{ text: "", answe
 type IELTSSectionPart = {
   audioFile: File | null;
   audioUrl: string;
+  introAudioFile?: File | null;
+  introAudioUrl?: string;
   questionGroups: QuestionGroup[];
   mapImageFile?: File | null;
   mapImageUrl?: string;
@@ -149,7 +151,7 @@ type IELTSSectionPart = {
 };
 
 function createEmptyPart(): IELTSSectionPart {
-  return { audioFile: null, audioUrl: "", questionGroups: [], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" };
+  return { audioFile: null, audioUrl: "", introAudioFile: null, introAudioUrl: "", questionGroups: [], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" };
 }
 function parseBulkMCQ(raw: string): MCQQuestion[] {
   const blocks = raw.trim().split(/\n{2,}/);
@@ -973,6 +975,8 @@ export default function AdminScreen({ onBack }: Props) {
         const processedParts = await Promise.all(sectionParts.map(async (part, pi) => {
           let audioUrl = part.audioUrl;
           if (part.audioFile) audioUrl = await uploadFile(part.audioFile, "episode");
+          let introAudioUrl = part.introAudioUrl || "";
+          if (part.introAudioFile) introAudioUrl = await uploadFile(part.introAudioFile, "episode");
           const processedGroups = await Promise.all(part.questionGroups.map(async group => {
             if (group.type === "map" && group.data?._imageFile) {
               const imageUrl = await uploadFile(group.data._imageFile, "map");
@@ -982,7 +986,7 @@ export default function AdminScreen({ onBack }: Props) {
             }
             return group;
           }));
-          return { part: pi + 1, audioUrl, groups: processedGroups };
+          return { part: pi + 1, audioUrl, introAudioUrl, groups: processedGroups };
         }));
         questions = processedParts;
       }
@@ -1088,8 +1092,8 @@ const autoTitle = isExam
     if (data.episode_type === "ielts-section" && data.audio_part1_url !== undefined) {
       setSectionNumber(data.exam_section || 1);
       setSectionParts([
-        { audioFile: null, audioUrl: data.audio_part1_url || "", questionGroups: data.questions?.[0]?.groups || [] },
-        { audioFile: null, audioUrl: data.audio_part2_url || "", questionGroups: data.questions?.[1]?.groups || [] },
+        { audioFile: null, audioUrl: data.audio_part1_url || "", introAudioFile: null, introAudioUrl: data.questions?.[0]?.introAudioUrl || "", questionGroups: data.questions?.[0]?.groups || [] },
+        { audioFile: null, audioUrl: data.audio_part2_url || "", introAudioFile: null, introAudioUrl: data.questions?.[1]?.introAudioUrl || "", questionGroups: data.questions?.[1]?.groups || [] },
       ]);
     }
     setActiveTab("new"); window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1803,6 +1807,19 @@ const autoTitle = isExam
                     }}
                     className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
 
+                  <div className="mt-3">
+                    <label className="mb-1 block text-sm font-semibold">🗣️ {sectionNumber === 4 ? "Intro Audio" : "Part 1 Intro Audio"} <span className="font-normal text-xs text-[#7a6258]">(opsiyonel — başta otomatik çalar)</span></label>
+                    {sectionParts[0].introAudioUrl && !sectionParts[0].introAudioFile && (
+                      <p className="mb-2 text-xs text-green-600">✓ Intro audio uploaded</p>
+                    )}
+                    <input type="file" accept="audio/*"
+                      onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) setSectionParts(prev => [{ ...prev[0], introAudioFile: f, introAudioUrl: "" }, prev[1]]);
+                      }}
+                      className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                  </div>
+
                   <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
                     <p className="mb-2 text-sm font-semibold text-[#7a6258]">
                       {sectionNumber === 4 ? "Question type + bulk paste" : "Part 1 question type + bulk paste"}
@@ -1888,6 +1905,19 @@ const autoTitle = isExam
                         if (f) setSectionParts(prev => [prev[0], { ...prev[1], audioFile: f, audioUrl: "" }]);
                       }}
                       className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+
+                    <div className="mt-3">
+                      <label className="mb-1 block text-sm font-semibold">🗣️ Part 2 Intro Audio <span className="font-normal text-xs text-[#7a6258]">(opsiyonel — başta otomatik çalar)</span></label>
+                      {sectionParts[1].introAudioUrl && !sectionParts[1].introAudioFile && (
+                        <p className="mb-2 text-xs text-green-600">✓ Intro audio uploaded</p>
+                      )}
+                      <input type="file" accept="audio/*"
+                        onChange={e => {
+                          const f = e.target.files?.[0];
+                          if (f) setSectionParts(prev => [prev[0], { ...prev[1], introAudioFile: f, introAudioUrl: "" }]);
+                        }}
+                        className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                    </div>
 
                     {/* Part 2 Bulk Paste (add question group from text) */}
                     <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">

@@ -18,6 +18,7 @@ type Props = {
 type IELTSSectionPart = {
   part: number;
   audioUrl: string;
+  introAudioUrl?: string;
   groups: { id: string; type: string; label: string; wordLimit?: string; data: any; }[];
 };
 
@@ -645,6 +646,11 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
   const [ieltsAudioPlaying, setIeltsAudioPlaying] = useState(false);
   const [ieltsAudioPlays, setIeltsAudioPlays] = useState<Record<number, number>>({});
   const ieltsAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Per-part intro audio: plays automatically at the start of each part's preview.
+  const [ieltsIntroDone, setIeltsIntroDone] = useState<Record<number, boolean>>({});
+  const ieltsIntroRef = useRef<HTMLAudioElement | null>(null);
+  // Guards each per-part auto-start (intro + main) so it fires exactly once.
+  const ieltsStartedRef = useRef<Record<string, boolean>>({});
 
   const [showResults, setShowResults] = useState(false);
   const [resultSaved, setResultSaved] = useState(false);
@@ -662,6 +668,45 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
     async function getUser() { const { data: { user } } = await supabase.auth.getUser(); if (user?.email) setUserEmail(user.email); }
     fetchEpisode(); getUser();
   }, [episodeId]);
+
+  // Auto-play a part's intro audio when its preview opens (if one was uploaded).
+  // Questions stay hidden until the intro finishes; with no intro the effect is a no-op.
+  useEffect(() => {
+    if (!episode || episode.episode_type !== "ielts-section") return;
+    if (ieltsStage !== "part1-preview" && ieltsStage !== "part2-preview") return;
+    const partIndex = ieltsStage.startsWith("part1") ? 0 : 1;
+    const guardKey = `intro-${partIndex}`;
+    if (ieltsStartedRef.current[guardKey]) return;
+    const parts = episode.questions as unknown as IELTSSectionPart[];
+    const introUrl = parts[partIndex]?.introAudioUrl;
+    if (!introUrl) return;
+    const audio = ieltsIntroRef.current;
+    if (!audio) return;
+    ieltsStartedRef.current[guardKey] = true;
+    audio.src = introUrl;
+    audio.currentTime = 0;
+    audio.play().catch(() => {
+      // Autoplay blocked or load failed — reveal the questions so the user isn't stuck.
+      setIeltsIntroDone(prev => ({ ...prev, [partIndex]: true }));
+    });
+  }, [ieltsStage, episode]);
+
+  // When a part's listening stage opens, auto-start its main audio once (counts as play 1).
+  useEffect(() => {
+    if (!episode || episode.episode_type !== "ielts-section") return;
+    if (ieltsStage !== "part1-audio" && ieltsStage !== "part2-audio") return;
+    const partIndex = ieltsStage.startsWith("part1") ? 0 : 1;
+    const guardKey = `audio-${partIndex}`;
+    if (ieltsStartedRef.current[guardKey]) return;
+    const audio = ieltsAudioRef.current;
+    if (!audio) return;
+    ieltsStartedRef.current[guardKey] = true;
+    audio.currentTime = 0;
+    audio.play().then(() => {
+      setIeltsAudioPlaying(true);
+      setIeltsAudioPlays(prev => ({ ...prev, [partIndex]: (prev[partIndex] || 0) + 1 }));
+    }).catch(() => {});
+  }, [ieltsStage, episode]);
 
   function toggleMainAudio() {
     const audio = audioRef.current; if (!audio) return;
@@ -1048,20 +1093,50 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
           };
 
           if (ieltsPreviewStage) {
+            const hasIntro = !!currentPart.introAudioUrl;
+            const introDone = !!ieltsIntroDone[ieltsPartIndex];
+            // While the intro is still playing, hide the questions and the start button.
+            const introActive = hasIntro && !introDone;
+            const skipIntro = () => {
+              const audio = ieltsIntroRef.current;
+              if (audio) audio.pause();
+              setIeltsIntroDone(prev => ({ ...prev, [ieltsPartIndex]: true }));
+            };
             return (
               <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+                {hasIntro && (
+                  <audio ref={ieltsIntroRef}
+                    onEnded={() => setIeltsIntroDone(prev => ({ ...prev, [ieltsPartIndex]: true }))}
+                    onError={() => setIeltsIntroDone(prev => ({ ...prev, [ieltsPartIndex]: true }))} />
+                )}
                 <div className="text-center">
                   <p className="text-lg font-bold">🎧 IELTS Listening Practice</p>
                   <p className="mt-2 text-sm text-[#7a6258]">Read the questions for {partLabel} before you listen.</p>
                   <p className="mt-2 text-xs text-[#7a6258]">You will have up to 2 plays for each audio section.</p>
                 </div>
-                <div className="mt-6 space-y-4">
-                  {currentPart.groups?.map((group, index) => renderIeltsGroupPreview(group, index))}
-                </div>
-                <button onClick={() => setIeltsStage(ieltsStage === "part1-preview" ? "part1-audio" : "part2-audio")}
-                  className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
-                  I&apos;m ready — Start Listening
-                </button>
+
+                {introActive ? (
+                  <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-[#e0c7bb] bg-white p-6 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#3b2f2f] animate-pulse">
+                      <Image src="/cat-logo.svg" alt="" width={36} height={36} className="object-contain" />
+                    </div>
+                    <p className="font-semibold">🔊 Playing introduction…</p>
+                    <p className="text-xs text-[#7a6258]">The questions will appear when the introduction finishes.</p>
+                    <button onClick={skipIntro} className="mt-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-xs font-semibold hover:bg-[#f1ded5]">
+                      Skip intro →
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-6 space-y-4">
+                      {currentPart.groups?.map((group, index) => renderIeltsGroupPreview(group, index))}
+                    </div>
+                    <button onClick={() => setIeltsStage(ieltsStage === "part1-preview" ? "part1-audio" : "part2-audio")}
+                      className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
+                      I&apos;m ready — Start Listening
+                    </button>
+                  </>
+                )}
               </div>
             );
           }
