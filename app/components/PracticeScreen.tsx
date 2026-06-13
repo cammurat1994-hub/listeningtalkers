@@ -648,6 +648,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
   const ieltsAudioRef = useRef<HTMLAudioElement | null>(null);
   // Per-part intro audio: plays automatically at the start of each part's preview.
   const [ieltsIntroDone, setIeltsIntroDone] = useState<Record<number, boolean>>({});
+  const [ieltsIntroPlaying, setIeltsIntroPlaying] = useState(false);
   const ieltsIntroRef = useRef<HTMLAudioElement | null>(null);
   // Guards each per-part auto-start (intro + main) so it fires exactly once.
   const ieltsStartedRef = useRef<Record<string, boolean>>({});
@@ -683,12 +684,14 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
     const audio = ieltsIntroRef.current;
     if (!audio) return;
     ieltsStartedRef.current[guardKey] = true;
-    audio.src = introUrl;
     audio.currentTime = 0;
-    audio.play().catch(() => {
-      // Autoplay blocked or load failed — reveal the questions so the user isn't stuck.
-      setIeltsIntroDone(prev => ({ ...prev, [partIndex]: true }));
-    });
+    audio.play()
+      .then(() => setIeltsIntroPlaying(true))
+      .catch(() => {
+        // Autoplay blocked by the browser (no user gesture yet). Leave the "Play
+        // introduction" button visible so the user can start it with a tap.
+        setIeltsIntroPlaying(false);
+      });
   }, [ieltsStage, episode]);
 
   // When a part's listening stage opens, auto-start its main audio once (counts as play 1).
@@ -826,7 +829,6 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
       <section className="mx-auto max-w-3xl px-6 py-12">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-[#7a6258]">{episode.level}</p>
             <h1 className="text-3xl font-bold md:text-4xl">{episode.title}</h1>
           </div>
           <button onClick={onBack} className="shrink-0 rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
@@ -1100,14 +1102,23 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
             const skipIntro = () => {
               const audio = ieltsIntroRef.current;
               if (audio) audio.pause();
+              setIeltsIntroPlaying(false);
               setIeltsIntroDone(prev => ({ ...prev, [ieltsPartIndex]: true }));
+            };
+            const toggleIntro = () => {
+              const audio = ieltsIntroRef.current;
+              if (!audio) return;
+              if (ieltsIntroPlaying) { audio.pause(); setIeltsIntroPlaying(false); }
+              else { audio.play().then(() => setIeltsIntroPlaying(true)).catch(() => {}); }
             };
             return (
               <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
                 {hasIntro && (
-                  <audio ref={ieltsIntroRef}
-                    onEnded={() => setIeltsIntroDone(prev => ({ ...prev, [ieltsPartIndex]: true }))}
-                    onError={() => setIeltsIntroDone(prev => ({ ...prev, [ieltsPartIndex]: true }))} />
+                  <audio ref={ieltsIntroRef} src={currentPart.introAudioUrl} preload="auto"
+                    onPlay={() => setIeltsIntroPlaying(true)}
+                    onPause={() => setIeltsIntroPlaying(false)}
+                    onEnded={() => { setIeltsIntroPlaying(false); setIeltsIntroDone(prev => ({ ...prev, [ieltsPartIndex]: true })); }}
+                    onError={() => { setIeltsIntroPlaying(false); setIeltsIntroDone(prev => ({ ...prev, [ieltsPartIndex]: true })); }} />
                 )}
                 <div className="text-center">
                   <p className="text-lg font-bold">🎧 IELTS Listening Practice</p>
@@ -1117,11 +1128,14 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
 
                 {introActive ? (
                   <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-[#e0c7bb] bg-white p-6 text-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#3b2f2f] animate-pulse">
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-full bg-[#3b2f2f] ${ieltsIntroPlaying ? "animate-pulse" : ""}`}>
                       <Image src="/cat-logo.svg" alt="" width={36} height={36} className="object-contain" />
                     </div>
-                    <p className="font-semibold">🔊 Playing introduction…</p>
+                    <p className="font-semibold">{ieltsIntroPlaying ? "🔊 Playing introduction…" : "🗣️ Introduction"}</p>
                     <p className="text-xs text-[#7a6258]">The questions will appear when the introduction finishes.</p>
+                    <button onClick={toggleIntro} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2f2424]">
+                      {ieltsIntroPlaying ? "⏸ Pause introduction" : "▶ Play introduction"}
+                    </button>
                     <button onClick={skipIntro} className="mt-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-xs font-semibold hover:bg-[#f1ded5]">
                       Skip intro →
                     </button>

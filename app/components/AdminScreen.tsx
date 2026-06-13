@@ -972,7 +972,22 @@ export default function AdminScreen({ onBack }: Props) {
       } else if (episodeType === "practice-completion-flow") { questions = [flowQuestion];
    } else if (episodeType === "practice-completion-sentence") { questions = [sentenceQuestion];
       } else if (episodeType === "ielts-section") {
-        const processedParts = await Promise.all(sectionParts.map(async (part, pi) => {
+        // Auto-apply any bulk text that was pasted but not "Apply"-ed before publishing.
+        const autoApplyPending = (part: IELTSSectionPart, type: QuestionGroupType | "", text: string, idx: number): IELTSSectionPart => {
+          if (!text.trim() || !type) return part;
+          const parsed = applyBulkToPart(idx, type, text);
+          if (!parsed) return part;
+          const groupData = (typeof parsed === "object" && type === "map")
+            ? { ...parsed, _imageFile: part.mapImageFile || undefined, imageUrl: part.mapImageUrl || undefined }
+            : parsed;
+          const group: QuestionGroup = { id: `group-bulk-${Date.now()}-${idx}`, type: type as QuestionGroupType, label: `Bulk ${type}`, wordLimit: "", data: groupData };
+          return { ...part, questionGroups: [...part.questionGroups, group] };
+        };
+        const partsForPublish = [
+          autoApplyPending(sectionParts[0], partBulkType1, partBulkText1, 0),
+          sectionNumber !== 4 ? autoApplyPending(sectionParts[1], partBulkType2, partBulkText2, 1) : sectionParts[1],
+        ];
+        const processedParts = await Promise.all(partsForPublish.map(async (part, pi) => {
           let audioUrl = part.audioUrl;
           if (part.audioFile) audioUrl = await uploadFile(part.audioFile, "episode");
           let introAudioUrl = part.introAudioUrl || "";
@@ -1005,9 +1020,19 @@ export default function AdminScreen({ onBack }: Props) {
 const typeLabel = PRACTICE_TYPES.find(t => t.id === episodeType)?.label
   || COMPLETION_TYPES.find(t => t.id === episodeType)?.label
   || "";
-const autoTitle = isExam
-  ? `${episodeType.replace("exam-", "").toUpperCase()} Full Test #${Date.now().toString().slice(-4)}`
-  : `${sectionLabel}${typeLabel} #${Date.now().toString().slice(-4)}`;
+let autoTitle: string;
+if (isExam) {
+  autoTitle = `${episodeType.replace("exam-", "").toUpperCase()} Full Test #${Date.now().toString().slice(-4)}`;
+} else if (episodeType === "ielts-section") {
+  // "IELTS Listening Section [N] | Practice [X]" — X = how many practices already exist for this section + 1.
+  let countQuery = supabase.from("episodes").select("id", { count: "exact", head: true })
+    .eq("episode_type", "ielts-section").eq("exam_section", sectionNumber);
+  if (editingId) countQuery = countQuery.neq("id", editingId);
+  const { count } = await countQuery;
+  autoTitle = `IELTS Listening Section ${sectionNumber} | Practice ${(count || 0) + 1}`;
+} else {
+  autoTitle = `${sectionLabel}${typeLabel} #${Date.now().toString().slice(-4)}`;
+}
 
    
 
