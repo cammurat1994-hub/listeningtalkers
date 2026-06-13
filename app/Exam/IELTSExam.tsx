@@ -420,7 +420,55 @@ function MatchingRenderer({ group, sectionNum, answers, onAnswer, locked }: {
   onAnswer: (key: string, val: string) => void;
   locked: boolean;
 }) {
-  const pairs = (group.data as { pairs?: { left: string; right: string }[] })?.pairs || [];
+  const data = group.data as {
+    pairs?: { left: string; right: string }[];
+    items?: string[];
+    options?: { key: string; label: string }[];
+    answers?: Record<string, string>;
+  };
+
+  // Canonical shape (bulk paste + rest of the app): items + options + answers.
+  if (data?.items && data.items.length) {
+    const items = data.items;
+    const options = data.options || [];
+    const answerKey = data.answers || {};
+    return (
+      <div className="flex flex-col gap-3">
+        {options.length > 0 && (
+          <div className="rounded-2xl border border-[#e0c7bb] bg-[#f7eee8] p-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#7a6258] mb-2">Options</p>
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              {options.map(opt => (
+                <p key={opt.key} className="text-sm"><span className="font-bold">{opt.key})</span> {opt.label}</p>
+              ))}
+            </div>
+          </div>
+        )}
+        {items.map((item, i) => {
+          const key = `${sectionNum}-${group.label}-match-${i}`;
+          const userAns = answers[key] || "";
+          const correct = answerKey[String(i)] || "";
+          const isCorrect = locked && userAns === correct;
+          const correctOpt = options.find(o => o.key === correct);
+          return (
+            <div key={i} className={`flex items-center gap-3 rounded-2xl border p-3 ${locked ? (isCorrect ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50") : "border-[#e0c7bb] bg-white"}`}>
+              <span className="text-sm font-semibold flex-1">{i + 1}. {item}</span>
+              <span className="text-[#7a6258]">→</span>
+              <select value={userAns} onChange={e => onAnswer(key, e.target.value)} disabled={locked}
+                className={`shrink-0 rounded-xl border px-3 py-1.5 text-sm font-semibold ${locked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`}>
+                <option value="">—</option>
+                {options.map(opt => <option key={opt.key} value={opt.key}>{opt.key}</option>)}
+              </select>
+              {locked && !isCorrect && correctOpt && <span className="text-xs text-green-600 font-semibold shrink-0">✓ {correctOpt.key}</span>}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Legacy shape (exam manual editor): pairs with a free-text answer.
+  const pairs = data?.pairs || [];
   return (
     <div className="flex flex-col gap-2">
       {pairs.map((pair, i) => {
