@@ -90,22 +90,22 @@ export default function IELTSSectionScreen({ onSelectSection, onBack, userEmail 
   }
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       {showModal && <IELTSInfoModal onClose={handleModalClose} />}
 
       <section className="mx-auto max-w-5xl px-6 py-16">
         <div className="text-center">
-          <button onClick={onBack} className="mb-6 flex items-center gap-2 mx-auto text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+          <button onClick={onBack} className="mb-6 flex items-center gap-2 mx-auto text-sm font-semibold text-[#4a5568] hover:text-[#1e2d4a]">
             ← Back
           </button>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#ead7cc] px-4 py-2 text-sm font-semibold text-[#3b2f2f] mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#dbe4f0] px-4 py-2 text-sm font-semibold text-[#1e2d4a] mb-4">
             🎧 IELTS Listening Practice
           </div>
           <h1 className="text-4xl font-bold md:text-5xl">Choose a Section</h1>
-          <p className="mt-4 text-lg text-[#7a6258]">
+          <p className="mt-4 text-lg text-[#4a5568]">
             Each section trains different question types. Practice them all to maximize your score.
           </p>
-          <button onClick={() => setShowModal(true)} className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold text-[#7a6258] hover:bg-[#f1ded5] transition">
+          <button onClick={() => setShowModal(true)} className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold text-[#4a5568] hover:bg-[#dbe4f0] transition">
             📖 How IELTS Listening Works
           </button>
         </div>
@@ -113,35 +113,35 @@ export default function IELTSSectionScreen({ onSelectSection, onBack, userEmail 
         <div className="mt-12 grid gap-5 md:grid-cols-2">
           {sections.map(s => (
             <button key={s.number} onClick={() => onSelectSection(s.number)}
-              className={`group rounded-[2rem] border-2 bg-[#fffaf7] p-7 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md ${s.color}`}>
+              className={`group rounded-[2rem] border-2 bg-[#ffffff] p-7 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md ${s.color}`}>
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">{s.emoji}</div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dbe4f0] text-3xl">{s.emoji}</div>
                   <div>
                     <p className="font-bold text-xl">{s.title}</p>
-                    <p className="text-sm text-[#7a6258]">{s.subtitle}</p>
+                    <p className="text-sm text-[#4a5568]">{s.subtitle}</p>
                   </div>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-bold shrink-0 ${s.badge}`}>{s.level}</span>
               </div>
-              <p className="text-sm text-[#7a6258] mb-4">{s.desc}</p>
+              <p className="text-sm text-[#4a5568] mb-4">{s.desc}</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {s.types.map(t => (
-                  <span key={t} className="rounded-full border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold text-[#3b2f2f]">{t}</span>
+                  <span key={t} className="rounded-full border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold text-[#1e2d4a]">{t}</span>
                 ))}
               </div>
-              <div className="flex items-center justify-between border-t border-[#e0c7bb] pt-4">
-                <span className="text-sm text-[#7a6258]">
+              <div className="flex items-center justify-between border-t border-[#c8d5e8] pt-4">
+                <span className="text-sm text-[#4a5568]">
                   {counts[s.number] ? `${counts[s.number]} practices available` : "Practices coming soon"}
                 </span>
-                <span className="text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</span>
+                <span className="text-[#8ba3c4] transition group-hover:translate-x-1 group-hover:text-[#1e2d4a]">→</span>
               </div>
             </button>
           ))}
         </div>
 
-        <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 text-center shadow-sm">
-          <p className="text-sm text-[#7a6258]">
+        <div className="mt-8 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-5 text-center shadow-sm">
+          <p className="text-sm text-[#4a5568]">
             🎯 <strong>Pro tip:</strong> Start with Section 1 and work your way up. Each section introduces new question types.
           </p>
         </div>

@@ -55,16 +55,16 @@ export default function IELTSInfoModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-2xl rounded-[2rem] bg-[#fffaf7] shadow-2xl overflow-hidden">
+      <div className="w-full max-w-2xl rounded-[2rem] bg-[#ffffff] shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="bg-[#3b2f2f] px-8 py-6 text-white">
+        <div className="bg-[#1e2d4a] px-8 py-6 text-white">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
               <Image src="/cat-logo.svg" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
             </div>
             <div>
               <h2 className="text-xl font-bold">How IELTS Listening Works</h2>
-              <p className="text-sm text-[#c9a99a]">4 sections · 40 questions · ~30 minutes</p>
+              <p className="text-sm text-[#8ba3c4]">4 sections · 40 questions · ~30 minutes</p>
             </div>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function IELTSInfoModal({ onClose }: Props) {
         <div className="px-8 py-6 max-h-[60vh] overflow-y-auto">
           {page === 0 ? (
             <div>
-              <p className="text-sm text-[#7a6258] mb-6">
+              <p className="text-sm text-[#4a5568] mb-6">
                 The IELTS Listening test has 4 sections, each with 10 questions. Difficulty increases with each section. Audio plays <strong>once only</strong> — no replays.
               </p>
               <div className="flex flex-col gap-3">
@@ -83,7 +83,7 @@ export default function IELTSInfoModal({ onClose }: Props) {
                       <p className="font-bold text-sm">{s.title}</p>
                       <span className={`rounded-full px-3 py-0.5 text-xs font-bold ${s.badge}`}>{s.level}</span>
                     </div>
-                    <p className="text-xs text-[#7a6258] mb-3">{s.desc}</p>
+                    <p className="text-xs text-[#4a5568] mb-3">{s.desc}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {s.types.map(t => (
                         <span key={t} className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.typeColor}`}>{t}</span>
@@ -95,7 +95,7 @@ export default function IELTSInfoModal({ onClose }: Props) {
             </div>
           ) : (
             <div>
-              <p className="text-sm font-bold text-[#3b2f2f] mb-4">💡 Key Tips for IELTS Listening</p>
+              <p className="text-sm font-bold text-[#1e2d4a] mb-4">💡 Key Tips for IELTS Listening</p>
               <div className="flex flex-col gap-3">
                 {[
                   { emoji: "👁️", tip: "Read the questions BEFORE the audio starts", detail: "You'll have 20–45 seconds. Use this time to identify keywords and predict answer types." },
@@ -105,12 +105,12 @@ export default function IELTSInfoModal({ onClose }: Props) {
                   { emoji: "🗺️", tip: "Section 4 has NO pauses", detail: "The hardest section. All 10 questions are shown upfront and audio runs without breaks." },
                   { emoji: "🔤", tip: "Spelling counts", detail: "Misspelled answers are marked wrong. Take care especially with names and numbers." },
                 ].map((item, i) => (
-                  <div key={i} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                  <div key={i} className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
                     <div className="flex items-start gap-3">
                       <span className="text-xl">{item.emoji}</span>
                       <div>
                         <p className="text-sm font-bold">{item.tip}</p>
-                        <p className="mt-0.5 text-xs text-[#7a6258]">{item.detail}</p>
+                        <p className="mt-0.5 text-xs text-[#4a5568]">{item.detail}</p>
                       </div>
                     </div>
                   </div>
@@ -121,27 +121,27 @@ export default function IELTSInfoModal({ onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[#e0c7bb] px-8 py-5 flex items-center justify-between bg-white">
+        <div className="border-t border-[#c8d5e8] px-8 py-5 flex items-center justify-between bg-white">
           <div className="flex gap-2">
-            <button onClick={() => setPage(0)} className={`h-2 w-6 rounded-full transition-all ${page === 0 ? "bg-[#3b2f2f]" : "bg-[#e0c7bb]"}`} />
-            <button onClick={() => setPage(1)} className={`h-2 w-6 rounded-full transition-all ${page === 1 ? "bg-[#3b2f2f]" : "bg-[#e0c7bb]"}`} />
+            <button onClick={() => setPage(0)} className={`h-2 w-6 rounded-full transition-all ${page === 0 ? "bg-[#1e2d4a]" : "bg-[#c8d5e8]"}`} />
+            <button onClick={() => setPage(1)} className={`h-2 w-6 rounded-full transition-all ${page === 1 ? "bg-[#1e2d4a]" : "bg-[#c8d5e8]"}`} />
           </div>
           <div className="flex gap-3">
             {page === 0 ? (
               <>
-                <button onClick={onClose} className="rounded-2xl border border-[#e0c7bb] bg-white px-5 py-2.5 text-sm font-semibold text-[#7a6258] hover:bg-[#f1ded5]">
+                <button onClick={onClose} className="rounded-2xl border border-[#c8d5e8] bg-white px-5 py-2.5 text-sm font-semibold text-[#4a5568] hover:bg-[#dbe4f0]">
                   Skip
                 </button>
-                <button onClick={() => setPage(1)} className="rounded-2xl bg-[#3b2f2f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2f2424]">
+                <button onClick={() => setPage(1)} className="rounded-2xl bg-[#1e2d4a] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#162038]">
                   Tips & Tricks →
                 </button>
               </>
             ) : (
               <>
-                <button onClick={() => setPage(0)} className="rounded-2xl border border-[#e0c7bb] bg-white px-5 py-2.5 text-sm font-semibold text-[#7a6258] hover:bg-[#f1ded5]">
+                <button onClick={() => setPage(0)} className="rounded-2xl border border-[#c8d5e8] bg-white px-5 py-2.5 text-sm font-semibold text-[#4a5568] hover:bg-[#dbe4f0]">
                   ← Back
                 </button>
-                <button onClick={onClose} className="rounded-2xl bg-[#3b2f2f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2f2424]">
+                <button onClick={onClose} className="rounded-2xl bg-[#1e2d4a] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#162038]">
                   Got it, let us practice! →
                 </button>
               </>

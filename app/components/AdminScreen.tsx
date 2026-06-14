@@ -412,19 +412,19 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
   }
 
   return (
-    <div className="rounded-2xl border-2 border-[#e0c7bb] bg-white p-5">
+    <div className="rounded-2xl border-2 border-[#c8d5e8] bg-white p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-lg">{typeLabel?.emoji}</span>
           <span className="font-bold text-sm">{typeLabel?.label}</span>
-          <span className="text-xs text-[#7a6258]">— {group.label}</span>
-          {group.wordLimit && <span className="rounded-full bg-[#ead7cc] px-2 py-0.5 text-xs font-semibold text-[#3b2f2f]">{group.wordLimit}</span>}
+          <span className="text-xs text-[#4a5568]">— {group.label}</span>
+          {group.wordLimit && <span className="rounded-full bg-[#dbe4f0] px-2 py-0.5 text-xs font-semibold text-[#1e2d4a]">{group.wordLimit}</span>}
           {group.isSection4 && <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">Section 4</span>}
         </div>
         <div className="flex gap-2">
           {group.type !== "map" && (
             <button onClick={() => { setBulkMode(!bulkMode); setBulkText(""); }}
-              className={`rounded-xl px-3 py-1 text-xs font-semibold ${bulkMode ? "bg-[#ead7cc]" : "border border-[#e0c7bb]"}`}>
+              className={`rounded-xl px-3 py-1 text-xs font-semibold ${bulkMode ? "bg-[#dbe4f0]" : "border border-[#c8d5e8]"}`}>
               {bulkMode ? "Manual" : "Bulk"}
             </button>
           )}
@@ -433,123 +433,123 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
       </div>
 
       {bulkMode && (
-        <div className="mb-4 rounded-xl border border-[#e0c7bb] bg-[#f7eee8] p-4">
-          <pre className="text-xs leading-6 text-[#7a6258] mb-2 whitespace-pre-wrap">{getBulkFormat()}</pre>
-          <textarea value={bulkText} onChange={e => setBulkText(e.target.value)} placeholder="Yapıştır..." className="min-h-[200px] w-full rounded-xl border border-[#e0c7bb] bg-white p-3 font-mono text-xs" />
-          <button onClick={applyBulk} className="mt-2 w-full rounded-xl bg-[#3b2f2f] py-2 text-sm font-semibold text-white">Apply</button>
+        <div className="mb-4 rounded-xl border border-[#c8d5e8] bg-[#f0f2f5] p-4">
+          <pre className="text-xs leading-6 text-[#4a5568] mb-2 whitespace-pre-wrap">{getBulkFormat()}</pre>
+          <textarea value={bulkText} onChange={e => setBulkText(e.target.value)} placeholder="Yapıştır..." className="min-h-[200px] w-full rounded-xl border border-[#c8d5e8] bg-white p-3 font-mono text-xs" />
+          <button onClick={applyBulk} className="mt-2 w-full rounded-xl bg-[#1e2d4a] py-2 text-sm font-semibold text-white">Apply</button>
         </div>
       )}
 
       {!bulkMode && group.type === "mcq" && (
         <div className="flex flex-col gap-4">
           {(Array.isArray(data) ? data : []).map((item: MCQQuestion, idx: number) => (
-            <div key={idx} className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-4">
+            <div key={idx} className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-4">
               <div className="flex justify-between mb-2">
-                <span className="text-xs font-bold text-[#7a6258]">Q{idx + 1}</span>
+                <span className="text-xs font-bold text-[#4a5568]">Q{idx + 1}</span>
                 <button onClick={() => { const u = [...data]; u.splice(idx, 1); onChange(u); }} className="text-xs text-red-600">Remove</button>
               </div>
-              <textarea value={item.question} onChange={e => { const u = [...data]; u[idx].question = e.target.value; onChange(u); }} placeholder="Question" className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-sm min-h-[60px]" />
+              <textarea value={item.question} onChange={e => { const u = [...data]; u[idx].question = e.target.value; onChange(u); }} placeholder="Question" className="w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-sm min-h-[60px]" />
               {(["A","B","C","D","E"] as const).map(letter => (
                 <div key={letter} className="mt-1 flex items-center gap-2">
-                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${item.correctAnswer === letter ? "bg-green-200 text-green-800" : "bg-[#ead7cc]"}`}>{letter}</span>
-                  <input type="text" value={item.options[letter]} onChange={e => { const u = [...data]; u[idx].options[letter] = e.target.value; onChange(u); }} placeholder={`Option ${letter}`} className="flex-1 rounded-xl border border-[#e0c7bb] bg-white p-1.5 text-xs" />
+                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${item.correctAnswer === letter ? "bg-green-200 text-green-800" : "bg-[#dbe4f0]"}`}>{letter}</span>
+                  <input type="text" value={item.options[letter]} onChange={e => { const u = [...data]; u[idx].options[letter] = e.target.value; onChange(u); }} placeholder={`Option ${letter}`} className="flex-1 rounded-xl border border-[#c8d5e8] bg-white p-1.5 text-xs" />
                 </div>
               ))}
               <div className="mt-2 flex items-center gap-2">
                 <label className="text-xs font-semibold">Correct:</label>
-                <select value={item.correctAnswer} onChange={e => { const u = [...data]; u[idx].correctAnswer = e.target.value; onChange(u); }} className="rounded-xl border border-[#e0c7bb] bg-white px-2 py-1 text-xs">
+                <select value={item.correctAnswer} onChange={e => { const u = [...data]; u[idx].correctAnswer = e.target.value; onChange(u); }} className="rounded-xl border border-[#c8d5e8] bg-white px-2 py-1 text-xs">
                   {["A","B","C","D","E"].map(l => <option key={l}>{l}</option>)}
                 </select>
               </div>
-              <textarea value={item.explanation || ""} onChange={e => { const u = [...data]; u[idx].explanation = e.target.value; onChange(u); }} placeholder="Explanation (optional)" className="mt-2 w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs min-h-[50px]" />
+              <textarea value={item.explanation || ""} onChange={e => { const u = [...data]; u[idx].explanation = e.target.value; onChange(u); }} placeholder="Explanation (optional)" className="mt-2 w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs min-h-[50px]" />
             </div>
           ))}
-          <button onClick={() => onChange([...(Array.isArray(data) ? data : []), createEmptyMCQ()])} className="rounded-xl border border-[#e0c7bb] bg-white py-2 text-sm font-semibold">+ Add Question</button>
+          <button onClick={() => onChange([...(Array.isArray(data) ? data : []), createEmptyMCQ()])} className="rounded-xl border border-[#c8d5e8] bg-white py-2 text-sm font-semibold">+ Add Question</button>
         </div>
       )}
 
       {!bulkMode && group.type === "note-completion" && (
         <div>
-          <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Title" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm mb-3" />
+          <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Title" className="w-full rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm mb-3" />
           {(data?.items || []).map((item: NoteItem, i: number) => (
             <div key={i} className="mt-2 grid grid-cols-2 gap-2">
-              <input type="text" value={item.label} onChange={e => { const u = [...data.items]; u[i].label = e.target.value; onChange({ ...data, items: u }); }} placeholder="Label (e.g. Speaker: ___)" className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-xs" />
-              <input type="text" value={item.answer} onChange={e => { const u = [...data.items]; u[i].answer = e.target.value; onChange({ ...data, items: u }); }} placeholder="Answer | alt" className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-xs" />
+              <input type="text" value={item.label} onChange={e => { const u = [...data.items]; u[i].label = e.target.value; onChange({ ...data, items: u }); }} placeholder="Label (e.g. Speaker: ___)" className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-xs" />
+              <input type="text" value={item.answer} onChange={e => { const u = [...data.items]; u[i].answer = e.target.value; onChange({ ...data, items: u }); }} placeholder="Answer | alt" className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-xs" />
             </div>
           ))}
-          <button onClick={() => onChange({ ...data, items: [...(data?.items || []), { label: "", answer: "" }] })} className="mt-2 rounded-xl border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold">+ Add Item</button>
+          <button onClick={() => onChange({ ...data, items: [...(data?.items || []), { label: "", answer: "" }] })} className="mt-2 rounded-xl border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold">+ Add Item</button>
         </div>
       )}
 
       {!bulkMode && group.type === "form-completion" && (
         <div>
-          <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Form Title" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm mb-3" />
+          <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Form Title" className="w-full rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm mb-3" />
           {(data?.fields || []).map((field: FormField, i: number) => (
             <div key={i} className="mt-2 grid grid-cols-2 gap-2">
-              <input type="text" value={field.label} onChange={e => { const u = [...data.fields]; u[i].label = e.target.value; onChange({ ...data, fields: u }); }} placeholder="Field label" className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-xs" />
-              <input type="text" value={field.answer} onChange={e => { const u = [...data.fields]; u[i].answer = e.target.value; onChange({ ...data, fields: u }); }} placeholder="Answer | alt" className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-xs" />
+              <input type="text" value={field.label} onChange={e => { const u = [...data.fields]; u[i].label = e.target.value; onChange({ ...data, fields: u }); }} placeholder="Field label" className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-xs" />
+              <input type="text" value={field.answer} onChange={e => { const u = [...data.fields]; u[i].answer = e.target.value; onChange({ ...data, fields: u }); }} placeholder="Answer | alt" className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-xs" />
             </div>
           ))}
-          <button onClick={() => onChange({ ...data, fields: [...(data?.fields || []), { label: "", answer: "" }] })} className="mt-2 rounded-xl border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold">+ Add Field</button>
+          <button onClick={() => onChange({ ...data, fields: [...(data?.fields || []), { label: "", answer: "" }] })} className="mt-2 rounded-xl border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold">+ Add Field</button>
         </div>
       )}
 
       {!bulkMode && group.type === "sentence-completion" && (
         <div>
           {(data?.items || []).map((item: SentenceItem, i: number) => (
-            <div key={i} className="mt-2 rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
-              <input type="text" value={item.text} onChange={e => { const u = [...data.items]; u[i].text = e.target.value; onChange({ ...data, items: u }); }} placeholder="Sentence with ___ blank" className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
-              <input type="text" value={item.answer} onChange={e => { const u = [...data.items]; u[i].answer = e.target.value; onChange({ ...data, items: u }); }} placeholder="Answer | alt" className="mt-1 w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
+            <div key={i} className="mt-2 rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-3">
+              <input type="text" value={item.text} onChange={e => { const u = [...data.items]; u[i].text = e.target.value; onChange({ ...data, items: u }); }} placeholder="Sentence with ___ blank" className="w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs" />
+              <input type="text" value={item.answer} onChange={e => { const u = [...data.items]; u[i].answer = e.target.value; onChange({ ...data, items: u }); }} placeholder="Answer | alt" className="mt-1 w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs" />
             </div>
           ))}
-          <button onClick={() => onChange({ ...data, items: [...(data?.items || []), { text: "", answer: "" }] })} className="mt-2 rounded-xl border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold">+ Add Sentence</button>
+          <button onClick={() => onChange({ ...data, items: [...(data?.items || []), { text: "", answer: "" }] })} className="mt-2 rounded-xl border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold">+ Add Sentence</button>
         </div>
       )}
 
       {!bulkMode && group.type === "flow-completion" && (
         <div>
-          <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Flow Chart Title" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm mb-3" />
+          <input type="text" value={data?.title || ""} onChange={e => onChange({ ...data, title: e.target.value })} placeholder="Flow Chart Title" className="w-full rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm mb-3" />
           {(data?.steps || []).map((step: FlowStep, i: number) => (
-            <div key={i} className="mt-2 rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white mb-1">{i + 1}</div>
-              <input type="text" value={step.text} onChange={e => { const u = [...data.steps]; u[i].text = e.target.value; u[i].hasBlank = e.target.value.includes("___"); onChange({ ...data, steps: u }); }} placeholder="Step text (use ___ for blank)" className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
-              {step.hasBlank && <input type="text" value={step.answer} onChange={e => { const u = [...data.steps]; u[i].answer = e.target.value; onChange({ ...data, steps: u }); }} placeholder="Answer | alt" className="mt-1 w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />}
+            <div key={i} className="mt-2 rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-3">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white mb-1">{i + 1}</div>
+              <input type="text" value={step.text} onChange={e => { const u = [...data.steps]; u[i].text = e.target.value; u[i].hasBlank = e.target.value.includes("___"); onChange({ ...data, steps: u }); }} placeholder="Step text (use ___ for blank)" className="w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs" />
+              {step.hasBlank && <input type="text" value={step.answer} onChange={e => { const u = [...data.steps]; u[i].answer = e.target.value; onChange({ ...data, steps: u }); }} placeholder="Answer | alt" className="mt-1 w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs" />}
             </div>
           ))}
-          <button onClick={() => onChange({ ...data, steps: [...(data?.steps || []), { text: "", answer: "", hasBlank: false }] })} className="mt-2 rounded-xl border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold">+ Add Step</button>
+          <button onClick={() => onChange({ ...data, steps: [...(data?.steps || []), { text: "", answer: "", hasBlank: false }] })} className="mt-2 rounded-xl border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold">+ Add Step</button>
         </div>
       )}
 
       {!bulkMode && group.type === "short-answer" && (
         <div className="flex flex-col gap-3">
           {(Array.isArray(data) ? data : []).map((item: ShortAnswerQuestion, i: number) => (
-            <div key={i} className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
+            <div key={i} className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-3">
               <div className="flex justify-between mb-1">
-                <span className="text-xs font-bold text-[#7a6258]">Q{i + 1}</span>
+                <span className="text-xs font-bold text-[#4a5568]">Q{i + 1}</span>
                 <button onClick={() => { const u = [...data]; u.splice(i, 1); onChange(u); }} className="text-xs text-red-600">Remove</button>
               </div>
-              <input type="text" value={item.question} onChange={e => { const u = [...data]; u[i].question = e.target.value; onChange(u); }} placeholder="Question" className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
-              <input type="text" value={item.answer} onChange={e => { const u = [...data]; u[i].answer = e.target.value; onChange(u); }} placeholder="Answer | alt" className="mt-1 w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
-              <input type="text" value={item.hint || ""} onChange={e => { const u = [...data]; u[i].hint = e.target.value; onChange(u); }} placeholder="Hint (optional)" className="mt-1 w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
+              <input type="text" value={item.question} onChange={e => { const u = [...data]; u[i].question = e.target.value; onChange(u); }} placeholder="Question" className="w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs" />
+              <input type="text" value={item.answer} onChange={e => { const u = [...data]; u[i].answer = e.target.value; onChange(u); }} placeholder="Answer | alt" className="mt-1 w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs" />
+              <input type="text" value={item.hint || ""} onChange={e => { const u = [...data]; u[i].hint = e.target.value; onChange(u); }} placeholder="Hint (optional)" className="mt-1 w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs" />
             </div>
           ))}
-          <button onClick={() => onChange([...(Array.isArray(data) ? data : []), createEmptyShort()])} className="rounded-xl border border-[#e0c7bb] bg-white py-2 text-sm font-semibold">+ Add Question</button>
+          <button onClick={() => onChange([...(Array.isArray(data) ? data : []), createEmptyShort()])} className="rounded-xl border border-[#c8d5e8] bg-white py-2 text-sm font-semibold">+ Add Question</button>
         </div>
       )}
 
       {!bulkMode && group.type === "matching" && (
         <div>
           <div className="grid grid-cols-2 gap-2 mb-2">
-            <span className="text-xs font-bold text-[#7a6258]">LEFT</span>
-            <span className="text-xs font-bold text-[#7a6258]">RIGHT</span>
+            <span className="text-xs font-bold text-[#4a5568]">LEFT</span>
+            <span className="text-xs font-bold text-[#4a5568]">RIGHT</span>
           </div>
           {(data?.pairs || []).map((pair: { left: string; right: string }, i: number) => (
             <div key={i} className="mt-1 grid grid-cols-2 gap-2">
-              <input type="text" value={pair.left} onChange={e => { const u = [...data.pairs]; u[i].left = e.target.value; onChange({ pairs: u }); }} placeholder={`Item ${i + 1}`} className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-xs" />
-              <input type="text" value={pair.right} onChange={e => { const u = [...data.pairs]; u[i].right = e.target.value; onChange({ pairs: u }); }} placeholder={`Match ${i + 1}`} className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-xs" />
+              <input type="text" value={pair.left} onChange={e => { const u = [...data.pairs]; u[i].left = e.target.value; onChange({ pairs: u }); }} placeholder={`Item ${i + 1}`} className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-xs" />
+              <input type="text" value={pair.right} onChange={e => { const u = [...data.pairs]; u[i].right = e.target.value; onChange({ pairs: u }); }} placeholder={`Match ${i + 1}`} className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-xs" />
             </div>
           ))}
-          <button onClick={() => onChange({ pairs: [...(data?.pairs || []), { left: "", right: "" }] })} className="mt-2 rounded-xl border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold">+ Add Pair</button>
+          <button onClick={() => onChange({ pairs: [...(data?.pairs || []), { left: "", right: "" }] })} className="mt-2 rounded-xl border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold">+ Add Pair</button>
         </div>
       )}
 
@@ -564,21 +564,21 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
               reader.onload = ev => setMapPreview(ev.target?.result as string);
               reader.readAsDataURL(f);
               onChange({ ...data, _imageFile: f });
-            }} className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-xs" />
+            }} className="w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-xs" />
           </div>
           <div className="mb-3">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-semibold">Options (A–H)</label>
               <div className="flex gap-1">
-                <button onClick={() => { const next = OPTION_KEYS[(data?.options || []).length]; if (next) onChange({ ...data, options: [...(data?.options || []), { key: next, label: "" }] }); }} disabled={(data?.options || []).length >= 8} className="rounded-lg bg-[#3b2f2f] px-2 py-0.5 text-xs text-white disabled:opacity-40">+</button>
-                <button onClick={() => { if ((data?.options || []).length > 2) onChange({ ...data, options: (data?.options || []).slice(0, -1) }); }} className="rounded-lg border border-[#e0c7bb] px-2 py-0.5 text-xs">-</button>
+                <button onClick={() => { const next = OPTION_KEYS[(data?.options || []).length]; if (next) onChange({ ...data, options: [...(data?.options || []), { key: next, label: "" }] }); }} disabled={(data?.options || []).length >= 8} className="rounded-lg bg-[#1e2d4a] px-2 py-0.5 text-xs text-white disabled:opacity-40">+</button>
+                <button onClick={() => { if ((data?.options || []).length > 2) onChange({ ...data, options: (data?.options || []).slice(0, -1) }); }} className="rounded-lg border border-[#c8d5e8] px-2 py-0.5 text-xs">-</button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-1">
               {(data?.options || []).map((opt: MapOption, i: number) => (
                 <div key={opt.key} className="flex items-center gap-1">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{opt.key}</span>
-                  <input type="text" value={opt.label} onChange={e => { const u = [...data.options]; u[i].label = e.target.value; onChange({ ...data, options: u }); }} placeholder="Location name" className="flex-1 rounded-lg border border-[#e0c7bb] bg-[#fffaf7] p-1.5 text-xs" />
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white">{opt.key}</span>
+                  <input type="text" value={opt.label} onChange={e => { const u = [...data.options]; u[i].label = e.target.value; onChange({ ...data, options: u }); }} placeholder="Location name" className="flex-1 rounded-lg border border-[#c8d5e8] bg-[#ffffff] p-1.5 text-xs" />
                 </div>
               ))}
             </div>
@@ -587,7 +587,7 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-semibold">Click map to add points</label>
-                <button onClick={() => setAddingPoint(!addingPoint)} className={`rounded-xl px-3 py-1 text-xs font-semibold ${addingPoint ? "bg-blue-600 text-white" : "border border-[#e0c7bb]"}`}>
+                <button onClick={() => setAddingPoint(!addingPoint)} className={`rounded-xl px-3 py-1 text-xs font-semibold ${addingPoint ? "bg-blue-600 text-white" : "border border-[#c8d5e8]"}`}>
                   {addingPoint ? "🎯 Click map..." : "➕ Add Point"}
                 </button>
               </div>
@@ -600,7 +600,7 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
                 const newId = (data?.points || []).length + 1;
                 onChange({ ...data, points: [...(data?.points || []), { id: newId, x, y, answer: "", explanation: "" }] });
                 setAddingPoint(false);
-              }} className={`relative w-full overflow-hidden rounded-2xl border-2 ${addingPoint ? "border-blue-400 cursor-crosshair" : "border-[#e0c7bb]"}`} style={{ paddingBottom: "55%" }}>
+              }} className={`relative w-full overflow-hidden rounded-2xl border-2 ${addingPoint ? "border-blue-400 cursor-crosshair" : "border-[#c8d5e8]"}`} style={{ paddingBottom: "55%" }}>
                 <div
                   role="img"
                   aria-label="Map"
@@ -613,24 +613,24 @@ function QuestionGroupEditor({ group, onChange, onRemove }: {
                   }}
                 />
                 {(data?.points || []).map((point: MapPoint) => (
-                  <div key={point.id} className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#3b2f2f] text-xs font-bold text-white shadow-lg cursor-pointer hover:bg-red-600" style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                  <div key={point.id} className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#1e2d4a] text-xs font-bold text-white shadow-lg cursor-pointer hover:bg-red-600" style={{ left: `${point.x}%`, top: `${point.y}%` }}
                     onClick={e => { e.stopPropagation(); if (!addingPoint) onChange({ ...data, points: (data?.points || []).filter((p: MapPoint) => p.id !== point.id).map((p: MapPoint, i: number) => ({ ...p, id: i + 1 })) }); }}>{point.id}</div>
                 ))}
               </div>
               {(data?.points || []).length > 0 && (
                 <div className="mt-3 flex flex-col gap-2">
                   {(data?.points || []).map((point: MapPoint, i: number) => (
-                    <div key={point.id} className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
+                    <div key={point.id} className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{point.id}</div>
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white">{point.id}</div>
                         <span className="text-xs font-semibold">Point {point.id}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                        <select value={point.answer} onChange={e => { const u = [...data.points]; u[i].answer = e.target.value; onChange({ ...data, points: u }); }} className="rounded-xl border border-[#e0c7bb] bg-white p-1.5 text-xs">
+                        <select value={point.answer} onChange={e => { const u = [...data.points]; u[i].answer = e.target.value; onChange({ ...data, points: u }); }} className="rounded-xl border border-[#c8d5e8] bg-white p-1.5 text-xs">
                           <option value="">Select...</option>
                           {(data?.options || []).map((opt: MapOption) => <option key={opt.key} value={opt.key}>{opt.key}) {opt.label}</option>)}
                         </select>
-                        <input type="text" value={point.explanation} onChange={e => { const u = [...data.points]; u[i].explanation = e.target.value; onChange({ ...data, points: u }); }} placeholder="Explanation" className="rounded-xl border border-[#e0c7bb] bg-white p-1.5 text-xs" />
+                        <input type="text" value={point.explanation} onChange={e => { const u = [...data.points]; u[i].explanation = e.target.value; onChange({ ...data, points: u }); }} placeholder="Explanation" className="rounded-xl border border-[#c8d5e8] bg-white p-1.5 text-xs" />
                       </div>
                     </div>
                   ))}
@@ -665,23 +665,23 @@ function AddGroupPanel({ onAdd }: { onAdd: (group: QuestionGroup) => void }) {
 
   return (
     <div>
-      <p className="mb-2 text-sm font-semibold text-[#7a6258]">Add Question Group</p>
+      <p className="mb-2 text-sm font-semibold text-[#4a5568]">Add Question Group</p>
       <div className="grid gap-2 md:grid-cols-2">
         <select value={type} onChange={e => setType(e.target.value as QuestionGroupType)}
-          className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+          className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm">
           <option value="">Select type...</option>
           {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
         </select>
         <input type="text" value={label} onChange={e => setLabel(e.target.value)}
           placeholder="e.g. Questions 1–5"
-          className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+          className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm" />
       </div>
       <div className="mt-2 flex gap-2">
         <input type="text" value={wordLimit} onChange={e => setWordLimit(e.target.value)}
           placeholder="Word limit — e.g. NO MORE THAN TWO WORDS AND/OR A NUMBER"
-          className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+          className="flex-1 rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm" />
         <button onClick={add} disabled={!type}
-          className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
+          className="rounded-2xl bg-[#1e2d4a] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
           + Add
         </button>
       </div>
@@ -713,39 +713,39 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
   }
 
   return (
-    <div className="rounded-3xl border-2 border-[#3b2f2f] bg-[#fffaf7] p-6">
+    <div className="rounded-3xl border-2 border-[#1e2d4a] bg-[#ffffff] p-6">
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-xl font-bold">Section {section.number}</h3>
         <button onClick={onRemove} className="rounded-2xl border border-red-200 bg-white px-3 py-1 text-sm font-semibold text-red-600">Remove Section</button>
       </div>
-      <div className="mb-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-        <label className="mb-2 block text-sm font-semibold">🎙️ Intro Audio <span className="font-normal text-xs text-[#7a6258]">(yönlendirme cümleleri + sessizlikler)</span></label>
+      <div className="mb-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+        <label className="mb-2 block text-sm font-semibold">🎙️ Intro Audio <span className="font-normal text-xs text-[#4a5568]">(yönlendirme cümleleri + sessizlikler)</span></label>
         {section.introUrl && <p className="mb-1 text-xs text-green-600">✓ Intro audio uploaded</p>}
-        <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, introFile: f, introUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
-        <p className="mt-1 text-xs text-[#7a6258]">
+        <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, introFile: f, introUrl: "" }); }} className="w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
+        <p className="mt-1 text-xs text-[#4a5568]">
           {section.number === 1 && "\"Now turn to Section 1...\" → 25sn → Q1-5 → \"Before you hear the rest...\" → 20sn → Q6-10 → \"That is the end of Section 1...\" → 30sn"}
           {section.number === 2 && "\"Now turn to Section 2...\" → 25sn → Q11-15 → ara → Q16-20 → \"That is the end of Section 2...\" → 30sn"}
           {section.number === 3 && "\"Now turn to Section 3...\" → 25sn → Q21-25 → ara → Q26-30 → \"That is the end of Section 3...\" → 30sn"}
           {section.number === 4 && "\"Now turn to Section 4...\" → 45sn → ders başlar (ARA YOK) → \"That is the end of the listening test. You now have 10 minutes...\""}
         </p>
       </div>
-      <div className="mb-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-        <label className="mb-2 block text-sm font-semibold">🗣️ Section Description Audio <span className="font-normal text-xs text-[#7a6258]">(&quot;You will hear a conversation between...&quot;)</span></label>
+      <div className="mb-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+        <label className="mb-2 block text-sm font-semibold">🗣️ Section Description Audio <span className="font-normal text-xs text-[#4a5568]">(&quot;You will hear a conversation between...&quot;)</span></label>
         {section.descUrl && <p className="mb-1 text-xs text-green-600">✓ Description audio uploaded</p>}
-        <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, descFile: f, descUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
-        <p className="mt-1 text-xs text-[#7a6258]">Narrator çalar: intro → Section {section.number} → <strong>bu açıklama</strong> → &quot;look at the questions&quot; → ...</p>
+        <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, descFile: f, descUrl: "" }); }} className="w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
+        <p className="mt-1 text-xs text-[#4a5568]">Narrator çalar: intro → Section {section.number} → <strong>bu açıklama</strong> → &quot;look at the questions&quot; → ...</p>
       </div>
       <div className="mb-4">
-        <label className="mb-2 block text-sm font-semibold">🔊 Main Audio — Part 1 <span className="font-normal text-xs text-[#7a6258]">(sadece konuşma içeriği)</span></label>
+        <label className="mb-2 block text-sm font-semibold">🔊 Main Audio — Part 1 <span className="font-normal text-xs text-[#4a5568]">(sadece konuşma içeriği)</span></label>
         {section.audioUrl && <p className="mb-1 text-xs text-green-600">✓ Part 1 audio uploaded</p>}
-        <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, audioFile: f, audioUrl: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+        <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, audioFile: f, audioUrl: "" }); }} className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm" />
       </div>
       {section.number !== 4 && (
         <div className="mb-5">
-          <label className="mb-2 block text-sm font-semibold">🔊 Main Audio — Part 2 <span className="font-normal text-xs text-[#7a6258]">(opsiyonel — Section 1-3 ikinci yarı)</span></label>
+          <label className="mb-2 block text-sm font-semibold">🔊 Main Audio — Part 2 <span className="font-normal text-xs text-[#4a5568]">(opsiyonel — Section 1-3 ikinci yarı)</span></label>
           {section.audio2Url && <p className="mb-1 text-xs text-green-600">✓ Part 2 audio uploaded</p>}
-          <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, audio2File: f, audio2Url: "" }); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
-          <p className="mt-1 text-xs text-[#7a6258]">Yüklenirse: Part 1 sonrası &quot;sorulara bakma v2&quot; → 30sn → &quot;now listen&quot; → Part 2 çalar.</p>
+          <input type="file" accept="audio/*" onChange={e => { const f = e.target.files?.[0]; if (f) onChange({ ...section, audio2File: f, audio2Url: "" }); }} className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm" />
+          <p className="mt-1 text-xs text-[#4a5568]">Yüklenirse: Part 1 sonrası &quot;sorulara bakma v2&quot; → 30sn → &quot;now listen&quot; → Part 2 çalar.</p>
         </div>
       )}
       <div className="flex flex-col gap-4">
@@ -756,23 +756,23 @@ function ExamSectionEditor({ section, onChange, onRemove }: {
           />
         ))}
       </div>
-      <div className="mt-5 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
-        <p className="mb-3 text-sm font-semibold text-[#7a6258]">Add Question Group to Section {section.number}</p>
+      <div className="mt-5 rounded-2xl border border-dashed border-[#8ba3c4] bg-[#f0f2f5] p-4">
+        <p className="mb-3 text-sm font-semibold text-[#4a5568]">Add Question Group to Section {section.number}</p>
         <div className="grid gap-2 md:grid-cols-2">
-          <select value={addingGroupType} onChange={e => setAddingGroupType(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+          <select value={addingGroupType} onChange={e => setAddingGroupType(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm">
             <option value="">Select type...</option>
             {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
           </select>
-          <input type="text" value={groupLabel} onChange={e => setGroupLabel(e.target.value)} placeholder="e.g. Questions 1–5" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+          <input type="text" value={groupLabel} onChange={e => setGroupLabel(e.target.value)} placeholder="e.g. Questions 1–5" className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm" />
         </div>
         <div className="grid gap-2 md:grid-cols-2 mt-2">
-          <input type="text" value={groupWordLimit} onChange={e => setGroupWordLimit(e.target.value)} placeholder="Word limit — e.g. NO MORE THAN TWO WORDS AND/OR A NUMBER" className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+          <input type="text" value={groupWordLimit} onChange={e => setGroupWordLimit(e.target.value)} placeholder="Word limit — e.g. NO MORE THAN TWO WORDS AND/OR A NUMBER" className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm" />
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
               <input type="checkbox" checked={groupIsSection4} onChange={e => setGroupIsSection4(e.target.checked)} className="h-4 w-4" />
               Section 4 (no reading break)
             </label>
-            <button onClick={addGroup} disabled={!addingGroupType} className="flex-1 rounded-2xl bg-[#3b2f2f] py-2 text-sm font-semibold text-white disabled:opacity-40">+ Add Group</button>
+            <button onClick={addGroup} disabled={!addingGroupType} className="flex-1 rounded-2xl bg-[#1e2d4a] py-2 text-sm font-semibold text-white disabled:opacity-40">+ Add Group</button>
           </div>
         </div>
       </div>
@@ -1152,14 +1152,14 @@ if (isExam) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <section className="mx-auto max-w-5xl px-6 py-12">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl font-bold md:text-5xl">Admin Panel</h1>
-            <p className="mt-2 text-[#7a6258]">Create and manage practices.</p>
+            <p className="mt-2 text-[#4a5568]">Create and manage practices.</p>
           </div>
-          <button onClick={onBack} className="rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
+          <button onClick={onBack} className="rounded-2xl border border-[#c8d5e8] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
         </div>
 
         <div className="mt-8 flex gap-3 flex-wrap">
@@ -1169,7 +1169,7 @@ if (isExam) {
             { id: "users", label: "👥 Users" },
           ].map(tab => (
             <button key={tab.id} onClick={() => { setActiveTab(tab.id as AdminTab); if (tab.id === "users") fetchUsers(); }}
-              className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${activeTab === tab.id ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+              className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${activeTab === tab.id ? "bg-[#1e2d4a] text-white" : "border border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]"}`}>
               {tab.label}
             </button>
           ))}
@@ -1178,12 +1178,12 @@ if (isExam) {
         {/* ─── NEW PRACTICE TAB ─── */}
         {activeTab === "new" && (
           <div className="mt-8">
-            <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+            <div className="rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm md:p-8">
               <h2 className="text-2xl font-bold">{editingId ? "Edit Practice" : "New Practice"}</h2>
 
               <div className="mt-6 grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a6258]">Create</p>
+                <div className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#4a5568]">Create</p>
                   <div className="flex flex-col gap-2">
                     {[
                       { id: "practice", label: "Practice", description: "Create practice content" },
@@ -1194,28 +1194,28 @@ if (isExam) {
                         if (mode.id === "exam") { setPracticeExamType(null); setEpisodeType("exam-ielts"); setExamSection(null); }
                         else { setEpisodeType("practice-mcq"); }
                       }}
-                        className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${creationMode === mode.id ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+                        className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${creationMode === mode.id ? "border-[#1e2d4a] bg-[#dbe4f0]" : "border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]"}`}>
                         <div className="font-bold">{mode.label}</div>
-                        <div className="mt-1 text-xs text-[#7a6258]">{mode.description}</div>
+                        <div className="mt-1 text-xs text-[#4a5568]">{mode.description}</div>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#e0c7eb] bg-white p-4">
-                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a6258]">Exam Type</p>
+                <div className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#4a5568]">Exam Type</p>
                   <div className="flex flex-wrap gap-2">
                     {PRACTICE_EXAM_TYPES.map(type => (
                       <button key={type.id} onClick={() => setPracticeExamType(type.id as "ielts" | "toefl" | "toeic" | "celpip")}
-                        className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${practiceExamType === type.id ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7eb] bg-white hover:bg-[#f1ded5]"}`}>
+                        className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${practiceExamType === type.id ? "border-[#1e2d4a] bg-[#dbe4f0]" : "border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]"}`}>
                         {type.emoji} {type.label}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#e0c7eb] bg-white p-4">
-                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a6258]">Section</p>
+                <div className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#4a5568]">Section</p>
                   <select value={practiceExamType === "ielts" ? (examSection || "") : ""}
                     onChange={e => {
                       const section = e.target.value ? Number(e.target.value) : null;
@@ -1225,15 +1225,15 @@ if (isExam) {
                       }
                     }}
                     disabled={practiceExamType !== "ielts"}
-                    className="w-full rounded-2xl border border-[#e0c7eb] bg-white p-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
+                    className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                     <option value="">Select IELTS section</option>
                     {IELTS_SECTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
-                  {practiceExamType !== "ielts" && <p className="mt-2 text-xs text-[#7a6258]">Section selection is only for IELTS.</p>}
+                  {practiceExamType !== "ielts" && <p className="mt-2 text-xs text-[#4a5568]">Section selection is only for IELTS.</p>}
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 text-sm text-[#7a6258]">
+              <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-4 text-sm text-[#4a5568]">
                 {creationMode === "practice" && !practiceExamType && <p>Select a practice exam type before picking practice content.</p>}
                 {creationMode === "practice" && practiceExamType && (
                   <p>Practice exam type selected: <strong>{practiceExamType.toUpperCase()}</strong>{practiceExamType === "ielts" && examSection ? ` · Section ${examSection}` : ""}</p>
@@ -1250,7 +1250,7 @@ if (isExam) {
                   { label: "Full Exam", types: EXAM_TYPES_LIST },
                 ]).map(col => (
                   <div key={col.label}>
-                    <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#7a6258]">{col.label}</p>
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#4a5568]">{col.label}</p>
                     <div className="flex flex-col gap-2">
                       {col.types.map(t => (
                         <button key={t.id} onClick={() => {
@@ -1263,7 +1263,7 @@ if (isExam) {
                           }
                           if (creationMode === "exam") setExamSection(null);
                         }}
-                          className={`rounded-2xl border px-3 py-2 text-left text-xs font-semibold transition ${episodeType === t.id ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"} ${creationMode === "practice" && !practiceExamType ? "cursor-not-allowed opacity-60" : ""}`}>
+                          className={`rounded-2xl border px-3 py-2 text-left text-xs font-semibold transition ${episodeType === t.id ? "border-[#1e2d4a] bg-[#dbe4f0]" : "border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]"} ${creationMode === "practice" && !practiceExamType ? "cursor-not-allowed opacity-60" : ""}`}>
                           {t.emoji} {t.label}
                         </button>
                       ))}
@@ -1272,7 +1272,7 @@ if (isExam) {
                 ))}
               </div>
               {creationMode === "exam" && (
-                <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 text-sm text-[#7a6258]">
+                <div className="mt-6 rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-4 text-sm text-[#4a5568]">
                   <p>Full exam mode selected. Choose a full exam type from the exam selector above.</p>
                 </div>
               )}
@@ -1282,8 +1282,8 @@ if (isExam) {
                 {/* IELTS Section */}
              {isPractice && (
   <div>
-    <label className="mb-2 block text-sm font-semibold">IELTS Section <span className="font-normal text-xs text-[#7a6258]">(optional)</span></label>
-    <select value={examSection || ""} onChange={e => setExamSection(e.target.value ? Number(e.target.value) : null)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
+    <label className="mb-2 block text-sm font-semibold">IELTS Section <span className="font-normal text-xs text-[#4a5568]">(optional)</span></label>
+    <select value={examSection || ""} onChange={e => setExamSection(e.target.value ? Number(e.target.value) : null)} className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-4">
       <option value="">General — no section tag</option>
       {IELTS_SECTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
     </select>
@@ -1292,9 +1292,8 @@ if (isExam) {
 
                 {/* Auto info */}
                {isPractice && (
-  <div className="rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm text-[#7a6258]">
-    <p>📋 <strong>Level:</strong> {examSection === 1 ? "Beginner" : examSection === 4 ? "Advanced" : "Intermediate"}</p>
-    <p className="mt-1">🏷️ <strong>Section:</strong> {examSection ? `IELTS Section ${examSection}` : "General (no section tag)"}</p>
+  <div className="rounded-2xl border border-[#c8d5e8] bg-white p-4 text-sm text-[#4a5568]">
+    <p>🏷️ <strong>Section:</strong> {examSection ? `IELTS Section ${examSection}` : "General (no section tag)"}</p>
   </div>
 )}
 
@@ -1303,16 +1302,16 @@ if (isExam) {
   <div>
     <label className="mb-2 block text-sm font-semibold">Main Audio</label>
                     {existingAudioUrl && !audioFile && <p className="mb-2 text-sm text-green-600">✓ Current audio kept.</p>}
-                    <input type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
+                    <input type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-4" />
                   </div>
                 )}
 
                 {/* PDF */}
                 {isExam && (
                   <div>
-                    <label className="mb-2 block text-sm font-semibold">Question Paper PDF <span className="font-normal text-[#7a6258]">(optional)</span></label>
+                    <label className="mb-2 block text-sm font-semibold">Question Paper PDF <span className="font-normal text-[#4a5568]">(optional)</span></label>
                     {existingPdfUrl && !pdfFile && <p className="mb-2 text-sm text-green-600">✓ PDF uploaded.</p>}
-                    <input type="file" accept=".pdf" onChange={e => setPdfFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
+                    <input type="file" accept=".pdf" onChange={e => setPdfFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-4" />
                   </div>
                 )}
               </div>
@@ -1323,7 +1322,7 @@ if (isExam) {
               <div className="mt-6 flex flex-col gap-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold">Exam Sections</h2>
-                  <button onClick={() => setExamSections([...examSections, createEmptySection(examSections.length + 1)])} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold hover:bg-[#f1ded5]">+ Add Section</button>
+                  <button onClick={() => setExamSections([...examSections, createEmptySection(examSections.length + 1)])} className="rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold hover:bg-[#dbe4f0]">+ Add Section</button>
                 </div>
                 {examSections.map((section, si) => (
                   <ExamSectionEditor key={section.id} section={section}
@@ -1336,34 +1335,34 @@ if (isExam) {
 
             {/* MCQ */}
             {(episodeType === "practice-mcq" || episodeType.startsWith("quiz-")) && (
-              <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+              <div className="mt-6 rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between gap-4">
                   <h2 className="text-2xl font-bold">Questions</h2>
                   <div className="flex gap-3">
-                    <button onClick={() => { setBulkMode(!bulkMode); setBulkError(""); }} className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${bulkMode ? "bg-[#ead7cc]" : "border border-[#e0c7bb] bg-white"}`}>{bulkMode ? "Manual" : "Bulk Paste"}</button>
-                    {!bulkMode && <button onClick={() => setMcqQuestions([...mcqQuestions, createEmptyMCQ()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Question</button>}
+                    <button onClick={() => { setBulkMode(!bulkMode); setBulkError(""); }} className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${bulkMode ? "bg-[#dbe4f0]" : "border border-[#c8d5e8] bg-white"}`}>{bulkMode ? "Manual" : "Bulk Paste"}</button>
+                    {!bulkMode && <button onClick={() => setMcqQuestions([...mcqQuestions, createEmptyMCQ()])} className="rounded-2xl bg-[#1e2d4a] px-4 py-2 text-sm font-semibold text-white">Add Question</button>}
                   </div>
                 </div>
                 {bulkMode && (
-                  <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
-                  <pre className="rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258] whitespace-pre-wrap">{`Single answer (A/B/C):\nQ) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nCorrect) B\nExplanation) Açıklama\n\nChoose TWO (A–E):\nQ) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nD) Şık D\nE) Şık E\nCorrect) B,D\nExplanation) Açıklama\n\nChoose THREE (A–G):\nQ) Soru metni\nA) ... G) ...\nCorrect) A,C,F\nExplanation) Açıklama`}</pre>
-                    <textarea value={bulkText} onChange={e => setBulkText(e.target.value)} placeholder="Soruları yapıştır..." className="mt-3 min-h-[280px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 font-mono text-sm" />
+                  <div className="mt-6 rounded-2xl border border-[#c8d5e8] bg-white p-5">
+                  <pre className="rounded-2xl bg-[#f0f2f5] p-3 text-xs leading-6 text-[#4a5568] whitespace-pre-wrap">{`Single answer (A/B/C):\nQ) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nCorrect) B\nExplanation) Açıklama\n\nChoose TWO (A–E):\nQ) Soru metni\nA) Şık A\nB) Şık B\nC) Şık C\nD) Şık D\nE) Şık E\nCorrect) B,D\nExplanation) Açıklama\n\nChoose THREE (A–G):\nQ) Soru metni\nA) ... G) ...\nCorrect) A,C,F\nExplanation) Açıklama`}</pre>
+                    <textarea value={bulkText} onChange={e => setBulkText(e.target.value)} placeholder="Soruları yapıştır..." className="mt-3 min-h-[280px] w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-4 font-mono text-sm" />
                     {bulkError && <p className="mt-2 text-sm text-red-600">{bulkError}</p>}
-                    <button onClick={() => { setBulkError(""); const parsed = parseBulkMCQ(bulkText); if (!parsed.length) { setBulkError("No questions found."); return; } setMcqQuestions(parsed); setBulkMode(false); setBulkText(""); }} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Apply</button>
+                    <button onClick={() => { setBulkError(""); const parsed = parseBulkMCQ(bulkText); if (!parsed.length) { setBulkError("No questions found."); return; } setMcqQuestions(parsed); setBulkMode(false); setBulkText(""); }} className="mt-3 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Apply</button>
                   </div>
                 )}
                 {!bulkMode && (
                   <div className="mt-6 flex flex-col gap-6">
                     {mcqQuestions.map((item, index) => (
-                      <div key={index} className="rounded-2xl border border-[#e0c7bb] bg-white p-5">
+                      <div key={index} className="rounded-2xl border border-[#c8d5e8] bg-white p-5">
                         <div className="flex items-center justify-between">
                           <span className="font-bold">Question {index + 1}</span>
                           <button onClick={() => setMcqQuestions(mcqQuestions.filter((_, i) => i !== index))} className="text-sm text-red-600">Remove</button>
                         </div>
-                        <textarea value={item.question} onChange={e => { const u = [...mcqQuestions]; u[index].question = e.target.value; setMcqQuestions(u); }} placeholder="Write your question..." className="mt-3 min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3" />
+                        <textarea value={item.question} onChange={e => { const u = [...mcqQuestions]; u[index].question = e.target.value; setMcqQuestions(u); }} placeholder="Write your question..." className="mt-3 min-h-[80px] w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3" />
                    {/* Option count selector */}
                         <div className="mt-3 flex items-center gap-3">
-                          <label className="text-xs font-semibold text-[#7a6258]">Type:</label>
+                          <label className="text-xs font-semibold text-[#4a5568]">Type:</label>
                           {[
                             { label: "Single (A–C)", keys: ["A","B","C"] },
                             { label: "Choose TWO (A–E)", keys: ["A","B","C","D","E"] },
@@ -1381,7 +1380,7 @@ if (isExam) {
                                   ? (u[index].correctAnswer as string[]).filter(a => opt.keys.includes(a))
                                   : opt.keys.includes(u[index].correctAnswer as string) ? u[index].correctAnswer : opt.keys[0];
                                 setMcqQuestions(u);
-                              }} className={`rounded-xl px-3 py-1 text-xs font-semibold transition ${isActive ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+                              }} className={`rounded-xl px-3 py-1 text-xs font-semibold transition ${isActive ? "bg-[#1e2d4a] text-white" : "border border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]"}`}>
                                 {opt.label}
                               </button>
                             );
@@ -1393,7 +1392,7 @@ if (isExam) {
                               ? item.correctAnswer.includes(letter)
                               : item.correctAnswer === letter;
                             return (
-                              <div key={letter} className="flex items-center gap-3 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3">
+                              <div key={letter} className="flex items-center gap-3 rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3">
                                 <button onClick={() => {
                                   const u = [...mcqQuestions];
                                   if (Array.isArray(u[index].correctAnswer)) {
@@ -1410,22 +1409,22 @@ if (isExam) {
                                     }
                                   }
                                   setMcqQuestions(u);
-                                }} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition ${isCorrect ? "bg-green-200 text-green-800 ring-2 ring-green-400" : "bg-[#ead7cc] hover:bg-[#d4b89a]"}`}>
+                                }} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition ${isCorrect ? "bg-green-200 text-green-800 ring-2 ring-green-400" : "bg-[#dbe4f0] hover:bg-[#8ba3c4]"}`}>
                                   {letter}
                                 </button>
-                                <input type="text" value={(item.options as any)[letter]} onChange={e => { const u = [...mcqQuestions]; (u[index].options as any)[letter] = e.target.value; setMcqQuestions(u); }} placeholder={`Option ${letter}`} className="w-full rounded-xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+                                <input type="text" value={(item.options as any)[letter]} onChange={e => { const u = [...mcqQuestions]; (u[index].options as any)[letter] = e.target.value; setMcqQuestions(u); }} placeholder={`Option ${letter}`} className="w-full rounded-xl border border-[#c8d5e8] bg-white p-2 text-sm" />
                               </div>
                             );
                           })}
                         </div>
                         {Array.isArray(item.correctAnswer) && (
-                          <p className="mt-1 text-xs text-[#7a6258]">
+                          <p className="mt-1 text-xs text-[#4a5568]">
                             Correct: {(item.correctAnswer as string[]).join(", ") || "none selected"} — click letters above to toggle
                           </p>
                         )}
                         <div className="mt-3">
                           <label className="mb-1 block text-sm font-semibold">Explanation</label>
-                          <textarea value={item.explanation || ""} onChange={e => { const u = [...mcqQuestions]; u[index].explanation = e.target.value; setMcqQuestions(u); }} placeholder="Doğru cevap neden doğru?" className="min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
+                          <textarea value={item.explanation || ""} onChange={e => { const u = [...mcqQuestions]; u[index].explanation = e.target.value; setMcqQuestions(u); }} placeholder="Doğru cevap neden doğru?" className="min-h-[80px] w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm" />
                         </div>
                       </div>
                     ))}
@@ -1436,18 +1435,18 @@ if (isExam) {
 
             {/* Fill */}
             {episodeType === "practice-fill" && (
-              <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+              <div className="mt-6 rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold">Fill in the Blank</h2>
-                  <button onClick={() => setFillQuestions([...fillQuestions, createEmptyFill()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Paragraph</button>
+                  <button onClick={() => setFillQuestions([...fillQuestions, createEmptyFill()])} className="rounded-2xl bg-[#1e2d4a] px-4 py-2 text-sm font-semibold text-white">Add Paragraph</button>
                 </div>
                 <label className="mt-5 flex items-center gap-3 text-sm font-semibold">
                   <input type="checkbox" checked={showNotes} onChange={e => setShowNotes(e.target.checked)} className="h-4 w-4" />Show notes field
                 </label>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                  <pre className="text-xs leading-6 text-[#7a6258]">{`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled\nANS2) conference room|boardroom`}</pre>
+                <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                  <pre className="text-xs leading-6 text-[#4a5568]">{`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled\nANS2) conference room|boardroom`}</pre>
                 </div>
-                <textarea placeholder={`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled|planned`} className="mt-4 min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
+                <textarea placeholder={`TEXT) The meeting was ___ at 3pm.\nANS1) scheduled|planned`} className="mt-4 min-h-[200px] w-full rounded-2xl border border-[#c8d5e8] bg-white p-4 font-mono text-sm"
                   onChange={e => {
                     const blocks = e.target.value.trim().split(/\n{2,}/);
                     const parsed: FillQuestion[] = [];
@@ -1465,13 +1464,13 @@ if (isExam) {
                 />
                 <div className="mt-4 flex flex-col gap-3">
                   {fillQuestions.map((item, i) => (
-                    <div key={i} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                    <div key={i} className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
                       <div className="flex items-center justify-between">
                         <span className="font-bold">Paragraph {i + 1}</span>
                         <button onClick={() => fillQuestions.length > 1 && setFillQuestions(fillQuestions.filter((_, j) => j !== i))} disabled={fillQuestions.length <= 1} className="text-sm text-red-600 disabled:opacity-30">Remove</button>
                       </div>
-                      <p className="mt-2 text-sm text-[#7a6258]">{item.text || "—"}</p>
-                      {item.blanks.map((b, bi) => <p key={bi} className="mt-1 text-xs text-[#7a6258]">Blank {bi + 1}: <strong>{b.answer}</strong></p>)}
+                      <p className="mt-2 text-sm text-[#4a5568]">{item.text || "—"}</p>
+                      {item.blanks.map((b, bi) => <p key={bi} className="mt-1 text-xs text-[#4a5568]">Blank {bi + 1}: <strong>{b.answer}</strong></p>)}
                     </div>
                   ))}
                 </div>
@@ -1480,17 +1479,17 @@ if (isExam) {
 
             {/* Dictation */}
             {episodeType === "practice-dictation" && (
-              <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+              <div className="mt-6 rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm md:p-8">
                 <h2 className="text-2xl font-bold">Dictation</h2>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                  <pre className="text-xs leading-6 text-[#7a6258]">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
+                <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                  <pre className="text-xs leading-6 text-[#4a5568]">{`S) The conference will be held next Monday.\nS) The colour|color of the sky is blue.`}</pre>
                 </div>
-                <textarea placeholder="S) The conference will be held next Monday." className="mt-4 min-h-[150px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
+                <textarea placeholder="S) The conference will be held next Monday." className="mt-4 min-h-[150px] w-full rounded-2xl border border-[#c8d5e8] bg-white p-4 font-mono text-sm"
                   onChange={e => { const lines = e.target.value.split("\n").map(l => l.trim()).filter(l => /^S\)/i.test(l)); if (lines.length) setDictationQuestions(lines.map(l => ({ sentence: l.replace(/^S\)\s*/i, "").trim() }))); }}
                 />
                 <div className="mt-4 flex flex-col gap-3">
                   {dictationQuestions.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                    <div key={i} className="flex items-center justify-between rounded-2xl border border-[#c8d5e8] bg-white p-4">
                       <p className="text-sm">{item.sentence || "—"}</p>
                       <button onClick={() => dictationQuestions.length > 1 && setDictationQuestions(dictationQuestions.filter((_, j) => j !== i))} disabled={dictationQuestions.length <= 1} className="ml-4 shrink-0 text-sm text-red-600 disabled:opacity-30">Remove</button>
                     </div>
@@ -1501,15 +1500,15 @@ if (isExam) {
 
             {/* Short Answer */}
             {episodeType === "practice-short" && (
-              <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+              <div className="mt-6 rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold">Short Answer</h2>
-                  <button onClick={() => setShortQuestions([...shortQuestions, createEmptyShort()])} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Add Question</button>
+                  <button onClick={() => setShortQuestions([...shortQuestions, createEmptyShort()])} className="rounded-2xl bg-[#1e2d4a] px-4 py-2 text-sm font-semibold text-white">Add Question</button>
                 </div>
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                  <pre className="text-xs leading-6 text-[#7a6258]">{`Q) What time does the library close?\nA) 9pm|nine o'clock\nH) Think about closing times`}</pre>
+                <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                  <pre className="text-xs leading-6 text-[#4a5568]">{`Q) What time does the library close?\nA) 9pm|nine o'clock\nH) Think about closing times`}</pre>
                 </div>
-                <textarea placeholder={`Q) What time?\nA) 9pm|nine\nH) Hint`} className="mt-4 min-h-[150px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 font-mono text-sm"
+                <textarea placeholder={`Q) What time?\nA) 9pm|nine\nH) Hint`} className="mt-4 min-h-[150px] w-full rounded-2xl border border-[#c8d5e8] bg-white p-4 font-mono text-sm"
                   onChange={e => {
                     const blocks = e.target.value.trim().split(/\n{2,}/);
                     const parsed: ShortAnswerQuestion[] = [];
@@ -1524,14 +1523,14 @@ if (isExam) {
                 />
                 <div className="mt-4 flex flex-col gap-4">
                   {shortQuestions.map((item, i) => (
-                    <div key={i} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                    <div key={i} className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
                       <div className="flex items-center justify-between">
                         <span className="font-bold">Q{i + 1}</span>
                         <button onClick={() => shortQuestions.length > 1 && setShortQuestions(shortQuestions.filter((_, j) => j !== i))} disabled={shortQuestions.length <= 1} className="text-sm text-red-600 disabled:opacity-30">Remove</button>
                       </div>
-                      <input type="text" value={item.question} onChange={e => { const u = [...shortQuestions]; u[i].question = e.target.value; setShortQuestions(u); }} placeholder="Question" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
-                      <input type="text" value={item.answer} onChange={e => { const u = [...shortQuestions]; u[i].answer = e.target.value; setShortQuestions(u); }} placeholder="Answer | alt" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
-                      <input type="text" value={item.hint || ""} onChange={e => { const u = [...shortQuestions]; u[i].hint = e.target.value; setShortQuestions(u); }} placeholder="Hint (optional)" className="mt-2 w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
+                      <input type="text" value={item.question} onChange={e => { const u = [...shortQuestions]; u[i].question = e.target.value; setShortQuestions(u); }} placeholder="Question" className="mt-2 w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm" />
+                      <input type="text" value={item.answer} onChange={e => { const u = [...shortQuestions]; u[i].answer = e.target.value; setShortQuestions(u); }} placeholder="Answer | alt" className="mt-2 w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm" />
+                      <input type="text" value={item.hint || ""} onChange={e => { const u = [...shortQuestions]; u[i].hint = e.target.value; setShortQuestions(u); }} placeholder="Hint (optional)" className="mt-2 w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm" />
                     </div>
                   ))}
                 </div>
@@ -1540,15 +1539,15 @@ if (isExam) {
 
 {/* Matching */}
             {episodeType === "practice-matching" && (
-              <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+              <div className="mt-6 rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold">🔗 Matching</h2>
-                  <button onClick={() => setCompletionBulkMode(!completionBulkMode)} className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${completionBulkMode ? "bg-[#ead7cc]" : "border border-[#e0c7bb] bg-white"}`}>{completionBulkMode ? "Manual" : "Bulk Paste"}</button>
+                  <button onClick={() => setCompletionBulkMode(!completionBulkMode)} className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${completionBulkMode ? "bg-[#dbe4f0]" : "border border-[#c8d5e8] bg-white"}`}>{completionBulkMode ? "Manual" : "Bulk Paste"}</button>
                 </div>
                 {completionBulkMode && (
-                  <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
-                    <pre className="rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258] whitespace-pre-wrap">{`Q1) Pinewood Cottage\nQ2) Hillside Lodge\nQ3) Riverside Retreat\nQ4) Oak House\nQ5) Valley View\nA) close to the beach\nB) provides free bicycles\nC) has a private garden\nD) recently renovated\nE) cheapest option\nF) has a swimming pool\nG) near a train station\nANS1) A\nANS2) B\nANS3) C\nANS4) D\nANS5) E`}</pre>
-                    <textarea value={completionBulkText} onChange={e => setCompletionBulkText(e.target.value)} placeholder="Yapıştır..." className="mt-3 min-h-[250px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 font-mono text-sm" />
+                  <div className="mt-6 rounded-2xl border border-[#c8d5e8] bg-white p-5">
+                    <pre className="rounded-2xl bg-[#f0f2f5] p-3 text-xs leading-6 text-[#4a5568] whitespace-pre-wrap">{`Q1) Pinewood Cottage\nQ2) Hillside Lodge\nQ3) Riverside Retreat\nQ4) Oak House\nQ5) Valley View\nA) close to the beach\nB) provides free bicycles\nC) has a private garden\nD) recently renovated\nE) cheapest option\nF) has a swimming pool\nG) near a train station\nANS1) A\nANS2) B\nANS3) C\nANS4) D\nANS5) E`}</pre>
+                    <textarea value={completionBulkText} onChange={e => setCompletionBulkText(e.target.value)} placeholder="Yapıştır..." className="mt-3 min-h-[250px] w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-4 font-mono text-sm" />
                     <button onClick={() => {
                       const lines = completionBulkText.trim().split("\n").map(l => l.trim()).filter(Boolean);
                       const items: string[] = [];
@@ -1569,7 +1568,7 @@ if (isExam) {
                       }
                       setMatchingQuestions([{ items, options, answers } as any]);
                       setCompletionBulkMode(false); setCompletionBulkText("");
-                    }} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Apply</button>
+                    }} className="mt-3 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Apply</button>
                   </div>
                 )}
                 {!completionBulkMode && (
@@ -1581,19 +1580,19 @@ if (isExam) {
                       </div>
                       {(matchingQuestions[0] as any)?.items?.map((item: string, i: number) => (
                         <div key={i} className="mt-2 flex items-center gap-2">
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{i + 1}</span>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white">{i + 1}</span>
                           <input type="text" value={item} onChange={e => {
                             const mq = matchingQuestions[0] as any;
                             const newItems = [...mq.items];
                             newItems[i] = e.target.value;
                             setMatchingQuestions([{ ...mq, items: newItems }]);
-                          }} placeholder={`Item ${i + 1} (e.g. Pinewood Cottage)`} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+                          }} placeholder={`Item ${i + 1} (e.g. Pinewood Cottage)`} className="flex-1 rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm" />
                           <div className="flex items-center gap-1">
-                            <span className="text-xs text-[#7a6258]">→</span>
+                            <span className="text-xs text-[#4a5568]">→</span>
                             <select value={(matchingQuestions[0] as any)?.answers?.[String(i)] || ""} onChange={e => {
                               const mq = matchingQuestions[0] as any;
                               setMatchingQuestions([{ ...mq, answers: { ...mq.answers, [String(i)]: e.target.value } }]);
-                            }} className="rounded-xl border border-[#e0c7bb] bg-white p-1.5 text-xs">
+                            }} className="rounded-xl border border-[#c8d5e8] bg-white p-1.5 text-xs">
                               <option value="">Answer?</option>
                               {(matchingQuestions[0] as any)?.options?.map((opt: any) => (
                                 <option key={opt.key} value={opt.key}>{opt.key}</option>
@@ -1613,22 +1612,22 @@ if (isExam) {
                             const keys = ["A","B","C","D","E","F","G"];
                             const next = keys[mq.options.length];
                             if (next) setMatchingQuestions([{ ...mq, options: [...mq.options, { key: next, label: "" }] }]);
-                          }} disabled={(matchingQuestions[0] as any)?.options?.length >= 7} className="rounded-xl bg-[#3b2f2f] px-2 py-0.5 text-xs text-white disabled:opacity-40">+</button>
+                          }} disabled={(matchingQuestions[0] as any)?.options?.length >= 7} className="rounded-xl bg-[#1e2d4a] px-2 py-0.5 text-xs text-white disabled:opacity-40">+</button>
                           <button onClick={() => {
                             const mq = matchingQuestions[0] as any;
                             if (mq.options.length > 5) setMatchingQuestions([{ ...mq, options: mq.options.slice(0, -1) }]);
-                          }} disabled={(matchingQuestions[0] as any)?.options?.length <= 5} className="rounded-xl border border-[#e0c7bb] px-2 py-0.5 text-xs disabled:opacity-40">-</button>
+                          }} disabled={(matchingQuestions[0] as any)?.options?.length <= 5} className="rounded-xl border border-[#c8d5e8] px-2 py-0.5 text-xs disabled:opacity-40">-</button>
                         </div>
                       </div>
                       {(matchingQuestions[0] as any)?.options?.map((opt: any, i: number) => (
                         <div key={opt.key} className="mt-2 flex items-center gap-2">
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#ead7cc] text-xs font-bold text-[#3b2f2f]">{opt.key}</span>
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#dbe4f0] text-xs font-bold text-[#1e2d4a]">{opt.key}</span>
                           <input type="text" value={opt.label} onChange={e => {
                             const mq = matchingQuestions[0] as any;
                             const newOpts = [...mq.options];
                             newOpts[i] = { ...newOpts[i], label: e.target.value };
                             setMatchingQuestions([{ ...mq, options: newOpts }]);
-                          }} placeholder={`Option ${opt.key} label`} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm" />
+                          }} placeholder={`Option ${opt.key} label`} className="flex-1 rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm" />
                         </div>
                       ))}
                     </div>
@@ -1639,25 +1638,25 @@ if (isExam) {
 
             {/* Map */}
             {episodeType === "practice-map" && (
-              <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+              <div className="mt-6 rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm md:p-8">
                 <h2 className="text-2xl font-bold">🗺️ Map Labelling</h2>
                 <div className="mt-6">
                   <label className="mb-2 block text-sm font-semibold">Map Image</label>
-                  <input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) handleMapImageSelect(f); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4" />
+                  <input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) handleMapImageSelect(f); }} className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-4" />
                 </div>
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-sm font-semibold">Options (A–H)</label>
                     <div className="flex gap-2">
-                      <button onClick={() => { const next = OPTION_KEYS[mapQuestion.options.length]; if (next) setMapQuestion(prev => ({ ...prev, options: [...prev.options, { key: next, label: "" }] })); }} disabled={mapQuestion.options.length >= 8} className="rounded-xl bg-[#3b2f2f] px-3 py-1 text-xs font-semibold text-white disabled:opacity-40">+</button>
-                      <button onClick={() => { if (mapQuestion.options.length > 2) setMapQuestion(prev => ({ ...prev, options: prev.options.slice(0, -1) })); }} disabled={mapQuestion.options.length <= 2} className="rounded-xl border border-[#e0c7bb] bg-white px-3 py-1 text-xs font-semibold disabled:opacity-40">-</button>
+                      <button onClick={() => { const next = OPTION_KEYS[mapQuestion.options.length]; if (next) setMapQuestion(prev => ({ ...prev, options: [...prev.options, { key: next, label: "" }] })); }} disabled={mapQuestion.options.length >= 8} className="rounded-xl bg-[#1e2d4a] px-3 py-1 text-xs font-semibold text-white disabled:opacity-40">+</button>
+                      <button onClick={() => { if (mapQuestion.options.length > 2) setMapQuestion(prev => ({ ...prev, options: prev.options.slice(0, -1) })); }} disabled={mapQuestion.options.length <= 2} className="rounded-xl border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold disabled:opacity-40">-</button>
                     </div>
                   </div>
                   <div className="grid gap-2 md:grid-cols-2">
                     {mapQuestion.options.map((opt, i) => (
-                      <div key={opt.key} className="flex items-center gap-2 rounded-2xl border border-[#e0c7bb] bg-white p-3">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{opt.key}</span>
-                        <input type="text" value={opt.label} onChange={e => { const u = [...mapQuestion.options]; u[i].label = e.target.value; setMapQuestion(prev => ({ ...prev, options: u })); }} placeholder="e.g. Library" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                      <div key={opt.key} className="flex items-center gap-2 rounded-2xl border border-[#c8d5e8] bg-white p-3">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white">{opt.key}</span>
+                        <input type="text" value={opt.label} onChange={e => { const u = [...mapQuestion.options]; u[i].label = e.target.value; setMapQuestion(prev => ({ ...prev, options: u })); }} placeholder="e.g. Library" className="w-full rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
                       </div>
                     ))}
                   </div>
@@ -1666,9 +1665,9 @@ if (isExam) {
                   <div className="mt-6">
                     <div className="mb-3 flex items-center justify-between">
                       <label className="text-sm font-semibold">Click to add points</label>
-                      <button onClick={() => setAddingPoint(!addingPoint)} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${addingPoint ? "bg-blue-600 text-white" : "border border-[#e0c7bb] bg-white"}`}>{addingPoint ? "🎯 Click map..." : "➕ Add Point"}</button>
+                      <button onClick={() => setAddingPoint(!addingPoint)} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${addingPoint ? "bg-blue-600 text-white" : "border border-[#c8d5e8] bg-white"}`}>{addingPoint ? "🎯 Click map..." : "➕ Add Point"}</button>
                     </div>
-                    <div ref={mapContainerRef} onClick={handleMapClick} className={`relative w-full overflow-hidden rounded-3xl border-2 ${addingPoint ? "border-blue-400 cursor-crosshair" : "border-[#e0c7bb]"}`} style={{ paddingBottom: "60%" }}>
+                    <div ref={mapContainerRef} onClick={handleMapClick} className={`relative w-full overflow-hidden rounded-3xl border-2 ${addingPoint ? "border-blue-400 cursor-crosshair" : "border-[#c8d5e8]"}`} style={{ paddingBottom: "60%" }}>
                       <div
                         role="img"
                         aria-label="Map"
@@ -1681,7 +1680,7 @@ if (isExam) {
                         }}
                       />
                       {mapQuestion.points.map(point => (
-                        <div key={point.id} className="absolute flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#3b2f2f] text-xs font-bold text-white shadow-lg cursor-pointer hover:bg-red-600 transition" style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                        <div key={point.id} className="absolute flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[#1e2d4a] text-xs font-bold text-white shadow-lg cursor-pointer hover:bg-red-600 transition" style={{ left: `${point.x}%`, top: `${point.y}%` }}
                           onClick={e => { e.stopPropagation(); if (!addingPoint) setMapQuestion(prev => ({ ...prev, points: prev.points.filter(p => p.id !== point.id).map((p, i) => ({ ...p, id: i + 1 })) })); }}>{point.id}</div>
                       ))}
                     </div>
@@ -1692,14 +1691,14 @@ if (isExam) {
                     <label className="mb-3 block text-sm font-semibold">Point Answers & Explanations</label>
                     <div className="flex flex-col gap-4">
                       {mapQuestion.points.map((point, i) => (
-                        <div key={point.id} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white mb-3">{point.id}</div>
+                        <div key={point.id} className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white mb-3">{point.id}</div>
                           <div className="grid gap-3 md:grid-cols-2">
-                            <select value={point.answer} onChange={e => { const u = [...mapQuestion.points]; u[i].answer = e.target.value; setMapQuestion(prev => ({ ...prev, points: u })); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm">
+                            <select value={point.answer} onChange={e => { const u = [...mapQuestion.points]; u[i].answer = e.target.value; setMapQuestion(prev => ({ ...prev, points: u })); }} className="w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm">
                               <option value="">Select...</option>
                               {mapQuestion.options.map(opt => <option key={opt.key} value={opt.key}>{opt.key}) {opt.label}</option>)}
                             </select>
-                            <textarea value={point.explanation} onChange={e => { const u = [...mapQuestion.points]; u[i].explanation = e.target.value; setMapQuestion(prev => ({ ...prev, points: u })); }} placeholder="Explanation..." className="min-h-[70px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
+                            <textarea value={point.explanation} onChange={e => { const u = [...mapQuestion.points]; u[i].explanation = e.target.value; setMapQuestion(prev => ({ ...prev, points: u })); }} placeholder="Explanation..." className="min-h-[70px] w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm" />
                           </div>
                         </div>
                       ))}
@@ -1711,7 +1710,7 @@ if (isExam) {
 
             {/* Completion Types */}
             {isCompletion && (
-              <div className="mt-6 rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm md:p-8">
+              <div className="mt-6 rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm md:p-8">
                 <div className="flex items-center justify-between gap-4">
                   <h2 className="text-2xl font-bold">
                     {episodeType === "practice-completion-note" && "📝 Note Completion"}
@@ -1720,89 +1719,89 @@ if (isExam) {
                     {episodeType === "practice-completion-flow" && "🔄 Flow Chart"}
                     {episodeType === "practice-completion-sentence" && "✏️ Sentence Completion"}
                   </h2>
-                  <button onClick={() => setCompletionBulkMode(!completionBulkMode)} className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${completionBulkMode ? "bg-[#ead7cc]" : "border border-[#e0c7bb] bg-white"}`}>{completionBulkMode ? "Manual" : "Bulk Paste"}</button>
+                  <button onClick={() => setCompletionBulkMode(!completionBulkMode)} className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${completionBulkMode ? "bg-[#dbe4f0]" : "border border-[#c8d5e8] bg-white"}`}>{completionBulkMode ? "Manual" : "Bulk Paste"}</button>
                 </div>
                 {completionBulkMode && (
-                  <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
-                    <pre className="rounded-2xl bg-[#f7eee8] p-3 text-xs leading-6 text-[#7a6258]">{getBulkFormat()}</pre>
-                    <textarea value={completionBulkText} onChange={e => setCompletionBulkText(e.target.value)} placeholder="Yapıştır..." className="mt-3 min-h-[250px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 font-mono text-sm" />
-                    <button onClick={applyCompletionBulk} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Apply</button>
+                  <div className="mt-6 rounded-2xl border border-[#c8d5e8] bg-white p-5">
+                    <pre className="rounded-2xl bg-[#f0f2f5] p-3 text-xs leading-6 text-[#4a5568]">{getBulkFormat()}</pre>
+                    <textarea value={completionBulkText} onChange={e => setCompletionBulkText(e.target.value)} placeholder="Yapıştır..." className="mt-3 min-h-[250px] w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-4 font-mono text-sm" />
+                    <button onClick={applyCompletionBulk} className="mt-3 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Apply</button>
                   </div>
                 )}
                 {!completionBulkMode && episodeType === "practice-completion-note" && (
                   <div className="mt-6">
-                    <input type="text" value={noteQuestion.title} onChange={e => setNoteQuestion(prev => ({ ...prev, title: e.target.value }))} placeholder="Title" className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm mb-3" />
+                    <input type="text" value={noteQuestion.title} onChange={e => setNoteQuestion(prev => ({ ...prev, title: e.target.value }))} placeholder="Title" className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm mb-3" />
                     {noteQuestion.items.map((item, i) => (
                       <div key={i} className="mt-2 grid grid-cols-2 gap-2">
-                        <input type="text" value={item.label} onChange={e => { const u = [...noteQuestion.items]; u[i].label = e.target.value; setNoteQuestion(prev => ({ ...prev, items: u })); }} placeholder="Label" className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
-                        <input type="text" value={item.answer} onChange={e => { const u = [...noteQuestion.items]; u[i].answer = e.target.value; setNoteQuestion(prev => ({ ...prev, items: u })); }} placeholder="Answer | alt" className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                        <input type="text" value={item.label} onChange={e => { const u = [...noteQuestion.items]; u[i].label = e.target.value; setNoteQuestion(prev => ({ ...prev, items: u })); }} placeholder="Label" className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
+                        <input type="text" value={item.answer} onChange={e => { const u = [...noteQuestion.items]; u[i].answer = e.target.value; setNoteQuestion(prev => ({ ...prev, items: u })); }} placeholder="Answer | alt" className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
                       </div>
                     ))}
-                    <button onClick={() => setNoteQuestion(prev => ({ ...prev, items: [...prev.items, { label: "", answer: "" }] }))} className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">+ Add Item</button>
+                    <button onClick={() => setNoteQuestion(prev => ({ ...prev, items: [...prev.items, { label: "", answer: "" }] }))} className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold">+ Add Item</button>
                   </div>
                 )}
                 {!completionBulkMode && episodeType === "practice-completion-form" && (
                   <div className="mt-6">
-                    <input type="text" value={formQuestion.title} onChange={e => setFormQuestion(prev => ({ ...prev, title: e.target.value }))} placeholder="Form Title" className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm mb-3" />
+                    <input type="text" value={formQuestion.title} onChange={e => setFormQuestion(prev => ({ ...prev, title: e.target.value }))} placeholder="Form Title" className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm mb-3" />
                     {formQuestion.fields.map((field, i) => (
                       <div key={i} className="mt-2 grid grid-cols-2 gap-2">
-                        <input type="text" value={field.label} onChange={e => { const u = [...formQuestion.fields]; u[i].label = e.target.value; setFormQuestion(prev => ({ ...prev, fields: u })); }} placeholder="Field label" className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
-                        <input type="text" value={field.answer} onChange={e => { const u = [...formQuestion.fields]; u[i].answer = e.target.value; setFormQuestion(prev => ({ ...prev, fields: u })); }} placeholder="Answer | alt" className="rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                        <input type="text" value={field.label} onChange={e => { const u = [...formQuestion.fields]; u[i].label = e.target.value; setFormQuestion(prev => ({ ...prev, fields: u })); }} placeholder="Field label" className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
+                        <input type="text" value={field.answer} onChange={e => { const u = [...formQuestion.fields]; u[i].answer = e.target.value; setFormQuestion(prev => ({ ...prev, fields: u })); }} placeholder="Answer | alt" className="rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
                       </div>
                     ))}
-                    <button onClick={() => setFormQuestion(prev => ({ ...prev, fields: [...prev.fields, { label: "", answer: "" }] }))} className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">+ Add Field</button>
+                    <button onClick={() => setFormQuestion(prev => ({ ...prev, fields: [...prev.fields, { label: "", answer: "" }] }))} className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold">+ Add Field</button>
                   </div>
                 )}
                 {!completionBulkMode && episodeType === "practice-completion-flow" && (
                   <div className="mt-6">
-                    <input type="text" value={flowQuestion.title} onChange={e => setFlowQuestion(prev => ({ ...prev, title: e.target.value }))} placeholder="Title" className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm mb-3" />
+                    <input type="text" value={flowQuestion.title} onChange={e => setFlowQuestion(prev => ({ ...prev, title: e.target.value }))} placeholder="Title" className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm mb-3" />
                     {flowQuestion.steps.map((step, i) => (
-                      <div key={i} className="mt-2 rounded-2xl border border-[#e0c7bb] bg-white p-3">
-                        <input type="text" value={step.text} onChange={e => { const u = [...flowQuestion.steps]; u[i].text = e.target.value; u[i].hasBlank = e.target.value.includes("___"); setFlowQuestion(prev => ({ ...prev, steps: u })); }} placeholder="Step (use ___ for blank)" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
-                        {step.hasBlank && <input type="text" value={step.answer} onChange={e => { const u = [...flowQuestion.steps]; u[i].answer = e.target.value; setFlowQuestion(prev => ({ ...prev, steps: u })); }} placeholder="Answer" className="mt-1 w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />}
+                      <div key={i} className="mt-2 rounded-2xl border border-[#c8d5e8] bg-white p-3">
+                        <input type="text" value={step.text} onChange={e => { const u = [...flowQuestion.steps]; u[i].text = e.target.value; u[i].hasBlank = e.target.value.includes("___"); setFlowQuestion(prev => ({ ...prev, steps: u })); }} placeholder="Step (use ___ for blank)" className="w-full rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
+                        {step.hasBlank && <input type="text" value={step.answer} onChange={e => { const u = [...flowQuestion.steps]; u[i].answer = e.target.value; setFlowQuestion(prev => ({ ...prev, steps: u })); }} placeholder="Answer" className="mt-1 w-full rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />}
                       </div>
                     ))}
-                    <button onClick={() => setFlowQuestion(prev => ({ ...prev, steps: [...prev.steps, { text: "", answer: "", hasBlank: false }] }))} className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">+ Add Step</button>
+                    <button onClick={() => setFlowQuestion(prev => ({ ...prev, steps: [...prev.steps, { text: "", answer: "", hasBlank: false }] }))} className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold">+ Add Step</button>
                   </div>
                 )}
                 {!completionBulkMode && episodeType === "practice-completion-sentence" && (
                   <div className="mt-6">
                     {sentenceQuestion.items.map((item, i) => (
-                      <div key={i} className="mt-2 rounded-2xl border border-[#e0c7bb] bg-white p-3">
-                        <input type="text" value={item.text} onChange={e => { const u = [...sentenceQuestion.items]; u[i].text = e.target.value; setSentenceQuestion(prev => ({ ...prev, items: u })); }} placeholder="Sentence with ___ blank" className="w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
-                        <input type="text" value={item.answer} onChange={e => { const u = [...sentenceQuestion.items]; u[i].answer = e.target.value; setSentenceQuestion(prev => ({ ...prev, items: u })); }} placeholder="Answer | alt" className="mt-1 w-full rounded-xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                      <div key={i} className="mt-2 rounded-2xl border border-[#c8d5e8] bg-white p-3">
+                        <input type="text" value={item.text} onChange={e => { const u = [...sentenceQuestion.items]; u[i].text = e.target.value; setSentenceQuestion(prev => ({ ...prev, items: u })); }} placeholder="Sentence with ___ blank" className="w-full rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
+                        <input type="text" value={item.answer} onChange={e => { const u = [...sentenceQuestion.items]; u[i].answer = e.target.value; setSentenceQuestion(prev => ({ ...prev, items: u })); }} placeholder="Answer | alt" className="mt-1 w-full rounded-xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
                       </div>
                     ))}
-                    <button onClick={() => setSentenceQuestion(prev => ({ ...prev, items: [...prev.items, { text: "", answer: "" }] }))} className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">+ Add Sentence</button>
+                    <button onClick={() => setSentenceQuestion(prev => ({ ...prev, items: [...prev.items, { text: "", answer: "" }] }))} className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold">+ Add Sentence</button>
                   </div>
                 )}
                 {!completionBulkMode && episodeType === "practice-completion-table" && (
                   <div className="mt-6">
-                    <p className="text-sm text-[#7a6258]">Use Bulk Paste for tables — it is much easier.</p>
-                    <pre className="mt-2 rounded-2xl bg-[#f7eee8] p-3 text-xs text-[#7a6258]">{getBulkFormat()}</pre>
+                    <p className="text-sm text-[#4a5568]">Use Bulk Paste for tables — it is much easier.</p>
+                    <pre className="mt-2 rounded-2xl bg-[#f0f2f5] p-3 text-xs text-[#4a5568]">{getBulkFormat()}</pre>
                   </div>
                 )}
               </div>
             )}
 
-            <button onClick={publishPractice} disabled={uploading} className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white transition hover:bg-[#2f2424] disabled:opacity-40">
+            <button onClick={publishPractice} disabled={uploading} className="mt-8 w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white transition hover:bg-[#162038] disabled:opacity-40">
               {uploading ? "Publishing..." : editingId ? "Update Practice" : "Publish Practice"}
             </button>
-            {editingId && <button onClick={resetForm} className="mt-3 w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">Cancel Edit</button>}
+            {editingId && <button onClick={resetForm} className="mt-3 w-full rounded-2xl border border-[#c8d5e8] bg-white px-6 py-4 font-semibold text-[#1e2d4a]">Cancel Edit</button>}
           </div>
         )}
 {/* IELTS Section */}
             {episodeType === "ielts-section" && (
               <div className="mt-6 flex flex-col gap-6">
-                <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+                <div className="rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
                   <h2 className="text-2xl font-bold">🎧 IELTS Section Practice</h2>
-                  <p className="mt-2 text-sm text-[#7a6258]">Section 1-3 için Part 1 + Part 2 audio, her part için soru tipi seçimi ve bulk paste. Section 4 seçildiğinde tek audio + tek soru tipi/bulk paste alanı gösterilir.</p>
+                  <p className="mt-2 text-sm text-[#4a5568]">Section 1-3 için Part 1 + Part 2 audio, her part için soru tipi seçimi ve bulk paste. Section 4 seçildiğinde tek audio + tek soru tipi/bulk paste alanı gösterilir.</p>
 
                   {/* Section Number */}
                   <div className="mt-5">
                     <label className="mb-2 block text-sm font-semibold">Section Number</label>
                     <select value={sectionNumber} onChange={e => setSectionNumber(Number(e.target.value))}
-                      className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                      className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-4">
                       <option value={1}>Section 1 — Form/Note/Table Completion (A2–B1)</option>
                       <option value={2}>Section 2 — MCQ Single + Map Labelling (B1–B2)</option>
                       <option value={3}>Section 3 — MCQ Single + Matching (B2–C1)</option>
@@ -1812,11 +1811,11 @@ if (isExam) {
                 </div>
 
                 {/* Part 1 */}
-                <div className="rounded-3xl border-2 border-[#3b2f2f] bg-[#fffaf7] p-6">
+                <div className="rounded-3xl border-2 border-[#1e2d4a] bg-[#ffffff] p-6">
                   <h3 className="text-xl font-bold mb-1">
                     {sectionNumber === 4 ? "🔊 Audio (full, no pause)" : "🔊 Part 1 Audio"}
                   </h3>
-                  <p className="text-xs text-[#7a6258] mb-4">
+                  <p className="text-xs text-[#4a5568] mb-4">
                     {sectionNumber === 1 && "Q1–5 konuşması"}
                     {sectionNumber === 2 && "Q11–16 konuşması (MCQ single kısmı)"}
                     {sectionNumber === 3 && "Q21–26 konuşması (MCQ single kısmı)"}
@@ -1830,10 +1829,10 @@ if (isExam) {
                       const f = e.target.files?.[0];
                       if (f) setSectionParts(prev => [{ ...prev[0], audioFile: f, audioUrl: "" }, prev[1]]);
                     }}
-                    className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+                    className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm" />
 
                   <div className="mt-3">
-                    <label className="mb-1 block text-sm font-semibold">🗣️ {sectionNumber === 4 ? "Intro Audio" : "Part 1 Intro Audio"} <span className="font-normal text-xs text-[#7a6258]">(opsiyonel — başta otomatik çalar)</span></label>
+                    <label className="mb-1 block text-sm font-semibold">🗣️ {sectionNumber === 4 ? "Intro Audio" : "Part 1 Intro Audio"} <span className="font-normal text-xs text-[#4a5568]">(opsiyonel — başta otomatik çalar)</span></label>
                     {sectionParts[0].introAudioUrl && !sectionParts[0].introAudioFile && (
                       <p className="mb-2 text-xs text-green-600">✓ Intro audio uploaded</p>
                     )}
@@ -1842,31 +1841,31 @@ if (isExam) {
                         const f = e.target.files?.[0];
                         if (f) setSectionParts(prev => [{ ...prev[0], introAudioFile: f, introAudioUrl: "" }, prev[1]]);
                       }}
-                      className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                      className="w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
-                    <p className="mb-2 text-sm font-semibold text-[#7a6258]">
+                  <div className="mt-4 rounded-2xl border border-dashed border-[#8ba3c4] bg-[#f0f2f5] p-4">
+                    <p className="mb-2 text-sm font-semibold text-[#4a5568]">
                       {sectionNumber === 4 ? "Question type + bulk paste" : "Part 1 question type + bulk paste"}
                     </p>
                     <div className="grid gap-2 md:grid-cols-2">
-                      <select value={partBulkType1} onChange={e => setPartBulkType1(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+                      <select value={partBulkType1} onChange={e => setPartBulkType1(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm">
                         <option value="">Select question type...</option>
                         {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
                       </select>
-                      <button onClick={() => { setPartBulkText1(""); setPartBulkError1(""); setPartBulkType1(""); setSectionParts(prev => [{ ...prev[0], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" }, prev[1]]); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
+                      <button onClick={() => { setPartBulkText1(""); setPartBulkError1(""); setPartBulkType1(""); setSectionParts(prev => [{ ...prev[0], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" }, prev[1]]); }} className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm">Reset</button>
                     </div>
                     {partBulkType1 && (
-                      <p className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm text-[#7a6258]">
+                      <p className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm text-[#4a5568]">
                         {getQuestionTypeDescription(partBulkType1)}
                       </p>
                     )}
                     {partBulkType1 === "map" && (
-                      <div className="mt-4 rounded-2xl border border-[#e0c7eb] bg-white p-4">
+                      <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
                         <label className="mb-2 block text-sm font-semibold">Map Image</label>
-                        <input type="file" accept="image/png,image/jpeg,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) handleIeltsMapImageSelect(0, f); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+                        <input type="file" accept="image/png,image/jpeg,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) handleIeltsMapImageSelect(0, f); }} className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm" />
                         {sectionParts[0].mapImageFile && (
-                          <div className="mt-3 text-sm text-[#3b2f2f]">
+                          <div className="mt-3 text-sm text-[#1e2d4a]">
                             {sectionParts[0].mapImageFile.type.startsWith("image/") && sectionParts[0].mapImagePreview ? (
                               <img src={sectionParts[0].mapImagePreview} alt="Map preview" className="mt-2 max-h-40 w-full rounded-2xl object-contain" />
                             ) : (
@@ -1876,7 +1875,7 @@ if (isExam) {
                         )}
                       </div>
                     )}
-                    <textarea value={partBulkText1} onChange={e => setPartBulkText1(e.target.value)} placeholder={getQuestionTypePlaceholder(partBulkType1 as QuestionGroupType, sectionNumber === 4 ? "Section" : "Part 1")} className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
+                    <textarea value={partBulkText1} onChange={e => setPartBulkText1(e.target.value)} placeholder={getQuestionTypePlaceholder(partBulkType1 as QuestionGroupType, sectionNumber === 4 ? "Section" : "Part 1")} className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 font-mono text-sm" />
                     {partBulkError1 && <p className="mt-2 text-sm text-red-600">{partBulkError1}</p>}
                     <div className="mt-2 flex gap-2">
                       <button onClick={() => {
@@ -1891,20 +1890,20 @@ if (isExam) {
                         const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType1 as QuestionGroupType, label: `Bulk ${partBulkType1}`, wordLimit: "", data: groupData };
                         setSectionParts(prev => [{ ...prev[0], questionGroups: [...prev[0].questionGroups, group] }, prev[1]]);
                         setPartBulkText1(""); setPartBulkType1("");
-                      }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">{sectionNumber === 4 ? "Apply" : "Apply to Part 1"}</button>
+                      }} className="rounded-2xl bg-[#1e2d4a] px-4 py-2 text-sm font-semibold text-white">{sectionNumber === 4 ? "Apply" : "Apply to Part 1"}</button>
                     </div>
                   </div>
                   {sectionParts[0].questionGroups.length > 0 && (
                     <div className="mt-5 space-y-3">
-                      <p className="text-sm font-semibold text-[#3b2f2f]">Added groups</p>
+                      <p className="text-sm font-semibold text-[#1e2d4a]">Added groups</p>
                       {sectionParts[0].questionGroups.map((group, gi) => (
-                        <div key={group.id} className="flex flex-col gap-2 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                        <div key={group.id} className="flex flex-col gap-2 rounded-2xl border border-[#c8d5e8] bg-white p-4">
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <p className="font-semibold">{getGroupTypeLabel(group.type)}</p>
-                              <p className="text-xs text-[#7a6258]">{getQuestionGroupItemCount(group)} item(s)</p>
+                              <p className="text-xs text-[#4a5568]">{getQuestionGroupItemCount(group)} item(s)</p>
                             </div>
-                            <button onClick={() => setSectionParts(prev => [{ ...prev[0], questionGroups: prev[0].questionGroups.filter((_, i) => i !== gi) }, prev[1]])} className="rounded-2xl border border-[#e0c7eb] bg-white px-3 py-1 text-xs font-semibold">Remove</button>
+                            <button onClick={() => setSectionParts(prev => [{ ...prev[0], questionGroups: prev[0].questionGroups.filter((_, i) => i !== gi) }, prev[1]])} className="rounded-2xl border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold">Remove</button>
                           </div>
                         </div>
                       ))}
@@ -1914,9 +1913,9 @@ if (isExam) {
 
                 {/* Part 2 — Section 4'te gösterme */}
                 {sectionNumber !== 4 && (
-                  <div className="rounded-3xl border-2 border-[#c9a99a] bg-[#fffaf7] p-6">
+                  <div className="rounded-3xl border-2 border-[#8ba3c4] bg-[#ffffff] p-6">
                     <h3 className="text-xl font-bold mb-1">🔊 Part 2 Audio</h3>
-                    <p className="text-xs text-[#7a6258] mb-4">
+                    <p className="text-xs text-[#4a5568] mb-4">
                       {sectionNumber === 1 && "Q6–10 konuşması"}
                       {sectionNumber === 2 && "Q17–20 konuşması (Map labelling kısmı)"}
                       {sectionNumber === 3 && "Q27–30 konuşması (Matching kısmı)"}
@@ -1929,10 +1928,10 @@ if (isExam) {
                         const f = e.target.files?.[0];
                         if (f) setSectionParts(prev => [prev[0], { ...prev[1], audioFile: f, audioUrl: "" }]);
                       }}
-                      className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+                      className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm" />
 
                     <div className="mt-3">
-                      <label className="mb-1 block text-sm font-semibold">🗣️ Part 2 Intro Audio <span className="font-normal text-xs text-[#7a6258]">(opsiyonel — başta otomatik çalar)</span></label>
+                      <label className="mb-1 block text-sm font-semibold">🗣️ Part 2 Intro Audio <span className="font-normal text-xs text-[#4a5568]">(opsiyonel — başta otomatik çalar)</span></label>
                       {sectionParts[1].introAudioUrl && !sectionParts[1].introAudioFile && (
                         <p className="mb-2 text-xs text-green-600">✓ Intro audio uploaded</p>
                       )}
@@ -1941,30 +1940,30 @@ if (isExam) {
                           const f = e.target.files?.[0];
                           if (f) setSectionParts(prev => [prev[0], { ...prev[1], introAudioFile: f, introAudioUrl: "" }]);
                         }}
-                        className="w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-2 text-sm" />
+                        className="w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-2 text-sm" />
                     </div>
 
                     {/* Part 2 Bulk Paste (add question group from text) */}
-                    <div className="mt-4 rounded-2xl border border-dashed border-[#c9a99a] bg-[#f7eee8] p-4">
-                      <p className="mb-2 text-sm font-semibold text-[#7a6258]">Part 2 question type + bulk paste</p>
+                    <div className="mt-4 rounded-2xl border border-dashed border-[#8ba3c4] bg-[#f0f2f5] p-4">
+                      <p className="mb-2 text-sm font-semibold text-[#4a5568]">Part 2 question type + bulk paste</p>
                       <div className="grid gap-2 md:grid-cols-2">
-                        <select value={partBulkType2} onChange={e => setPartBulkType2(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#e0c7bb] bg-white p-2 text-sm">
+                        <select value={partBulkType2} onChange={e => setPartBulkType2(e.target.value as QuestionGroupType)} className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm">
                           <option value="">Select question type...</option>
                           {QUESTION_GROUP_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
                         </select>
-                        <button onClick={() => { setPartBulkText2(""); setPartBulkError2(""); setPartBulkType2(""); setSectionParts(prev => [prev[0], { ...prev[1], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" }]); }} className="rounded-2xl border border-[#e0c7eb] bg-white p-2 text-sm">Reset</button>
+                        <button onClick={() => { setPartBulkText2(""); setPartBulkError2(""); setPartBulkType2(""); setSectionParts(prev => [prev[0], { ...prev[1], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" }]); }} className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm">Reset</button>
                       </div>
                       {partBulkType2 && (
-                        <p className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm text-[#7a6258]">
+                        <p className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm text-[#4a5568]">
                           {getQuestionTypeDescription(partBulkType2)}
                         </p>
                       )}
                       {partBulkType2 === "map" && (
-                        <div className="mt-4 rounded-2xl border border-[#e0c7eb] bg-white p-4">
+                        <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
                           <label className="mb-2 block text-sm font-semibold">Map Image</label>
-                          <input type="file" accept="image/png,image/jpeg,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) handleIeltsMapImageSelect(1, f); }} className="w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
+                          <input type="file" accept="image/png,image/jpeg,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) handleIeltsMapImageSelect(1, f); }} className="w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm" />
                           {sectionParts[1].mapImageFile && (
-                            <div className="mt-3 text-sm text-[#3b2f2f]">
+                            <div className="mt-3 text-sm text-[#1e2d4a]">
                               {sectionParts[1].mapImageFile.type.startsWith("image/") && sectionParts[1].mapImagePreview ? (
                                 <img src={sectionParts[1].mapImagePreview} alt="Map preview" className="mt-2 max-h-40 w-full rounded-2xl object-contain" />
                               ) : (
@@ -1974,7 +1973,7 @@ if (isExam) {
                           )}
                         </div>
                       )}
-                      <textarea value={partBulkText2} onChange={e => setPartBulkText2(e.target.value)} placeholder={getQuestionTypePlaceholder(partBulkType2 as QuestionGroupType, "Part 2")} className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-3 font-mono text-sm" />
+                      <textarea value={partBulkText2} onChange={e => setPartBulkText2(e.target.value)} placeholder={getQuestionTypePlaceholder(partBulkType2 as QuestionGroupType, "Part 2")} className="mt-3 min-h-[160px] w-full rounded-2xl border border-[#c8d5e8] bg-white p-3 font-mono text-sm" />
                       {partBulkError2 && <p className="mt-2 text-sm text-red-600">{partBulkError2}</p>}
                       <div className="mt-2 flex gap-2">
                         <button onClick={() => {
@@ -1989,20 +1988,20 @@ if (isExam) {
                           const group: QuestionGroup = { id: `group-${Date.now()}`, type: partBulkType2 as QuestionGroupType, label: `Bulk ${partBulkType2}`, wordLimit: "", data: groupData };
                           setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: [...prev[1].questionGroups, group] }]);
                           setPartBulkText2(""); setPartBulkType2("");
-                        }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">Apply to Part 2</button>
+                        }} className="rounded-2xl bg-[#1e2d4a] px-4 py-2 text-sm font-semibold text-white">Apply to Part 2</button>
                       </div>
                     </div>
                     {sectionParts[1].questionGroups.length > 0 && (
                       <div className="mt-5 space-y-3">
-                        <p className="text-sm font-semibold text-[#3b2f2f]">Added groups</p>
+                        <p className="text-sm font-semibold text-[#1e2d4a]">Added groups</p>
                         {sectionParts[1].questionGroups.map((group, gi) => (
-                          <div key={group.id} className="flex flex-col gap-2 rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                          <div key={group.id} className="flex flex-col gap-2 rounded-2xl border border-[#c8d5e8] bg-white p-4">
                             <div className="flex items-start justify-between gap-4">
                               <div>
                                 <p className="font-semibold">{getGroupTypeLabel(group.type)}</p>
-                                <p className="text-xs text-[#7a6258]">{getQuestionGroupItemCount(group)} item(s)</p>
+                                <p className="text-xs text-[#4a5568]">{getQuestionGroupItemCount(group)} item(s)</p>
                               </div>
-                              <button onClick={() => setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: prev[1].questionGroups.filter((_, i) => i !== gi) }])} className="rounded-2xl border border-[#e0c7eb] bg-white px-3 py-1 text-xs font-semibold">Remove</button>
+                              <button onClick={() => setSectionParts(prev => [prev[0], { ...prev[1], questionGroups: prev[1].questionGroups.filter((_, i) => i !== gi) }])} className="rounded-2xl border border-[#c8d5e8] bg-white px-3 py-1 text-xs font-semibold">Remove</button>
                             </div>
                           </div>
                         ))}
@@ -2015,19 +2014,19 @@ if (isExam) {
         {/* ─── MANAGE TAB ─── */}
         {activeTab === "manage" && (
           <div className="mt-8">
-            <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+            <div className="rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
               <h2 className="text-2xl font-bold">Practices</h2>
               <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setManagePage(0); }} placeholder="🔍 Search..." className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm" />
-                <select value={filterType} onChange={e => { setFilterType(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
+                <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setManagePage(0); }} placeholder="🔍 Search..." className="rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm" />
+                <select value={filterType} onChange={e => { setFilterType(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm">
                   <option value="all">All Types</option>
                   {ALL_TYPES.map(t => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
                 </select>
-                <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
+                <select value={filterLevel} onChange={e => { setFilterLevel(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm">
                   <option value="all">All Levels</option>
                   {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
-                <select value={filterExamSection} onChange={e => { setFilterExamSection(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#e0c7bb] bg-white p-3 text-sm">
+                <select value={filterExamSection} onChange={e => { setFilterExamSection(e.target.value); setManagePage(0); }} className="rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm">
                   <option value="all">All Sections</option>
                   {IELTS_SECTIONS.map(s => <option key={s.value} value={String(s.value)}>IELTS S{s.value}</option>)}
                 </select>
@@ -2039,15 +2038,15 @@ if (isExam) {
                 return (
                   <>
                     <div className="mt-3 flex items-center justify-between">
-                      <p className="text-sm text-[#7a6258]">{filteredPractices.length} practice found</p>
-                      {totalPages > 1 && <p className="text-sm text-[#7a6258]">Page {managePage + 1} / {totalPages}</p>}
+                      <p className="text-sm text-[#4a5568]">{filteredPractices.length} practice found</p>
+                      {totalPages > 1 && <p className="text-sm text-[#4a5568]">Page {managePage + 1} / {totalPages}</p>}
                     </div>
                     <div className="mt-4 flex flex-col gap-3">
                       {paged.map(p => (
-                        <div key={p.id} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white p-4">
+                        <div key={p.id} className="flex items-center justify-between rounded-2xl border border-[#c8d5e8] bg-white p-4">
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-xs text-[#7a6258]">{p.level ? `${p.level} — ` : ""}{ALL_TYPES.find(t => t.id === p.episode_type)?.label || p.episode_type}</p>
+                              <p className="text-xs text-[#4a5568]">{ALL_TYPES.find(t => t.id === p.episode_type)?.label || p.episode_type}</p>
                               {p.exam_type === "ielts" && p.exam_section && (
                                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">IELTS S{p.exam_section}</span>
                               )}
@@ -2055,20 +2054,20 @@ if (isExam) {
                             <p className="font-bold">{p.title}</p>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => handleEdit(p.id)} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
+                            <button onClick={() => handleEdit(p.id)} className="rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold">Edit</button>
                             <button onClick={async () => { if (!confirm("Delete?")) return; await supabase.from("episodes").delete().eq("id", p.id); fetchPractices(); }} className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white">Delete</button>
                           </div>
                         </div>
                       ))}
-                      {paged.length === 0 && <p className="py-8 text-center text-[#7a6258]">No practices found.</p>}
+                      {paged.length === 0 && <p className="py-8 text-center text-[#4a5568]">No practices found.</p>}
                     </div>
                     {totalPages > 1 && (
                       <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
-                        <button onClick={() => setManagePage(p => Math.max(0, p - 1))} disabled={managePage === 0} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">← Prev</button>
+                        <button onClick={() => setManagePage(p => Math.max(0, p - 1))} disabled={managePage === 0} className="rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">← Prev</button>
                         {Array.from({ length: totalPages }, (_, i) => (
-                          <button key={i} onClick={() => setManagePage(i)} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${managePage === i ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>{i + 1}</button>
+                          <button key={i} onClick={() => setManagePage(i)} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${managePage === i ? "bg-[#1e2d4a] text-white" : "border border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]"}`}>{i + 1}</button>
                         ))}
-                        <button onClick={() => setManagePage(p => Math.min(totalPages - 1, p + 1))} disabled={managePage === totalPages - 1} className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Next →</button>
+                        <button onClick={() => setManagePage(p => Math.min(totalPages - 1, p + 1))} disabled={managePage === totalPages - 1} className="rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Next →</button>
                       </div>
                     )}
                   </>
@@ -2081,25 +2080,25 @@ if (isExam) {
         {/* ─── USERS TAB ─── */}
         {activeTab === "users" && (
           <div className="mt-8">
-            <div className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+            <div className="rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold">Users</h2>
-                  <p className="mt-1 text-sm text-[#7a6258]">{users.length} registered users</p>
+                  <p className="mt-1 text-sm text-[#4a5568]">{users.length} registered users</p>
                 </div>
-                <button onClick={() => { const emails = users.map(u => u.email).join("\n"); navigator.clipboard.writeText(emails); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="rounded-2xl bg-[#3b2f2f] px-4 py-2 text-sm font-semibold text-white">
+                <button onClick={() => { const emails = users.map(u => u.email).join("\n"); navigator.clipboard.writeText(emails); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="rounded-2xl bg-[#1e2d4a] px-4 py-2 text-sm font-semibold text-white">
                   {copied ? "Copied ✓" : "Copy All Emails"}
                 </button>
               </div>
-              {loadingUsers ? <p className="mt-6 text-center text-[#7a6258]">Loading...</p> : (
+              {loadingUsers ? <p className="mt-6 text-center text-[#4a5568]">Loading...</p> : (
                 <div className="mt-6 flex flex-col gap-2">
                   {users.map((user, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3">
+                    <div key={i} className="flex items-center justify-between rounded-2xl border border-[#c8d5e8] bg-white px-4 py-3">
                       <p className="text-sm font-semibold">{user.email}</p>
-                      <p className="text-xs text-[#7a6258]">{new Date(user.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-[#4a5568]">{new Date(user.created_at).toLocaleDateString()}</p>
                     </div>
                   ))}
-                  {users.length === 0 && <p className="py-8 text-center text-[#7a6258]">No users yet.</p>}
+                  {users.length === 0 && <p className="py-8 text-center text-[#4a5568]">No users yet.</p>}
                 </div>
               )}
             </div>

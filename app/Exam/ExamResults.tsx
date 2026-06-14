@@ -145,30 +145,30 @@ export default function ExamResults({ title, examType, sections, answers, onBack
   }));
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <section className="mx-auto max-w-3xl px-6 py-12">
 
         {/* Score card */}
-        <div className="rounded-3xl bg-[#3b2f2f] p-8 text-white text-center shadow-xl">
-          <p className="text-sm font-semibold text-[#c9a99a] uppercase tracking-wide">{examType} Listening Results</p>
+        <div className="rounded-3xl bg-[#1e2d4a] p-8 text-white text-center shadow-xl">
+          <p className="text-sm font-semibold text-[#8ba3c4] uppercase tracking-wide">{examType} Listening Results</p>
           <h1 className="mt-2 text-2xl font-bold">{title}</h1>
           <div className="mt-6 flex items-center justify-center gap-8 flex-wrap">
             <div>
               <p className="text-6xl font-bold">{totalCorrect}</p>
-              <p className="text-sm text-[#c9a99a]">out of {total}</p>
+              <p className="text-sm text-[#8ba3c4]">out of {total}</p>
             </div>
             <div className="h-16 w-px bg-white/20" />
             <div>
               <p className={`text-6xl font-bold ${bandColor(band)}`}>{band}</p>
-              <p className="text-sm text-[#c9a99a]">Band Score</p>
+              <p className="text-sm text-[#8ba3c4]">Band Score</p>
             </div>
             <div className="h-16 w-px bg-white/20" />
             <div>
               <p className="text-6xl font-bold">{pct}%</p>
-              <p className="text-sm text-[#c9a99a]">accuracy</p>
+              <p className="text-sm text-[#8ba3c4]">accuracy</p>
             </div>
           </div>
-          <p className="mt-4 text-sm text-[#c9a99a]">
+          <p className="mt-4 text-sm text-[#8ba3c4]">
             {parseFloat(band) >= 7 ? "🎯 Excellent! Target band achieved." :
              parseFloat(band) >= 5.5 ? "📈 Good work! Keep practicing to reach band 7+." :
              "💪 Keep going! Consistent practice will improve your score."}
@@ -182,7 +182,7 @@ export default function ExamResults({ title, examType, sections, answers, onBack
             const sTotal = s.results.length;
             const sPct = sTotal > 0 ? Math.round((sCorrect / sTotal) * 100) : 0;
             return (
-              <div key={s.number} className="rounded-3xl border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+              <div key={s.number} className="rounded-3xl border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold">Section {s.number}</h2>
                   <div className="flex items-center gap-3">
@@ -190,7 +190,7 @@ export default function ExamResults({ title, examType, sections, answers, onBack
                     <span className={`rounded-full px-3 py-1 text-xs font-bold ${sPct >= 80 ? "bg-green-100 text-green-700" : sPct >= 60 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{sPct}%</span>
                   </div>
                 </div>
-                <div className="h-2 w-full rounded-full bg-[#ead7cc] mb-4">
+                <div className="h-2 w-full rounded-full bg-[#dbe4f0] mb-4">
                   <div className={`h-2 rounded-full transition-all ${sPct >= 80 ? "bg-green-500" : sPct >= 60 ? "bg-yellow-400" : "bg-red-400"}`} style={{ width: `${sPct}%` }} />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -200,7 +200,7 @@ export default function ExamResults({ title, examType, sections, answers, onBack
                         {r.correct ? "✓" : "✗"}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-[#7a6258]">{r.groupLabel}</p>
+                        <p className="text-xs text-[#4a5568]">{r.groupLabel}</p>
                         {!r.correct && (
                           <p className="text-xs mt-0.5">
                             <span className="text-red-600">Your answer: {r.userAnswer || "(blank)"}</span>
@@ -211,7 +211,7 @@ export default function ExamResults({ title, examType, sections, answers, onBack
                     </div>
                   ))}
                   {s.results.length === 0 && (
-                    <p className="text-xs text-center text-[#7a6258] py-2">No questions in this section</p>
+                    <p className="text-xs text-center text-[#4a5568] py-2">No questions in this section</p>
                   )}
                 </div>
               </div>
@@ -221,10 +221,10 @@ export default function ExamResults({ title, examType, sections, answers, onBack
 
         {/* Actions */}
         <div className="mt-8 flex flex-col gap-3">
-          <button onClick={onRetry} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white hover:bg-[#2f2424]">
+          <button onClick={onRetry} className="w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white hover:bg-[#162038]">
             Retry This Test
           </button>
-          <button onClick={onBack} className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f] hover:bg-[#f1ded5]">
+          <button onClick={onBack} className="w-full rounded-2xl border border-[#c8d5e8] bg-white px-6 py-4 font-semibold text-[#1e2d4a] hover:bg-[#dbe4f0]">
             Back to Exam List
           </button>
         </div>

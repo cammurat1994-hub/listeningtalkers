@@ -64,15 +64,15 @@ function renderIeltsGroupPreview(group: any, index: number) {
     case "mcq": {
       const questions = group.data || [];
       return (
-        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
-          <p className="font-bold text-[#3b2f2f]">{label}</p>
+        <div key={index} className="rounded-3xl border border-[#c8d5e8] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#1e2d4a]">{label}</p>
           <div className="mt-4 space-y-4">
             {questions.map((q: any, qi: number) => (
-              <div key={qi} className="rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4">
+              <div key={qi} className="rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-4">
                 <p className="font-semibold">{qi + 1}. {q.question}</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {Object.entries(q.options).filter(([, v]) => v).map(([key, value]) => (
-                    <div key={key} className="rounded-2xl border border-[#dcd0c5] bg-white p-3 text-sm">{key}) {String(value)}</div>
+                    <div key={key} className="rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm">{key}) {String(value)}</div>
                   ))}
                 </div>
               </div>
@@ -84,12 +84,12 @@ function renderIeltsGroupPreview(group: any, index: number) {
     case "note-completion":
     case "form-completion":
       return (
-        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
-          <p className="font-bold text-[#3b2f2f]">{label}</p>
-          {group.data?.title && <p className="mt-2 text-sm text-[#7a6258]">{group.data.title}</p>}
-          <div className="mt-4 space-y-3 text-sm text-[#3b2f2f]">
+        <div key={index} className="rounded-3xl border border-[#c8d5e8] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#1e2d4a]">{label}</p>
+          {group.data?.title && <p className="mt-2 text-sm text-[#4a5568]">{group.data.title}</p>}
+          <div className="mt-4 space-y-3 text-sm text-[#1e2d4a]">
             {(group.data?.items || group.data?.fields || []).map((item: any, bi: number) => (
-              <div key={bi} className="rounded-2xl border border-[#dcd0c5] bg-[#fffaf7] p-3">
+              <div key={bi} className="rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3">
                 <p className="font-semibold">{bi + 1}. {item.label || item.title || item.field || item.text || "Question"}</p>
               </div>
             ))}
@@ -98,11 +98,11 @@ function renderIeltsGroupPreview(group: any, index: number) {
       );
     case "sentence-completion":
       return (
-        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
-          <p className="font-bold text-[#3b2f2f]">{label}</p>
-          <div className="mt-4 space-y-3 text-sm text-[#3b2f2f]">
+        <div key={index} className="rounded-3xl border border-[#c8d5e8] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#1e2d4a]">{label}</p>
+          <div className="mt-4 space-y-3 text-sm text-[#1e2d4a]">
             {(group.data?.items || []).map((item: any, bi: number) => (
-              <div key={bi} className="rounded-2xl border border-[#dcd0c5] bg-[#fffaf7] p-3">{bi + 1}. {item.text}</div>
+              <div key={bi} className="rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3">{bi + 1}. {item.text}</div>
             ))}
           </div>
         </div>
@@ -111,21 +111,21 @@ function renderIeltsGroupPreview(group: any, index: number) {
       const headers = group.data?.headers || [];
       const rows = group.data?.rows || [];
       return (
-        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
-          <p className="font-bold text-[#3b2f2f]">{label}</p>
-          {group.data?.title && <p className="mt-2 text-sm text-[#7a6258]">{group.data.title}</p>}
+        <div key={index} className="rounded-3xl border border-[#c8d5e8] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#1e2d4a]">{label}</p>
+          {group.data?.title && <p className="mt-2 text-sm text-[#4a5568]">{group.data.title}</p>}
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               {headers.length > 0 && (
-                <thead><tr>{headers.map((h: string, i: number) => <th key={i} className="border border-[#dcd0c5] bg-[#f7eee8] px-3 py-2 text-left font-semibold">{h}</th>)}</tr></thead>
+                <thead><tr>{headers.map((h: string, i: number) => <th key={i} className="border border-[#c8d5e8] bg-[#f0f2f5] px-3 py-2 text-left font-semibold">{h}</th>)}</tr></thead>
               )}
               <tbody>
                 {rows.map((row: any, ri: number) => (
                   <tr key={ri}>
                     {row.cells.map((cell: string, ci: number) => (
-                      <td key={ci} className="border border-[#dcd0c5] px-3 py-2">
+                      <td key={ci} className="border border-[#c8d5e8] px-3 py-2">
                         {cell === "___"
-                          ? <input type="text" disabled className="w-24 rounded-lg border border-[#e0c7bb] bg-[#f7eee8] px-2 py-1 text-sm" />
+                          ? <input type="text" disabled className="w-24 rounded-lg border border-[#c8d5e8] bg-[#f0f2f5] px-2 py-1 text-sm" />
                           : cell}
                       </td>
                     ))}
@@ -139,29 +139,29 @@ function renderIeltsGroupPreview(group: any, index: number) {
     }
     case "matching":
       return (
-        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
-          <p className="font-bold text-[#3b2f2f]">{label}</p>
-          <div className="mt-4 text-sm text-[#3b2f2f]">
+        <div key={index} className="rounded-3xl border border-[#c8d5e8] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#1e2d4a]">{label}</p>
+          <div className="mt-4 text-sm text-[#1e2d4a]">
             <p className="font-semibold">Items</p>
             <ul className="ml-4 list-disc">{(group.data?.items || []).map((item: any, bi: number) => <li key={bi}>{item}</li>)}</ul>
             <p className="mt-3 font-semibold">Options</p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">{(group.data?.options || []).map((opt: any) => <div key={opt.key} className="rounded-2xl border border-[#dcd0c5] bg-[#fffaf7] p-3 text-sm">{opt.key}) {opt.label}</div>)}</div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">{(group.data?.options || []).map((opt: any) => <div key={opt.key} className="rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm">{opt.key}) {opt.label}</div>)}</div>
           </div>
         </div>
       );
     case "map":
       return (
-        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
-          <p className="font-bold text-[#3b2f2f]">{label}</p>
-          {group.data?.imageUrl && <img src={group.data.imageUrl} alt="Map preview" className="mt-4 w-full rounded-2xl border border-[#dcd0c5] object-contain" />}
-          <p className="mt-4 text-sm text-[#7a6258]">Points: {(group.data?.points || []).length}</p>
+        <div key={index} className="rounded-3xl border border-[#c8d5e8] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#1e2d4a]">{label}</p>
+          {group.data?.imageUrl && <img src={group.data.imageUrl} alt="Map preview" className="mt-4 w-full rounded-2xl border border-[#c8d5e8] object-contain" />}
+          <p className="mt-4 text-sm text-[#4a5568]">Points: {(group.data?.points || []).length}</p>
         </div>
       );
     default:
       return (
-        <div key={index} className="rounded-3xl border border-[#e0c7bb] bg-white p-5 shadow-sm">
-          <p className="font-bold text-[#3b2f2f]">{label}</p>
-          <p className="mt-2 text-sm text-[#7a6258]">Preview questions for this group.</p>
+        <div key={index} className="rounded-3xl border border-[#c8d5e8] bg-white p-5 shadow-sm">
+          <p className="font-bold text-[#1e2d4a]">{label}</p>
+          <p className="mt-2 text-sm text-[#4a5568]">Preview questions for this group.</p>
         </div>
       );
   }
@@ -169,30 +169,30 @@ function renderIeltsGroupPreview(group: any, index: number) {
 
 // ─── Audio Player ─────────────────────────────────────────────────────────────
 
-function AudioPlayer({ isPlaying, progress, duration, currentTime, onSeek, onToggle, title, level }: {
+function AudioPlayer({ isPlaying, progress, duration, currentTime, onSeek, onToggle, title }: {
   isPlaying: boolean; progress: number; duration: number; currentTime: number;
-  onSeek: (percent: number) => void; onToggle: () => void; title: string; level: string;
+  onSeek: (percent: number) => void; onToggle: () => void; title: string; level?: string;
 }) {
   return (
-    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+    <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
       <div className="flex flex-col items-center gap-5">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#3b2f2f] shadow-lg">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1e2d4a] shadow-lg">
           <Image src="/cat-logo.svg" alt="ListeningTalkers" width={44} height={44} className="object-contain" />
         </div>
-        <div className="text-center"><p className="font-bold">{title}</p><p className="text-sm text-[#7a6258]">{level}</p></div>
+        <div className="text-center"><p className="font-bold">{title}</p></div>
         <div className="w-full">
-          <div className="relative h-2 w-full cursor-pointer rounded-full bg-[#ead7cc]" onClick={e => {
+          <div className="relative h-2 w-full cursor-pointer rounded-full bg-[#dbe4f0]" onClick={e => {
             const rect = e.currentTarget.getBoundingClientRect();
             onSeek(((e.clientX - rect.left) / rect.width) * 100);
           }}>
-            <div className="h-2 rounded-full bg-[#3b2f2f] transition-all" style={{ width: `${progress}%` }} />
+            <div className="h-2 rounded-full bg-[#1e2d4a] transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <div className="mt-1 flex justify-between text-xs text-[#7a6258]">
+          <div className="mt-1 flex justify-between text-xs text-[#4a5568]">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
-        <button onClick={onToggle} className="flex items-center gap-3 rounded-2xl bg-[#3b2f2f] px-8 py-3 font-bold text-white transition hover:bg-[#2f2424]">
+        <button onClick={onToggle} className="flex items-center gap-3 rounded-2xl bg-[#1e2d4a] px-8 py-3 font-bold text-white transition hover:bg-[#162038]">
           {isPlaying ? <><span>⏸</span> Pause</> : <><span>▶</span> Start Listening</>}
         </button>
       </div>
@@ -214,29 +214,29 @@ function MCQQuestionView({ question, selectedAnswers, confirmed, onToggle, onCon
   const isSelected = (letter: string) => selectedAnswers.includes(letter);
 
   const getButtonClass = (letter: string) => {
-    if (!confirmed) return isSelected(letter) ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]";
+    if (!confirmed) return isSelected(letter) ? "border-[#1e2d4a] bg-[#dbe4f0]" : "border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]";
     if (isCorrectAnswer(letter) && isSelected(letter)) return "border-green-400 bg-green-50";
     if (isCorrectAnswer(letter) && !isSelected(letter)) return "border-green-300 bg-green-50 opacity-70";
     if (!isCorrectAnswer(letter) && isSelected(letter)) return "border-red-400 bg-red-50";
-    return "border-[#e0c7bb] bg-white opacity-50";
+    return "border-[#c8d5e8] bg-white opacity-50";
   };
 
   const allCorrect = confirmed && correctArr.every(c => selectedAnswers.includes(c)) && selectedAnswers.every(s => correctArr.includes(s));
   const canConfirm = !confirmed && selectedAnswers.length === requiredCount;
 
   return (
-    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-      {isMultiple && <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#ead7cc] px-3 py-1 text-xs font-bold text-[#3b2f2f]">Choose {requiredCount === 2 ? "TWO" : "THREE"} answers</div>}
+    <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
+      {isMultiple && <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#dbe4f0] px-3 py-1 text-xs font-bold text-[#1e2d4a]">Choose {requiredCount === 2 ? "TWO" : "THREE"} answers</div>}
       <p className="text-xl font-bold">{question.question}</p>
       <div className="mt-5 flex flex-col gap-3">
         {optionLetters.map(letter => (
           <button key={letter} onClick={() => { if (!confirmed) onToggle(letter); }} disabled={confirmed} className={`rounded-2xl border p-4 text-left transition ${getButtonClass(letter)}`}>
             <div className="flex items-center gap-3">
               <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition ${
-                isSelected(letter) && !confirmed ? "bg-[#3b2f2f] text-white" :
+                isSelected(letter) && !confirmed ? "bg-[#1e2d4a] text-white" :
                 confirmed && isCorrectAnswer(letter) ? "bg-green-400 text-white" :
                 confirmed && isSelected(letter) && !isCorrectAnswer(letter) ? "bg-red-400 text-white" :
-                "bg-[#ead7cc] text-[#3b2f2f]"}`}>{letter}</span>
+                "bg-[#dbe4f0] text-[#1e2d4a]"}`}>{letter}</span>
               <span>{(question.options as any)[letter]}</span>
               {confirmed && isCorrectAnswer(letter) && <span className="ml-auto font-bold text-green-600">✓</span>}
               {confirmed && isSelected(letter) && !isCorrectAnswer(letter) && <span className="ml-auto font-bold text-red-600">✗</span>}
@@ -244,9 +244,9 @@ function MCQQuestionView({ question, selectedAnswers, confirmed, onToggle, onCon
           </button>
         ))}
       </div>
-      {!confirmed && isMultiple && <p className="mt-3 text-xs text-[#7a6258]">{selectedAnswers.length}/{requiredCount} selected{selectedAnswers.length === requiredCount ? " — ready to confirm" : ""}</p>}
+      {!confirmed && isMultiple && <p className="mt-3 text-xs text-[#4a5568]">{selectedAnswers.length}/{requiredCount} selected{selectedAnswers.length === requiredCount ? " — ready to confirm" : ""}</p>}
       {!confirmed && (
-        <button onClick={onConfirm} disabled={!canConfirm} className="mt-4 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white disabled:opacity-40">
+        <button onClick={onConfirm} disabled={!canConfirm} className="mt-4 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white disabled:opacity-40">
           {isMultiple ? (canConfirm ? "Confirm Answers" : `Select ${requiredCount - selectedAnswers.length} more`) : (selectedAnswers.length === 0 ? "Select an answer" : "Confirm Answer")}
         </button>
       )}
@@ -256,9 +256,9 @@ function MCQQuestionView({ question, selectedAnswers, confirmed, onToggle, onCon
         </div>
       )}
       {confirmed && question.explanation && (
-        <div className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#7a6258] mb-1">💡 Explanation</p>
-          <p className="text-sm text-[#3b2f2f]">{question.explanation}</p>
+        <div className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#4a5568] mb-1">💡 Explanation</p>
+          <p className="text-sm text-[#1e2d4a]">{question.explanation}</p>
         </div>
       )}
     </div>
@@ -275,15 +275,15 @@ function FillQuestionView({ question, answers, feedback, onCheck, onUpdate }: {
   let blankIndex = 0;
   const parts = question.text.split("___");
   return (
-    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-      <p className="mb-3 text-sm font-semibold text-[#7a6258]">Fill in the blanks as you listen:</p>
+    <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
+      <p className="mb-3 text-sm font-semibold text-[#4a5568]">Fill in the blanks as you listen:</p>
       <div className="text-lg leading-10">
         {parts.map((part, i) => (
           <span key={i}>{part}{i < parts.length - 1 && (() => {
             const bi = blankIndex++;
             const fb = feedback[bi];
             return <input type="text" value={answers[bi] || ""} onChange={e => { if (!checked) onUpdate({ ...answers, [bi]: e.target.value }); }} disabled={checked}
-              className={`mx-1 inline-block w-28 rounded-xl border px-2 py-1 text-center text-sm font-semibold ${fb === true ? "border-green-400 bg-green-50 text-green-700" : fb === false ? "border-red-400 bg-red-50 text-red-700" : "border-[#3b2f2f] bg-white"}`} />;
+              className={`mx-1 inline-block w-28 rounded-xl border px-2 py-1 text-center text-sm font-semibold ${fb === true ? "border-green-400 bg-green-50 text-green-700" : fb === false ? "border-red-400 bg-red-50 text-red-700" : "border-[#1e2d4a] bg-white"}`} />;
           })()}</span>
         ))}
       </div>
@@ -296,7 +296,7 @@ function FillQuestionView({ question, answers, feedback, onCheck, onUpdate }: {
           ))}
         </div>
       )}
-      {!checked && <button onClick={() => onCheck(answers)} className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check Answers</button>}
+      {!checked && <button onClick={() => onCheck(answers)} className="mt-5 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Check Answers</button>}
     </div>
   );
 }
@@ -310,26 +310,26 @@ function DictationQuestionView({ question, answer, feedback, revealed, playsUsed
 }) {
   const canPlay = playsUsed < maxPlays;
   return (
-    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-      <div className="flex items-center justify-between gap-4"><p className="font-bold text-lg">🎙️ Listen and type what you hear</p><span className="text-sm text-[#7a6258]">{playsUsed}/{maxPlays} plays</span></div>
-      <button onClick={onPlay} disabled={!canPlay || isPlaying} className={`mt-4 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${canPlay && !isPlaying ? "bg-[#3b2f2f] text-white hover:bg-[#2f2424]" : "cursor-not-allowed bg-[#e0c7bb] text-[#7a6258]"}`}>
+    <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
+      <div className="flex items-center justify-between gap-4"><p className="font-bold text-lg">🎙️ Listen and type what you hear</p><span className="text-sm text-[#4a5568]">{playsUsed}/{maxPlays} plays</span></div>
+      <button onClick={onPlay} disabled={!canPlay || isPlaying} className={`mt-4 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${canPlay && !isPlaying ? "bg-[#1e2d4a] text-white hover:bg-[#162038]" : "cursor-not-allowed bg-[#c8d5e8] text-[#4a5568]"}`}>
         {isPlaying ? "🔊 Playing..." : canPlay ? `▶ Play${playsUsed > 0 ? " Again" : ""}` : "No plays left"}
       </button>
       {playsUsed > 0 && (
         <>
-          <textarea value={answer} onChange={e => onChange(e.target.value)} disabled={feedback !== null} placeholder="Type exactly what you heard..." className={`mt-4 min-h-[100px] w-full rounded-2xl border p-4 ${feedback === true ? "border-green-400 bg-green-50" : feedback === false ? "border-red-400 bg-red-50" : "border-[#e0c7bb] bg-white"}`} />
-          {feedback === null && <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check</button>}
+          <textarea value={answer} onChange={e => onChange(e.target.value)} disabled={feedback !== null} placeholder="Type exactly what you heard..." className={`mt-4 min-h-[100px] w-full rounded-2xl border p-4 ${feedback === true ? "border-green-400 bg-green-50" : feedback === false ? "border-red-400 bg-red-50" : "border-[#c8d5e8] bg-white"}`} />
+          {feedback === null && <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Check</button>}
           {feedback === true && <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Perfect!</div>}
           {feedback === false && !revealed && (
             <div className="mt-3 flex flex-col gap-2">
               <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">✗ Not quite right.</div>
               <div className="flex gap-3">
-                <button onClick={onRetry} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold">Try Again</button>
-                <button onClick={onReveal} className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white">Show Answer</button>
+                <button onClick={onRetry} className="flex-1 rounded-2xl border border-[#c8d5e8] bg-white px-4 py-3 font-semibold">Try Again</button>
+                <button onClick={onReveal} className="flex-1 rounded-2xl bg-[#1e2d4a] px-4 py-3 font-semibold text-white">Show Answer</button>
               </div>
             </div>
           )}
-          {revealed && <div className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-4"><p className="text-sm text-[#7a6258]">Correct answer:</p><p className="mt-1 font-semibold">{question.sentence.split("|")[0]}</p></div>}
+          {revealed && <div className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white p-4"><p className="text-sm text-[#4a5568]">Correct answer:</p><p className="mt-1 font-semibold">{question.sentence.split("|")[0]}</p></div>}
         </>
       )}
     </div>
@@ -343,23 +343,23 @@ function ShortAnswerView({ question, answer, feedback, revealed, onChange, onChe
   onChange: (v: string) => void; onCheck: () => void; onReveal: () => void; onRetry: () => void;
 }) {
   return (
-    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+    <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
       <p className="text-xl font-bold">{question.question}</p>
-      {question.hint && feedback === null && <p className="mt-2 text-sm text-[#7a6258]">💡 Hint: {question.hint}</p>}
+      {question.hint && feedback === null && <p className="mt-2 text-sm text-[#4a5568]">💡 Hint: {question.hint}</p>}
       <input type="text" value={answer} onChange={e => onChange(e.target.value)} disabled={feedback !== null} placeholder="Your answer (max 3 words)..." onKeyDown={e => { if (e.key === "Enter" && feedback === null) onCheck(); }}
-        className={`mt-4 w-full rounded-2xl border p-4 text-lg ${feedback === true ? "border-green-400 bg-green-50" : feedback === false ? "border-red-400 bg-red-50" : "border-[#e0c7bb] bg-white"}`} />
-      {feedback === null && <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Check Answer</button>}
+        className={`mt-4 w-full rounded-2xl border p-4 text-lg ${feedback === true ? "border-green-400 bg-green-50" : feedback === false ? "border-red-400 bg-red-50" : "border-[#c8d5e8] bg-white"}`} />
+      {feedback === null && <button onClick={onCheck} className="mt-3 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Check Answer</button>}
       {feedback === true && <div className="mt-3 rounded-2xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">✓ Correct!</div>}
       {feedback === false && !revealed && (
         <div className="mt-3 flex flex-col gap-2">
           <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">✗ Not quite right.</div>
           <div className="flex gap-3">
-            <button onClick={onRetry} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold">Try Again</button>
-            <button onClick={onReveal} className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white">Show Answer</button>
+            <button onClick={onRetry} className="flex-1 rounded-2xl border border-[#c8d5e8] bg-white px-4 py-3 font-semibold">Try Again</button>
+            <button onClick={onReveal} className="flex-1 rounded-2xl bg-[#1e2d4a] px-4 py-3 font-semibold text-white">Show Answer</button>
           </div>
         </div>
       )}
-      {revealed && <div className="mt-3 rounded-2xl border border-[#e0c7bb] bg-white p-4"><p className="text-sm text-[#7a6258]">Correct answer:</p><p className="mt-1 font-semibold">{question.answer.split("|")[0]}</p></div>}
+      {revealed && <div className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white p-4"><p className="text-sm text-[#4a5568]">Correct answer:</p><p className="mt-1 font-semibold">{question.answer.split("|")[0]}</p></div>}
     </div>
   );
 }
@@ -373,14 +373,14 @@ function MatchingView({ question, userAnswers, checked, onAnswer, onCheck }: {
   const isCorrect = (i: number) => userAnswers[i] === question.answers[String(i)];
   const allAnswered = question.items.every((_, i) => userAnswers[i]);
   return (
-    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-      <p className="mb-2 text-sm font-semibold text-[#7a6258]">Match each item with the correct option.</p>
-      <div className="mb-5 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-[#7a6258] mb-2">Options</p>
+    <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
+      <p className="mb-2 text-sm font-semibold text-[#4a5568]">Match each item with the correct option.</p>
+      <div className="mb-5 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+        <p className="text-xs font-bold uppercase tracking-wide text-[#4a5568] mb-2">Options</p>
         <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
           {question.options.map(opt => (
             <div key={opt.key} className="flex items-center gap-2 text-sm">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ead7cc] text-xs font-bold text-[#3b2f2f]">{opt.key}</span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#dbe4f0] text-xs font-bold text-[#1e2d4a]">{opt.key}</span>
               <span>{opt.label}</span>
             </div>
           ))}
@@ -392,12 +392,12 @@ function MatchingView({ question, userAnswers, checked, onAnswer, onCheck }: {
           const correct_label = question.options.find(o => o.key === correct)?.label;
           const selected_label = question.options.find(o => o.key === selected)?.label;
           return (
-            <div key={i} className={`rounded-2xl border p-4 ${checked ? (isCorrect(i) ? "border-green-300 bg-green-50" : "border-red-300 bg-red-50") : "border-[#e0c7bb] bg-white"}`}>
+            <div key={i} className={`rounded-2xl border p-4 ${checked ? (isCorrect(i) ? "border-green-300 bg-green-50" : "border-red-300 bg-red-50") : "border-[#c8d5e8] bg-white"}`}>
               <div className="flex items-start gap-3 flex-wrap">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{i + 1}</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white">{i + 1}</span>
                 <span className="flex-1 text-sm font-semibold pt-0.5">{item}</span>
                 {!checked ? (
-                  <select value={selected || ""} onChange={e => onAnswer(i, e.target.value)} className="rounded-xl border border-[#e0c7bb] bg-[#f7eee8] px-3 py-1.5 text-sm font-semibold">
+                  <select value={selected || ""} onChange={e => onAnswer(i, e.target.value)} className="rounded-xl border border-[#c8d5e8] bg-[#f0f2f5] px-3 py-1.5 text-sm font-semibold">
                     <option value="">Select...</option>
                     {question.options.map(opt => <option key={opt.key} value={opt.key}>{opt.key}</option>)}
                   </select>
@@ -406,7 +406,7 @@ function MatchingView({ question, userAnswers, checked, onAnswer, onCheck }: {
                 )}
               </div>
               {checked && !isCorrect(i) && (
-                <div className="mt-2 ml-10 text-xs text-[#7a6258]">
+                <div className="mt-2 ml-10 text-xs text-[#4a5568]">
                   <span className="text-red-600">Your answer: {selected || "none"}) {selected_label || "—"}</span>
                   <span className="mx-2">|</span>
                   <span className="text-green-700">Correct: {correct}) {correct_label}</span>
@@ -416,8 +416,8 @@ function MatchingView({ question, userAnswers, checked, onAnswer, onCheck }: {
           );
         })}
       </div>
-      {!checked && <button onClick={onCheck} disabled={!allAnswered} className="mt-5 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white disabled:opacity-40">{allAnswered ? "Check Answers" : `Answer all items (${Object.keys(userAnswers).length}/${question.items.length})`}</button>}
-      {checked && <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold ${question.items.every((_, i) => isCorrect(i)) ? "bg-green-100 text-green-700" : "bg-[#f7eee8] text-[#7a6258]"}`}>{question.items.filter((_, i) => isCorrect(i)).length}/{question.items.length} correct</div>}
+      {!checked && <button onClick={onCheck} disabled={!allAnswered} className="mt-5 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white disabled:opacity-40">{allAnswered ? "Check Answers" : `Answer all items (${Object.keys(userAnswers).length}/${question.items.length})`}</button>}
+      {checked && <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold ${question.items.every((_, i) => isCorrect(i)) ? "bg-green-100 text-green-700" : "bg-[#f0f2f5] text-[#4a5568]"}`}>{question.items.filter((_, i) => isCorrect(i)).length}/{question.items.length} correct</div>}
     </div>
   );
 }
@@ -438,21 +438,21 @@ function MapView({ question, userAnswers, checked, playsUsed, maxPlays, isPlayin
     if (!checked) {
       if (selectedPoint === point.id) return "bg-blue-600 border-white ring-2 ring-blue-300";
       if (userAnswers[point.id]) return "bg-blue-500 border-white";
-      return "bg-[#3b2f2f] border-white";
+      return "bg-[#1e2d4a] border-white";
     }
     return userAnswers[point.id] === point.answer ? "bg-green-500 border-white" : "bg-red-500 border-white";
   };
 
   return (
-    <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-lg">🗺️ Map Labelling</h3><span className="text-sm text-[#7a6258]">{playsUsed}/{maxPlays} plays</span></div>
-      <button onClick={onPlay} disabled={!canPlay || isPlaying} className={`mb-5 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${canPlay && !isPlaying ? "bg-[#3b2f2f] text-white hover:bg-[#2f2424]" : "cursor-not-allowed bg-[#e0c7bb] text-[#7a6258]"}`}>
+    <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
+      <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-lg">🗺️ Map Labelling</h3><span className="text-sm text-[#4a5568]">{playsUsed}/{maxPlays} plays</span></div>
+      <button onClick={onPlay} disabled={!canPlay || isPlaying} className={`mb-5 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${canPlay && !isPlaying ? "bg-[#1e2d4a] text-white hover:bg-[#162038]" : "cursor-not-allowed bg-[#c8d5e8] text-[#4a5568]"}`}>
         {isPlaying ? "🔊 Playing..." : canPlay ? `▶ Play${playsUsed > 0 ? " Again" : " Audio"}` : "No plays left"}
       </button>
       {playsUsed > 0 && (
         <>
-          <p className="mb-3 text-sm text-[#7a6258]">{!checked ? (selectedPoint ? `Point ${selectedPoint} selected — choose an option below` : "Tap a numbered point on the map, then select an answer") : `${correctCount}/${question.points.length} correct`}</p>
-          <div className="relative w-full overflow-hidden rounded-[2rem] border-2 border-[#e0c7bb] bg-white" style={{ paddingBottom: "65%" }}>
+          <p className="mb-3 text-sm text-[#4a5568]">{!checked ? (selectedPoint ? `Point ${selectedPoint} selected — choose an option below` : "Tap a numbered point on the map, then select an answer") : `${correctCount}/${question.points.length} correct`}</p>
+          <div className="relative w-full overflow-hidden rounded-[2rem] border-2 border-[#c8d5e8] bg-white" style={{ paddingBottom: "65%" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={question.imageUrl} alt="Map" className="absolute inset-0 h-full w-full object-contain" draggable={false} />
             {question.points.map(point => (
@@ -463,22 +463,22 @@ function MapView({ question, userAnswers, checked, playsUsed, maxPlays, isPlayin
           </div>
           {!checked && (
             <div className="mt-4">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#7a6258]">Options — {selectedPoint ? `Answering Point ${selectedPoint}` : "Select a point first"}</p>
+              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#4a5568]">Options — {selectedPoint ? `Answering Point ${selectedPoint}` : "Select a point first"}</p>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                 {question.options.map(opt => {
                   const isAssigned = Object.entries(userAnswers).some(([pid, key]) => key === opt.key && Number(pid) !== selectedPoint);
                   const isSelectedForThisPoint = selectedPoint !== null && userAnswers[selectedPoint] === opt.key;
                   return (
                     <button key={opt.key} disabled={!selectedPoint} onClick={() => { if (selectedPoint !== null) { onAnswer(selectedPoint, opt.key); setSelectedPoint(null); } }}
-                      className={`rounded-2xl border p-3 text-left text-sm transition ${isSelectedForThisPoint ? "border-blue-400 bg-blue-50 font-bold" : isAssigned ? "border-[#c9a99a] bg-[#f7eee8] opacity-60" : selectedPoint ? "border-[#e0c7bb] bg-white hover:border-[#3b2f2f] hover:bg-[#ead7cc]" : "border-[#e0c7bb] bg-white opacity-50 cursor-not-allowed"}`}>
+                      className={`rounded-2xl border p-3 text-left text-sm transition ${isSelectedForThisPoint ? "border-blue-400 bg-blue-50 font-bold" : isAssigned ? "border-[#8ba3c4] bg-[#f0f2f5] opacity-60" : selectedPoint ? "border-[#c8d5e8] bg-white hover:border-[#1e2d4a] hover:bg-[#dbe4f0]" : "border-[#c8d5e8] bg-white opacity-50 cursor-not-allowed"}`}>
                       <span className="font-bold">{opt.key})</span> {opt.label}
                     </button>
                   );
                 })}
               </div>
               {Object.keys(userAnswers).length > 0 && (
-                <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#7a6258] mb-2">Your answers so far:</p>
+                <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#4a5568] mb-2">Your answers so far:</p>
                   <div className="flex flex-wrap gap-2">
                     {question.points.map(point => userAnswers[point.id] ? (
                       <div key={point.id} className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -489,7 +489,7 @@ function MapView({ question, userAnswers, checked, playsUsed, maxPlays, isPlayin
                   </div>
                 </div>
               )}
-              <button onClick={onCheck} disabled={Object.keys(userAnswers).length < question.points.length} className="mt-4 w-full rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white disabled:opacity-40">
+              <button onClick={onCheck} disabled={Object.keys(userAnswers).length < question.points.length} className="mt-4 w-full rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white disabled:opacity-40">
                 {Object.keys(userAnswers).length < question.points.length ? `Answer all points (${Object.keys(userAnswers).length}/${question.points.length})` : "Check Answers"}
               </button>
             </div>
@@ -517,7 +517,7 @@ function MapView({ question, userAnswers, checked, playsUsed, maxPlays, isPlayin
                 })}
               </div>
               {question.points.some(p => p.explanation) && (
-                <button onClick={() => setShowExplanations(!showExplanations)} className="mt-4 w-full rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 text-sm font-semibold hover:bg-[#f1ded5]">
+                <button onClick={() => setShowExplanations(!showExplanations)} className="mt-4 w-full rounded-2xl border border-[#c8d5e8] bg-white px-5 py-3 text-sm font-semibold hover:bg-[#dbe4f0]">
                   {showExplanations ? "Hide Explanations ▲" : "💡 View Explanations ▼"}
                 </button>
               )}
@@ -526,9 +526,9 @@ function MapView({ question, userAnswers, checked, playsUsed, maxPlays, isPlayin
                   {question.points.filter(p => p.explanation).map(point => {
                     const opt = question.options.find(o => o.key === point.answer);
                     return (
-                      <div key={point.id} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                        <div className="flex items-center gap-2 mb-2"><div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{point.id}</div><p className="text-sm font-bold">{opt?.key}) {opt?.label}</p></div>
-                        <p className="text-sm text-[#7a6258]">{point.explanation}</p>
+                      <div key={point.id} className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                        <div className="flex items-center gap-2 mb-2"><div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white">{point.id}</div><p className="text-sm font-bold">{opt?.key}) {opt?.label}</p></div>
+                        <p className="text-sm text-[#4a5568]">{point.explanation}</p>
                       </div>
                     );
                   })}
@@ -580,41 +580,41 @@ function CommentsPanel({ episodeId, userEmail }: { episodeId: string; userEmail:
   const getDisplayName = (email: string) => email.split("@")[0];
 
   return (
-    <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+    <div className="mt-8 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
       <h3 className="text-lg font-bold">💬 Discussion</h3>
-      <p className="mt-1 text-sm text-[#7a6258]">Ask questions or share tips about this practice.</p>
+      <p className="mt-1 text-sm text-[#4a5568]">Ask questions or share tips about this practice.</p>
       <div className="mt-5">
-        <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Write a comment..." className="min-h-[80px] w-full rounded-2xl border border-[#e0c7bb] bg-white p-4 text-sm" />
-        <button onClick={submitComment} disabled={submitting || !newComment.trim()} className="mt-2 rounded-2xl bg-[#3b2f2f] px-5 py-2 text-sm font-semibold text-white disabled:opacity-40">{submitting ? "Posting..." : "Post Comment"}</button>
+        <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Write a comment..." className="min-h-[80px] w-full rounded-2xl border border-[#c8d5e8] bg-white p-4 text-sm" />
+        <button onClick={submitComment} disabled={submitting || !newComment.trim()} className="mt-2 rounded-2xl bg-[#1e2d4a] px-5 py-2 text-sm font-semibold text-white disabled:opacity-40">{submitting ? "Posting..." : "Post Comment"}</button>
       </div>
-      {loading ? <p className="mt-4 text-sm text-[#7a6258]">Loading comments...</p> :
-        topLevel.length === 0 ? <p className="mt-4 text-sm text-[#7a6258]">No comments yet. Be the first!</p> : (
+      {loading ? <p className="mt-4 text-sm text-[#4a5568]">Loading comments...</p> :
+        topLevel.length === 0 ? <p className="mt-4 text-sm text-[#4a5568]">No comments yet. Be the first!</p> : (
           <div className="mt-6 flex flex-col gap-4">
             {topLevel.map(comment => (
-              <div key={comment.id} className="rounded-2xl border border-[#e0c7bb] bg-white p-4">
+              <div key={comment.id} className="rounded-2xl border border-[#c8d5e8] bg-white p-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{getInitial(comment.user_email)}</div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white">{getInitial(comment.user_email)}</div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2"><p className="text-sm font-bold">{getDisplayName(comment.user_email)}</p><p className="text-xs text-[#7a6258]">{formatDate(comment.created_at)}</p></div>
-                    <p className="mt-1 text-sm text-[#3b2f2f]">{comment.content}</p>
-                    <button onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)} className="mt-2 text-xs font-semibold text-[#7a6258] hover:text-[#3b2f2f]">{replyTo === comment.id ? "Cancel" : "Reply"}</button>
+                    <div className="flex items-center gap-2"><p className="text-sm font-bold">{getDisplayName(comment.user_email)}</p><p className="text-xs text-[#4a5568]">{formatDate(comment.created_at)}</p></div>
+                    <p className="mt-1 text-sm text-[#1e2d4a]">{comment.content}</p>
+                    <button onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)} className="mt-2 text-xs font-semibold text-[#4a5568] hover:text-[#1e2d4a]">{replyTo === comment.id ? "Cancel" : "Reply"}</button>
                   </div>
                 </div>
                 {replyTo === comment.id && (
                   <div className="mt-3 ml-11">
-                    <textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Write a reply..." className="min-h-[60px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
-                    <button onClick={() => submitReply(comment.id)} disabled={submitting || !replyText.trim()} className="mt-2 rounded-2xl bg-[#3b2f2f] px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">{submitting ? "Posting..." : "Post Reply"}</button>
+                    <textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Write a reply..." className="min-h-[60px] w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm" />
+                    <button onClick={() => submitReply(comment.id)} disabled={submitting || !replyText.trim()} className="mt-2 rounded-2xl bg-[#1e2d4a] px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">{submitting ? "Posting..." : "Post Reply"}</button>
                   </div>
                 )}
                 {getReplies(comment.id).length > 0 && (
                   <div className="mt-3 ml-11 flex flex-col gap-3">
                     {getReplies(comment.id).map(reply => (
-                      <div key={reply.id} className="rounded-2xl border border-[#e0c7bb] bg-[#f7eee8] p-3">
+                      <div key={reply.id} className="rounded-2xl border border-[#c8d5e8] bg-[#f0f2f5] p-3">
                         <div className="flex items-start gap-2">
-                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#c9a99a] text-xs font-bold text-white">{getInitial(reply.user_email)}</div>
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#8ba3c4] text-xs font-bold text-white">{getInitial(reply.user_email)}</div>
                           <div>
-                            <div className="flex items-center gap-2"><p className="text-xs font-bold">{getDisplayName(reply.user_email)}</p><p className="text-xs text-[#7a6258]">{formatDate(reply.created_at)}</p></div>
-                            <p className="mt-1 text-sm text-[#3b2f2f]">{reply.content}</p>
+                            <div className="flex items-center gap-2"><p className="text-xs font-bold">{getDisplayName(reply.user_email)}</p><p className="text-xs text-[#4a5568]">{formatDate(reply.created_at)}</p></div>
+                            <p className="mt-1 text-sm text-[#1e2d4a]">{reply.content}</p>
                           </div>
                         </div>
                       </div>
@@ -845,8 +845,8 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
     setResultSaved(true);
   }
 
-  if (loading) return <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]"><p className="text-xl text-[#3b2f2f]">Loading...</p></main>;
-  if (!episode) return <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]"><p className="text-xl text-[#3b2f2f]">Episode not found.</p></main>;
+  if (loading) return <main className="flex min-h-screen items-center justify-center bg-[#f0f2f5]"><p className="text-xl text-[#1e2d4a]">Loading...</p></main>;
+  if (!episode) return <main className="flex min-h-screen items-center justify-center bg-[#f0f2f5]"><p className="text-xl text-[#1e2d4a]">Episode not found.</p></main>;
 
   const questions = episode.questions || [];
   const question = questions[currentQuestion];
@@ -867,13 +867,13 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
   const currentIeltsPlays = ieltsAudioPlays[ieltsPartIndex] || 0;
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <section className="mx-auto max-w-3xl px-6 py-12">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold md:text-4xl">{episode.title}</h1>
           </div>
-          <button onClick={onBack} className="shrink-0 rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
+          <button onClick={onBack} className="shrink-0 rounded-2xl border border-[#c8d5e8] bg-white px-5 py-3 font-semibold shadow-sm">Back</button>
         </div>
 
         {/* ─── MCQ — Listening phase ─── */}
@@ -885,14 +885,14 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
               onEnded={() => setIsPlaying(false)} />
             <AudioPlayer isPlaying={isPlaying} progress={audioProgress} duration={audioDuration} currentTime={audioCurrentTime} onSeek={percent => { const audio = audioRef.current; if (!audio) return; audio.currentTime = (percent / 100) * audio.duration; }} onToggle={toggleMainAudio} title={episode.title} level={episode.level} />
             {!showStartWarning ? (
-              <button onClick={() => setShowStartWarning(true)} className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">I have listened — Start Questions</button>
+              <button onClick={() => setShowStartWarning(true)} className="mt-6 w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white">I have listened — Start Questions</button>
             ) : (
-              <div className="mt-6 rounded-2xl border border-[#e0c7bb] bg-white p-5">
+              <div className="mt-6 rounded-2xl border border-[#c8d5e8] bg-white p-5">
                 <p className="font-semibold">⚠️ Before you start</p>
-                <p className="mt-2 text-sm text-[#7a6258]">Audio will not be available during questions. Make sure you have taken your notes.</p>
+                <p className="mt-2 text-sm text-[#4a5568]">Audio will not be available during questions. Make sure you have taken your notes.</p>
                 <div className="mt-4 flex gap-3">
-                  <button onClick={() => setShowStartWarning(false)} className="flex-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold">Go Back</button>
-                  <button onClick={() => setTestStarted(true)} className="flex-1 rounded-2xl bg-[#3b2f2f] px-4 py-3 font-semibold text-white">Yes, I am Ready</button>
+                  <button onClick={() => setShowStartWarning(false)} className="flex-1 rounded-2xl border border-[#c8d5e8] bg-white px-4 py-3 font-semibold">Go Back</button>
+                  <button onClick={() => setTestStarted(true)} className="flex-1 rounded-2xl bg-[#1e2d4a] px-4 py-3 font-semibold text-white">Yes, I am Ready</button>
                 </div>
               </div>
             )}
@@ -903,8 +903,8 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
         {isMCQ && testStarted && !showResults && question && (
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#7a6258]">Question {currentQuestion + 1} of {questions.length}</p>
-              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : mcqConfirmed[i] ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />)}</div>
+              <p className="text-sm font-semibold text-[#4a5568]">Question {currentQuestion + 1} of {questions.length}</p>
+              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#1e2d4a]" : mcqConfirmed[i] ? "bg-[#8ba3c4]" : "bg-[#c8d5e8]"}`} />)}</div>
             </div>
             <MCQQuestionView
               question={question as MCQQuestion}
@@ -923,11 +923,11 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
               onConfirm={() => setMcqConfirmed({ ...mcqConfirmed, [currentQuestion]: true })}
             />
             <div className="mt-6 flex justify-between gap-4">
-              <button disabled={currentQuestion === 0} onClick={() => setCurrentQuestion(currentQuestion - 1)} className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
+              <button disabled={currentQuestion === 0} onClick={() => setCurrentQuestion(currentQuestion - 1)} className="rounded-2xl border border-[#c8d5e8] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
               {currentQuestion < questions.length - 1 ? (
-                <button onClick={() => setCurrentQuestion(currentQuestion + 1)} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
+                <button onClick={() => setCurrentQuestion(currentQuestion + 1)} className="rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Next →</button>
               ) : (
-                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Finish ✓</button>
               )}
             </div>
           </div>
@@ -956,7 +956,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                       onUpdate={ans => setFillAnswers({ ...fillAnswers, [i]: ans })} />
                   ))}
                 </div>
-                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Finish ✓</button>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="mt-8 w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white">Finish ✓</button>
               </>
             )}
           </div>
@@ -964,10 +964,10 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
 
         {/* ─── Dictation — Intro ─── */}
         {isDictation && !testStarted && (
-          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
+          <div className="mt-8 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm text-center">
             <p className="text-lg font-bold">🎙️ Dictation Practice</p>
-            <p className="mt-2 text-sm text-[#7a6258]">Listen carefully and type exactly what you hear. You have <strong>2 plays</strong> per sentence.</p>
-            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start Dictation</button>
+            <p className="mt-2 text-sm text-[#4a5568]">Listen carefully and type exactly what you hear. You have <strong>2 plays</strong> per sentence.</p>
+            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#1e2d4a] px-8 py-4 font-semibold text-white">Start Dictation</button>
           </div>
         )}
 
@@ -975,8 +975,8 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
         {isDictation && testStarted && !showResults && question && (
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#7a6258]">Sentence {currentQuestion + 1} of {questions.length}</p>
-              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />)}</div>
+              <p className="text-sm font-semibold text-[#4a5568]">Sentence {currentQuestion + 1} of {questions.length}</p>
+              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#1e2d4a]" : i < currentQuestion ? "bg-[#8ba3c4]" : "bg-[#c8d5e8]"}`} />)}</div>
             </div>
             <audio ref={dictationAudioRef} src={episode.audio_url} onEnded={() => setDictationPlaying(false)} />
             <DictationQuestionView
@@ -999,11 +999,11 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
               onRetry={() => { setDictationAnswers({ ...dictationAnswers, [currentQuestion]: "" }); setDictationFeedback({ ...dictationFeedback, [currentQuestion]: null }); }}
             />
             <div className="mt-6 flex justify-between gap-4">
-              <button disabled={currentQuestion === 0} onClick={() => { setCurrentQuestion(currentQuestion - 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }} className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
+              <button disabled={currentQuestion === 0} onClick={() => { setCurrentQuestion(currentQuestion - 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }} className="rounded-2xl border border-[#c8d5e8] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
               {currentQuestion < questions.length - 1 ? (
-                <button onClick={() => { setCurrentQuestion(currentQuestion + 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
+                <button onClick={() => { setCurrentQuestion(currentQuestion + 1); setDictationPlaying(false); if (dictationAudioRef.current) dictationAudioRef.current.pause(); }} className="rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Next →</button>
               ) : (
-                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Finish ✓</button>
               )}
             </div>
           </div>
@@ -1012,10 +1012,10 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
         {/* ─── Short Answer — Intro ─── */}
         {isShort && !testStarted && (
           <div className="mt-8">
-            <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center mb-4">
+            <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm text-center mb-4">
               <p className="text-lg font-bold">✍️ Short Answer Practice</p>
-              <p className="mt-2 text-sm text-[#7a6258]">Listen carefully, then answer each question in 1–3 words.</p>
-              <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start</button>
+              <p className="mt-2 text-sm text-[#4a5568]">Listen carefully, then answer each question in 1–3 words.</p>
+              <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#1e2d4a] px-8 py-4 font-semibold text-white">Start</button>
             </div>
             <audio ref={audioRef} src={episode.audio_url}
               onTimeUpdate={() => { const a = audioRef.current; if (a) { setAudioProgress((a.currentTime / a.duration) * 100); setAudioCurrentTime(a.currentTime); } }}
@@ -1029,8 +1029,8 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
         {isShort && testStarted && !showResults && question && (
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#7a6258]">Question {currentQuestion + 1} of {questions.length}</p>
-              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#3b2f2f]" : i < currentQuestion ? "bg-[#c9a99a]" : "bg-[#e0c7bb]"}`} />)}</div>
+              <p className="text-sm font-semibold text-[#4a5568]">Question {currentQuestion + 1} of {questions.length}</p>
+              <div className="flex gap-1">{questions.map((_, i) => <div key={i} className={`h-2 w-2 rounded-full ${i === currentQuestion ? "bg-[#1e2d4a]" : i < currentQuestion ? "bg-[#8ba3c4]" : "bg-[#c8d5e8]"}`} />)}</div>
             </div>
             <ShortAnswerView
               question={question as ShortAnswerQuestion}
@@ -1043,11 +1043,11 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
               onRetry={() => { setShortAnswers({ ...shortAnswers, [currentQuestion]: "" }); setShortFeedback({ ...shortFeedback, [currentQuestion]: null }); }}
             />
             <div className="mt-6 flex justify-between gap-4">
-              <button disabled={currentQuestion === 0} onClick={() => setCurrentQuestion(currentQuestion - 1)} className="rounded-2xl border border-[#e0c7bb] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
+              <button disabled={currentQuestion === 0} onClick={() => setCurrentQuestion(currentQuestion - 1)} className="rounded-2xl border border-[#c8d5e8] bg-white px-6 py-3 font-semibold disabled:opacity-30">Previous</button>
               {currentQuestion < questions.length - 1 ? (
-                <button onClick={() => setCurrentQuestion(currentQuestion + 1)} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Next →</button>
+                <button onClick={() => setCurrentQuestion(currentQuestion + 1)} className="rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Next →</button>
               ) : (
-                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 font-semibold text-white">Finish ✓</button>
+                <button onClick={async () => { setShowResults(true); await saveResult(); }} className="rounded-2xl bg-[#1e2d4a] px-6 py-3 font-semibold text-white">Finish ✓</button>
               )}
             </div>
           </div>
@@ -1056,10 +1056,10 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
         {/* ─── Matching — Intro ─── */}
         {isMatching && !testStarted && (
           <div className="mt-8">
-            <div className="rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center mb-4">
+            <div className="rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm text-center mb-4">
               <p className="text-lg font-bold">🔗 Matching Practice</p>
-              <p className="mt-2 text-sm text-[#7a6258]">Listen carefully, then match each item with the correct option.</p>
-              <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start Matching</button>
+              <p className="mt-2 text-sm text-[#4a5568]">Listen carefully, then match each item with the correct option.</p>
+              <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#1e2d4a] px-8 py-4 font-semibold text-white">Start Matching</button>
             </div>
             <audio ref={audioRef} src={episode.audio_url}
               onTimeUpdate={() => { const a = audioRef.current; if (a) { setAudioProgress((a.currentTime / a.duration) * 100); setAudioCurrentTime(a.currentTime); } }}
@@ -1077,16 +1077,16 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                 onAnswer={(itemIndex, optionKey) => setMatchingAnswers({ ...matchingAnswers, [i]: { ...(matchingAnswers[i] || {}), [itemIndex]: optionKey } })}
                 onCheck={() => setMatchingChecked({ ...matchingChecked, [i]: true })} />
             ))}
-            <button onClick={async () => { setShowResults(true); await saveResult(); }} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Finish ✓</button>
+            <button onClick={async () => { setShowResults(true); await saveResult(); }} className="w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white">Finish ✓</button>
           </div>
         )}
 
         {/* ─── Map — Intro ─── */}
         {isMap && !testStarted && (
-          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm text-center">
+          <div className="mt-8 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm text-center">
             <p className="text-lg font-bold">🗺️ Map Labelling</p>
-            <p className="mt-2 text-sm text-[#7a6258]">Listen to the audio, then label the locations on the map. You have <strong>2 plays</strong>.</p>
-            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-4 font-semibold text-white">Start Map Exercise</button>
+            <p className="mt-2 text-sm text-[#4a5568]">Listen to the audio, then label the locations on the map. You have <strong>2 plays</strong>.</p>
+            <button onClick={() => setTestStarted(true)} className="mt-6 rounded-2xl bg-[#1e2d4a] px-8 py-4 font-semibold text-white">Start Map Exercise</button>
           </div>
         )}
 
@@ -1108,7 +1108,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                 setMapPlays(prev => prev + 1); audio.currentTime = 0; audio.play(); setMapPlaying(true);
               }}
             />
-            {mapChecked && <button onClick={async () => { setShowResults(true); await saveResult(); }} className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Finish ✓</button>}
+            {mapChecked && <button onClick={async () => { setShowResults(true); await saveResult(); }} className="mt-6 w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white">Finish ✓</button>}
           </div>
         )}
 
@@ -1154,7 +1154,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
               else { audio.play().then(() => setIeltsIntroPlaying(true)).catch(() => {}); }
             };
             return (
-              <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+              <div className="mt-8 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
                 {hasIntro && (
                   <audio ref={ieltsIntroRef} src={currentPart.introAudioUrl} preload="auto"
                     onPlay={() => setIeltsIntroPlaying(true)}
@@ -1164,21 +1164,21 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                 )}
                 <div className="text-center">
                   <p className="text-lg font-bold">🎧 IELTS Listening Practice</p>
-                  <p className="mt-2 text-sm text-[#7a6258]">Read the questions for {partLabel} before you listen.</p>
-                  <p className="mt-2 text-xs text-[#7a6258]">You will have up to 2 plays for each audio section.</p>
+                  <p className="mt-2 text-sm text-[#4a5568]">Read the questions for {partLabel} before you listen.</p>
+                  <p className="mt-2 text-xs text-[#4a5568]">You will have up to 2 plays for each audio section.</p>
                 </div>
 
                 {introActive ? (
-                  <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-[#e0c7bb] bg-white p-6 text-center">
-                    <div className={`flex h-14 w-14 items-center justify-center rounded-full bg-[#3b2f2f] ${ieltsIntroPlaying ? "animate-pulse" : ""}`}>
+                  <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-[#c8d5e8] bg-white p-6 text-center">
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-full bg-[#1e2d4a] ${ieltsIntroPlaying ? "animate-pulse" : ""}`}>
                       <Image src="/cat-logo.svg" alt="" width={36} height={36} className="object-contain" />
                     </div>
                     <p className="font-semibold">{ieltsIntroPlaying ? "🔊 Playing introduction…" : "🗣️ Introduction"}</p>
-                    <p className="text-xs text-[#7a6258]">The questions will appear when the introduction finishes.</p>
-                    <button onClick={toggleIntro} className="rounded-2xl bg-[#3b2f2f] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2f2424]">
+                    <p className="text-xs text-[#4a5568]">The questions will appear when the introduction finishes.</p>
+                    <button onClick={toggleIntro} className="rounded-2xl bg-[#1e2d4a] px-6 py-3 text-sm font-semibold text-white hover:bg-[#162038]">
                       {ieltsIntroPlaying ? "⏸ Pause introduction" : "▶ Play introduction"}
                     </button>
-                    <button onClick={skipIntro} className="mt-1 rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-xs font-semibold hover:bg-[#f1ded5]">
+                    <button onClick={skipIntro} className="mt-1 rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-xs font-semibold hover:bg-[#dbe4f0]">
                       Skip intro →
                     </button>
                   </div>
@@ -1188,7 +1188,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                       {currentPart.groups?.map((group, index) => renderIeltsGroupPreview(group, index))}
                     </div>
                     <button onClick={() => setIeltsStage(ieltsStage === "part1-preview" ? "part1-audio" : "part2-audio")}
-                      className="mt-6 w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
+                      className="mt-6 w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white">
                       I&apos;m ready — Start Listening
                     </button>
                   </>
@@ -1201,8 +1201,8 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
             <div className="mt-8">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-[#7a6258]">{partLabel}</p>
-                  <p className="text-xs text-[#7a6258]">You have {currentIeltsPlays}/2 plays</p>
+                  <p className="text-sm font-semibold text-[#4a5568]">{partLabel}</p>
+                  <p className="text-xs text-[#4a5568]">You have {currentIeltsPlays}/2 plays</p>
                 </div>
                 {!isSection4 && <span className={`rounded-full px-3 py-1 text-xs font-bold ${ieltsPartIndex === 0 ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"}`}>{partLabel}</span>}
               </div>
@@ -1220,16 +1220,16 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                   setIeltsAudioPlaying(true);
                   setIeltsAudioPlays(prev => ({ ...prev, [ieltsPartIndex]: (prev[ieltsPartIndex] || 0) + 1 }));
                 }
-              }} className={`mb-5 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${ieltsAudioPlaying ? "bg-[#c9a99a] text-white" : "bg-[#3b2f2f] text-white hover:bg-[#2f2424]"}`}>
+              }} className={`mb-5 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold transition ${ieltsAudioPlaying ? "bg-[#8ba3c4] text-white" : "bg-[#1e2d4a] text-white hover:bg-[#162038]"}`}>
                 {ieltsAudioPlaying ? "⏸ Pause Audio" : currentIeltsPlays >= 2 ? "No plays left" : "▶ Play Audio"}
               </button>
 
               {currentPart.groups?.map((group, groupIndex) => {
                 const groupKey = `${currentPart.part}-${group.id}`;
                 return (
-                  <div key={groupKey} className="mb-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
-                    {group.wordLimit && <div className="mb-4 rounded-2xl bg-[#ead7cc] px-4 py-2 text-sm font-semibold text-[#3b2f2f]">✏️ Write {group.wordLimit}</div>}
-                    <p className="mb-3 text-sm font-bold text-[#7a6258] uppercase tracking-wide">{group.label}</p>
+                  <div key={groupKey} className="mb-6 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
+                    {group.wordLimit && <div className="mb-4 rounded-2xl bg-[#dbe4f0] px-4 py-2 text-sm font-semibold text-[#1e2d4a]">✏️ Write {group.wordLimit}</div>}
+                    <p className="mb-3 text-sm font-bold text-[#4a5568] uppercase tracking-wide">{group.label}</p>
 
                     {(group.type === "note-completion" || group.type === "form-completion") && (() => {
                       const items = group.data?.items || group.data?.fields || [];
@@ -1243,10 +1243,10 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                             return (
                               <div key={bi}>
                                 <div className="flex items-center gap-3">
-                                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white">{bi + 1}</span>
+                                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white">{bi + 1}</span>
                                   <span className="text-sm flex-1">{item.label.replace("___", "")}</span>
                                   <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
-                                    className={`w-32 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                                    className={`w-32 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#1e2d4a] bg-white"}`} />
                                 </div>
                                 {checked && !isCorrect && <p className="mt-1 ml-9 text-xs font-semibold text-green-600">✓ Correct answer: {item.answer.split("|")[0]}</p>}
                               </div>
@@ -1268,10 +1268,10 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                             const parts2 = item.text.split("___");
                             return (
                               <div key={bi} className="flex flex-wrap items-center gap-1 text-sm">
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b2f2f] text-xs font-bold text-white mr-1">{bi + 1}</span>
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1e2d4a] text-xs font-bold text-white mr-1">{bi + 1}</span>
                                 <span>{parts2[0]}</span>
                                 <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
-                                  className={`w-28 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                                  className={`w-28 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#1e2d4a] bg-white"}`} />
                                 {parts2[1] && <span>{parts2[1]}</span>}
                                 {checked && !isCorrect && <span className="ml-1 text-xs font-semibold text-green-600">✓ Correct answer: {item.answer.split("|")[0]}</span>}
                               </div>
@@ -1290,7 +1290,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                           {group.data?.title && <p className="font-bold mb-3 text-center">{group.data.title}</p>}
                           <table className="w-full text-sm border-collapse">
                             {headers.length > 0 && (
-                              <thead><tr>{headers.map((h: string, hi: number) => <th key={hi} className="border border-[#e0c7bb] bg-[#f7eee8] px-3 py-2 text-left font-semibold">{h}</th>)}</tr></thead>
+                              <thead><tr>{headers.map((h: string, hi: number) => <th key={hi} className="border border-[#c8d5e8] bg-[#f0f2f5] px-3 py-2 text-left font-semibold">{h}</th>)}</tr></thead>
                             )}
                             <tbody>
                               {rows.map((row: any, ri: number) => (
@@ -1304,11 +1304,11 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                                     const correctAns = isBlank ? (row.answers[row.answerIndices.indexOf(ci)] || "") : "";
                                     const isCorrect = isBlank && checked && checkAnswer(userAns, correctAns);
                                     return (
-                                      <td key={ci} className="border border-[#e0c7bb] px-3 py-2">
+                                      <td key={ci} className="border border-[#c8d5e8] px-3 py-2">
                                         {isBlank ? (
                                           <div className="flex items-center gap-1">
                                             <input type="text" value={userAns} onChange={e => setIeltsAnswers(prev => ({ ...prev, [key]: e.target.value }))} disabled={!!checked}
-                                              className={`w-24 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#3b2f2f] bg-white"}`} />
+                                              className={`w-24 rounded-xl border px-2 py-1 text-sm text-center font-semibold ${checked ? (isCorrect ? "border-green-400 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-700") : "border-[#1e2d4a] bg-white"}`} />
                                             {checked && !isCorrect && <span className="text-xs text-green-600 font-semibold">✓{correctAns.split("|")[0]}</span>}
                                           </div>
                                         ) : cell}
@@ -1382,7 +1382,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                         const newChecked = { ...ieltsChecked };
                         items.forEach((_: any, bi: number) => { newChecked[`${currentPart.part}-${group.id}-${bi}`] = true; });
                         setIeltsChecked(newChecked);
-                      }} className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold text-sm">Check Answers</button>
+                      }} className="mt-6 w-full rounded-2xl border border-[#c8d5e8] bg-white px-4 py-3 font-semibold text-sm">Check Answers</button>
                     )}
 
                     {group.type === "table-completion" && (
@@ -1392,13 +1392,13 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                         let idx = 0;
                         rows.forEach((row: any) => row.cells.forEach((cell: string) => { if (cell === "___") { newChecked[`${currentPart.part}-${group.id}-table-${idx}`] = true; idx++; } }));
                         setIeltsChecked(newChecked);
-                      }} className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3 font-semibold text-sm">Check Answers</button>
+                      }} className="mt-6 w-full rounded-2xl border border-[#c8d5e8] bg-white px-4 py-3 font-semibold text-sm">Check Answers</button>
                     )}
                   </div>
                 );
               })}
 
-              <button onClick={handleContinue} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
+              <button onClick={handleContinue} className="w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white">
                 {(!isSection4 && ieltsPartIndex === 0) ? "Submit Part 1" : "Finish & See Results"}
               </button>
             </div>
@@ -1407,7 +1407,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
 
         {/* ─── Results ─── */}
         {showResults && (
-          <div className="mt-8 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-8 shadow-sm">
+          <div className="mt-8 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-8 shadow-sm">
             {(() => {
               const { correct, total } = calculateScore();
               const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
@@ -1415,8 +1415,8 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                 <div className="text-center">
                   <h2 className="text-4xl font-bold">Well done!</h2>
                   <p className="mt-4 text-6xl font-bold">{correct} / {total}</p>
-                  <p className="mt-2 text-lg text-[#7a6258]">{pct}% accuracy</p>
-                  <p className="mt-3 text-sm text-[#7a6258]">{pct >= 80 ? "🎯 Excellent work!" : pct >= 60 ? "📈 Good job!" : "💪 Keep going!"}</p>
+                  <p className="mt-2 text-lg text-[#4a5568]">{pct}% accuracy</p>
+                  <p className="mt-3 text-sm text-[#4a5568]">{pct >= 80 ? "🎯 Excellent work!" : pct >= 60 ? "📈 Good job!" : "💪 Keep going!"}</p>
                 </div>
               );
             })()}
@@ -1425,55 +1425,55 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                 const sectionNumber = episode.exam_section;
                 return (
                   <>
-                    <button onClick={() => onNavigateToSection(sectionNumber)} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">
+                    <button onClick={() => onNavigateToSection(sectionNumber)} className="w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white">
                       Continue with Section {sectionNumber}
                     </button>
                     {sectionNumber < 4 ? (
-                      <button onClick={() => onNavigateToSection(sectionNumber + 1)} className="w-full rounded-2xl bg-[#c9a99a] px-6 py-4 font-semibold text-[#3b2f2f]">
+                      <button onClick={() => onNavigateToSection(sectionNumber + 1)} className="w-full rounded-2xl bg-[#8ba3c4] px-6 py-4 font-semibold text-[#1e2d4a]">
                         Move to Section {sectionNumber + 1}
                       </button>
                     ) : (
-                      <button onClick={() => onNavigateHome?.()} className="w-full rounded-2xl bg-white border border-[#e0c7cc] px-6 py-4 font-semibold text-[#3b2f2f]">
+                      <button onClick={() => onNavigateHome?.()} className="w-full rounded-2xl bg-white border border-[#c8d5e8] px-6 py-4 font-semibold text-[#1e2d4a]">
                         Back to Home
                       </button>
                     )}
                   </>
                 );
               })()}
-              {nextEpisode && <button onClick={() => onNextEpisode(nextEpisode.id)} className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white">Next Practice →</button>}
-              <button onClick={onBack} className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f]">Back to Practices</button>
+              {nextEpisode && <button onClick={() => onNextEpisode(nextEpisode.id)} className="w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white">Next Practice →</button>}
+              <button onClick={onBack} className="w-full rounded-2xl border border-[#c8d5e8] bg-white px-6 py-4 font-semibold text-[#1e2d4a]">Back to Practices</button>
             </div>
           </div>
         )}
 
         {/* ─── Comments ─── */}
         <div className="mt-8">
-          <button onClick={() => setShowComments(!showComments)} className={`flex w-full items-center justify-between rounded-2xl border px-5 py-4 font-semibold transition ${showComments ? "border-[#3b2f2f] bg-[#ead7cc]" : "border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
+          <button onClick={() => setShowComments(!showComments)} className={`flex w-full items-center justify-between rounded-2xl border px-5 py-4 font-semibold transition ${showComments ? "border-[#1e2d4a] bg-[#dbe4f0]" : "border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]"}`}>
             <span>💬 Discussion</span>
             <span className="text-sm">{showComments ? "Hide ▲" : "Show ▼"}</span>
           </button>
           {showComments && userEmail && <CommentsPanel episodeId={episodeId} userEmail={userEmail} />}
-          {showComments && !userEmail && <div className="mt-4 rounded-2xl border border-[#e0c7bb] bg-white p-4 text-center text-sm text-[#7a6258]">Please log in to view and post comments.</div>}
+          {showComments && !userEmail && <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4 text-center text-sm text-[#4a5568]">Please log in to view and post comments.</div>}
         </div>
       </section>
 
       {/* ─── Floating Notes ─── */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
         {showNotesPanel && (
-          <div className="w-80 rounded-[2rem] border border-[#e0c7bb] bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#e0c7bb] px-5 py-4">
+          <div className="w-80 rounded-[2rem] border border-[#c8d5e8] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#c8d5e8] px-5 py-4">
               <p className="font-bold">📝 My Notes</p>
-              <button onClick={() => setShowNotesPanel(false)} className="text-[#7a6258] hover:text-[#3b2f2f]">✕</button>
+              <button onClick={() => setShowNotesPanel(false)} className="text-[#4a5568] hover:text-[#1e2d4a]">✕</button>
             </div>
             <div className="p-4">
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Write your notes here..." className="min-h-[200px] w-full rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-3 text-sm" />
-              {notes && <p className="mt-2 text-right text-xs text-[#7a6258]">{notes.length} chars</p>}
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Write your notes here..." className="min-h-[200px] w-full rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-3 text-sm" />
+              {notes && <p className="mt-2 text-right text-xs text-[#4a5568]">{notes.length} chars</p>}
             </div>
           </div>
         )}
-        <button onClick={() => setShowNotesPanel(!showNotesPanel)} className={`flex items-center gap-2 rounded-full px-5 py-3 font-bold shadow-xl transition ${showNotesPanel ? "bg-[#ead7cc] text-[#3b2f2f]" : "bg-[#3b2f2f] text-white hover:bg-[#2f2424]"}`}>
+        <button onClick={() => setShowNotesPanel(!showNotesPanel)} className={`flex items-center gap-2 rounded-full px-5 py-3 font-bold shadow-xl transition ${showNotesPanel ? "bg-[#dbe4f0] text-[#1e2d4a]" : "bg-[#1e2d4a] text-white hover:bg-[#162038]"}`}>
           📝 {showNotesPanel ? "Close" : "Notes"}
-          {notes && !showNotesPanel && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#c9a99a] text-xs text-white">✓</span>}
+          {notes && !showNotesPanel && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8ba3c4] text-xs text-white">✓</span>}
         </button>
       </div>
     </main>

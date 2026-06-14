@@ -18,7 +18,31 @@ type Practice = {
   title: string;
   level: string;
   episode_type: string;
+  questions?: any;
 };
+
+const GROUP_TYPE_LABELS: Record<string, string> = {
+  "mcq": "Multiple Choice",
+  "note-completion": "Note Completion",
+  "form-completion": "Form Completion",
+  "table-completion": "Table Completion",
+  "flow-completion": "Flow Chart",
+  "sentence-completion": "Sentence Completion",
+  "short-answer": "Short Answer",
+  "matching": "Matching",
+  "map": "Map Labelling",
+};
+
+// For IELTS sections: distinct question-group types inside the episode (parts → groups).
+function getGroupTypeLine(questions: any): string {
+  if (!Array.isArray(questions)) return "";
+  const types: string[] = [];
+  questions.forEach((p: any) => (p?.groups || []).forEach((g: any) => {
+    const lbl = GROUP_TYPE_LABELS[g?.type];
+    if (lbl && !types.includes(lbl)) types.push(lbl);
+  }));
+  return types.join(" · ");
+}
 
 type CompletedPractice = {
   episode_id: string;
@@ -70,12 +94,6 @@ const TYPE_EMOJI: Record<string, string> = {
   "quiz-celpip": "📝",
 };
 
-const LEVEL_COLORS: Record<string, string> = {
-  "Beginner": "bg-green-100 text-green-700",
-  "Intermediate": "bg-yellow-100 text-yellow-700",
-  "Advanced": "bg-red-100 text-red-700",
-};
-
 const IELTS_SECTION_LABELS: Record<number, string> = {
   1: "Section 1 — Everyday Conversation",
   2: "Section 2 — Social Monologue",
@@ -98,7 +116,7 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
   const buildQuery = useCallback(async (from: number, to: number) => {
     let query = supabase
       .from("episodes")
-      .select("id, title, level, episode_type", { count: "exact" })
+      .select("id, title, level, episode_type, questions", { count: "exact" })
       .order("created_at", { ascending: true })
       .range(from, to);
 
@@ -166,7 +184,7 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
       "completion-note": "Note Completion", "completion-form": "Form Completion",
       "completion-table": "Table Completion", "completion-flow": "Flow Chart", "completion-sentence": "Sentence Completion",
     };
-    return `${selectedLevel} — ${labels[practiceMode || ""] || "Practice"}`;
+    return labels[practiceMode || ""] || "Practice";
   }
 
   function getCompletionData(practiceId: string) {
@@ -183,29 +201,29 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
   const completedCount = practices.filter(p => completed.some(c => c.episode_id === p.id)).length;
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <section className="mx-auto max-w-4xl px-6 py-12">
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <button onClick={onBack} className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+            <button onClick={onBack} className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#4a5568] hover:text-[#1e2d4a]">
               ← Back
             </button>
             <h1 className="text-4xl font-bold">{getTitle()}</h1>
             {ieltsSection && (
-              <p className="mt-2 text-sm text-[#7a6258]">
+              <p className="mt-2 text-sm text-[#4a5568]">
                 🎧 IELTS Listening Practice
               </p>
             )}
             <div className="mt-2 flex items-center gap-3 flex-wrap">
-              <p className="text-[#7a6258]">{totalCount} {isExamMode ? "exams" : "practices"}</p>
+              <p className="text-[#4a5568]">{totalCount} {isExamMode ? "exams" : "practices"}</p>
               {completedCount > 0 && (
                 <span className="rounded-full bg-green-100 px-3 py-0.5 text-xs font-semibold text-green-700">
                   ✓ {completedCount} completed
                 </span>
               )}
               {completedCount > 0 && totalCount > 0 && (
-                <span className="rounded-full bg-[#ead7cc] px-3 py-0.5 text-xs font-semibold text-[#3b2f2f]">
+                <span className="rounded-full bg-[#dbe4f0] px-3 py-0.5 text-xs font-semibold text-[#1e2d4a]">
                   {Math.round((completedCount / totalCount) * 100)}% done
                 </span>
               )}
@@ -213,10 +231,10 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
           </div>
 
           {totalCount > 0 && completedCount > 0 && (
-            <div className="shrink-0 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] px-5 py-4 text-center shadow-sm">
-              <p className="text-2xl font-bold">{completedCount}<span className="text-base text-[#7a6258]">/{totalCount}</span></p>
-              <p className="text-xs text-[#7a6258]">completed</p>
-              <div className="mt-2 h-1.5 w-20 rounded-full bg-[#ead7cc]">
+            <div className="shrink-0 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] px-5 py-4 text-center shadow-sm">
+              <p className="text-2xl font-bold">{completedCount}<span className="text-base text-[#4a5568]">/{totalCount}</span></p>
+              <p className="text-xs text-[#4a5568]">completed</p>
+              <div className="mt-2 h-1.5 w-20 rounded-full bg-[#dbe4f0]">
                 <div className="h-1.5 rounded-full bg-green-500 transition-all" style={{ width: `${Math.round((completedCount / totalCount) * 100)}%` }} />
               </div>
             </div>
@@ -226,12 +244,12 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
         <div className="mt-6">
           <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             placeholder="🔍 Search practices..."
-            className="w-full rounded-2xl border border-[#e0c7bb] bg-white px-5 py-3 text-sm shadow-sm focus:border-[#3b2f2f] focus:outline-none" />
+            className="w-full rounded-2xl border border-[#c8d5e8] bg-white px-5 py-3 text-sm shadow-sm focus:border-[#1e2d4a] focus:outline-none" />
         </div>
 
         {loading ? (
           <div className="mt-6 flex flex-col gap-3">
-            {[1,2,3,4,5].map(i => <div key={i} className="h-20 w-full animate-pulse rounded-[2rem] bg-[#ead7cc]" />)}
+            {[1,2,3,4,5].map(i => <div key={i} className="h-20 w-full animate-pulse rounded-[2rem] bg-[#dbe4f0]" />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="mt-16 text-center">
@@ -239,11 +257,11 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
             <p className="mt-4 text-lg font-semibold">
               {searchQuery ? "No results match your search" : "No content yet — check back soon!"}
             </p>
-            <p className="mt-2 text-sm text-[#7a6258]">
+            <p className="mt-2 text-sm text-[#4a5568]">
               {searchQuery ? "Try a different keyword." : "New content is being added regularly."}
             </p>
             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="mt-4 text-sm font-semibold text-[#7a6258] underline">Clear search</button>
+              <button onClick={() => setSearchQuery("")} className="mt-4 text-sm font-semibold text-[#4a5568] underline">Clear search</button>
             )}
           </div>
         ) : (
@@ -255,25 +273,21 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
                 return (
                   <button key={practice.id} onClick={() => onSelectEpisode(practice.id)}
                     className={`group flex items-center gap-4 rounded-[2rem] border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                      isCompleted ? "border-green-200 bg-green-50 hover:bg-green-100" : "border-[#e0c7bb] bg-[#fffaf7] hover:bg-white"
+                      isCompleted ? "border-green-200 bg-green-50 hover:bg-green-100" : "border-[#c8d5e8] bg-[#ffffff] hover:bg-white"
                     }`}>
                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
-                      isCompleted ? "bg-green-500 text-white" : "bg-[#ead7cc] text-[#3b2f2f]"
+                      isCompleted ? "bg-green-500 text-white" : "bg-[#dbe4f0] text-[#1e2d4a]"
                     }`}>
                       {isCompleted ? "✓" : index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-semibold text-[#7a6258]">
+                        <span className="text-xs font-semibold text-[#4a5568]">
                           {TYPE_EMOJI[practice.episode_type] || "🎧"} {TYPE_LABELS[practice.episode_type] || practice.episode_type}
                         </span>
-                        {practice.level && (
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LEVEL_COLORS[practice.level] || "bg-[#ead7cc] text-[#3b2f2f]"}`}>
-                            {practice.level}
-                          </span>
-                        )}
                       </div>
                       <p className="mt-1 font-bold truncate">{practice.title}</p>
+                      {(() => { const line = getGroupTypeLine(practice.questions); return line ? <p className="mt-0.5 text-xs text-[#4a5568] truncate">📋 {line}</p> : null; })()}
                       {completion && (
                         <div className="mt-2 flex items-center gap-2">
                           <div className="h-1.5 flex-1 rounded-full bg-green-200">
@@ -289,7 +303,7 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
                         </div>
                       )}
                     </div>
-                    <div className="shrink-0 text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</div>
+                    <div className="shrink-0 text-[#8ba3c4] transition group-hover:translate-x-1 group-hover:text-[#1e2d4a]">→</div>
                   </button>
                 );
               })}
@@ -297,13 +311,13 @@ export default function EpisodeScreen({ selectedLevel, practiceMode, isQuizMode,
 
             {!searchQuery && hasMore && (
               <button onClick={() => fetchPractices(page + 1)} disabled={loadingMore}
-                className="mt-6 w-full rounded-2xl border border-[#e0c7bb] bg-white py-4 font-semibold text-[#3b2f2f] transition hover:bg-[#f1ded5] disabled:opacity-50">
+                className="mt-6 w-full rounded-2xl border border-[#c8d5e8] bg-white py-4 font-semibold text-[#1e2d4a] transition hover:bg-[#dbe4f0] disabled:opacity-50">
                 {loadingMore ? "Loading..." : "Load more"}
               </button>
             )}
 
             {!searchQuery && !hasMore && practices.length > PAGE_SIZE && (
-              <p className="mt-6 text-center text-sm text-[#7a6258]">All {totalCount} loaded ✓</p>
+              <p className="mt-6 text-center text-sm text-[#4a5568]">All {totalCount} loaded ✓</p>
             )}
           </>
         )}

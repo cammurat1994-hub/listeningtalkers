@@ -58,31 +58,31 @@ function UserPanel({ userEmail, onNavigate, onLogout }: {
   return (
     <div className="fixed right-5 top-5 z-50">
       <button onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="flex items-center gap-3 rounded-full bg-[#3b2f2f] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-[#2f2424]">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#3b2f2f]">
+        className="flex items-center gap-3 rounded-full bg-[#1e2d4a] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:bg-[#162038]">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#1e2d4a]">
           {isAdmin ? "A" : userEmail.charAt(0).toUpperCase()}
         </span>
         <span className="hidden sm:inline">Account</span>
         <span>▾</span>
       </button>
       {isMenuOpen && (
-        <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-[#e0c7bb] bg-white shadow-2xl">
-          <div className="border-b border-[#e0c7bb] px-5 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#7a6258]">{isAdmin ? "Administrator" : "Signed in"}</p>
-            <p className="mt-1 truncate text-sm font-bold text-[#3b2f2f]">{userEmail}</p>
+        <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-[#c8d5e8] bg-white shadow-2xl">
+          <div className="border-b border-[#c8d5e8] px-5 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#4a5568]">{isAdmin ? "Administrator" : "Signed in"}</p>
+            <p className="mt-1 truncate text-sm font-bold text-[#1e2d4a]">{userEmail}</p>
           </div>
           {isAdmin && (
             <button onClick={() => { onNavigate("admin"); setIsMenuOpen(false); }}
-              className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]">
+              className="flex w-full items-center gap-3 border-b border-[#c8d5e8] px-5 py-4 text-left font-semibold text-[#1e2d4a] transition hover:bg-[#f0f2f5]">
               🛡️ Admin
             </button>
           )}
           <button onClick={() => { onNavigate("progress"); setIsMenuOpen(false); }}
-            className="flex w-full items-center gap-3 border-b border-[#e0c7bb] px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]">
+            className="flex w-full items-center gap-3 border-b border-[#c8d5e8] px-5 py-4 text-left font-semibold text-[#1e2d4a] transition hover:bg-[#f0f2f5]">
             📊 My Progress
           </button>
           <button onClick={() => { onLogout(); setIsMenuOpen(false); }}
-            className="flex w-full items-center gap-3 px-5 py-4 text-left font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]">
+            className="flex w-full items-center gap-3 px-5 py-4 text-left font-semibold text-[#1e2d4a] transition hover:bg-[#f0f2f5]">
             🚪 Logout
           </button>
         </div>
@@ -207,10 +207,10 @@ export default function Home() {
     return (
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
-        <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
-          <div className="rounded-3xl border border-[#e0c7bb] bg-white p-10 text-center shadow-sm">
+        <main className="flex min-h-screen items-center justify-center bg-[#f0f2f5]">
+          <div className="rounded-3xl border border-[#c8d5e8] bg-white p-10 text-center shadow-sm">
             <h1 className="text-3xl font-bold text-red-600">Access Denied</h1>
-            <p className="mt-4 text-[#7a6258]">You are not authorized to access the admin panel.</p>
+            <p className="mt-4 text-[#4a5568]">You are not authorized to access the admin panel.</p>
           </div>
         </main>
       </>

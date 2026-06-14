@@ -22,44 +22,44 @@ const SECTION_INFO = [
 
 export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, onBack }: Props) {
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <section className="mx-auto max-w-3xl px-6 py-12">
 
         {/* Header */}
-        <button onClick={onBack} className="mb-6 flex items-center gap-2 text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+        <button onClick={onBack} className="mb-6 flex items-center gap-2 text-sm font-semibold text-[#4a5568] hover:text-[#1e2d4a]">
           ← Back
         </button>
 
-        <div className="rounded-[2rem] bg-[#3b2f2f] p-8 text-white shadow-xl">
+        <div className="rounded-[2rem] bg-[#1e2d4a] p-8 text-white shadow-xl">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-[#c9a99a] uppercase tracking-wide">{examType} Listening</p>
+              <p className="text-sm font-semibold text-[#8ba3c4] uppercase tracking-wide">{examType} Listening</p>
               <h1 className="mt-2 text-3xl font-bold">{title}</h1>
             </div>
             <div className="text-right shrink-0">
               <p className="text-4xl font-bold">40</p>
-              <p className="text-sm text-[#c9a99a]">questions</p>
+              <p className="text-sm text-[#8ba3c4]">questions</p>
             </div>
           </div>
 
           <div className="mt-6 grid grid-cols-3 gap-4">
             <div className="rounded-2xl bg-white/10 p-4 text-center">
               <p className="text-2xl font-bold">30</p>
-              <p className="text-xs text-[#c9a99a]">min listening</p>
+              <p className="text-xs text-[#8ba3c4]">min listening</p>
             </div>
             <div className="rounded-2xl bg-white/10 p-4 text-center">
               <p className="text-2xl font-bold">10</p>
-              <p className="text-xs text-[#c9a99a]">min review</p>
+              <p className="text-xs text-[#8ba3c4]">min review</p>
             </div>
             <div className="rounded-2xl bg-white/10 p-4 text-center">
               <p className="text-2xl font-bold">4</p>
-              <p className="text-xs text-[#c9a99a]">sections</p>
+              <p className="text-xs text-[#8ba3c4]">sections</p>
             </div>
           </div>
         </div>
 
         {/* Important rules */}
-        <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+        <div className="mt-6 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
           <h2 className="text-lg font-bold">⚠️ Before you start</h2>
           <div className="mt-4 flex flex-col gap-3">
             {[
@@ -71,14 +71,14 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
             ].map((rule, i) => (
               <div key={i} className="flex items-start gap-3">
                 <span className="text-lg shrink-0">{rule.icon}</span>
-                <p className="text-sm text-[#3b2f2f]">{rule.text}</p>
+                <p className="text-sm text-[#1e2d4a]">{rule.text}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Section breakdown */}
-        <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+        <div className="mt-6 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
           <h2 className="text-lg font-bold">📋 Test structure</h2>
           <div className="mt-4 flex flex-col gap-3">
             {SECTION_INFO.map((s, i) => {
@@ -95,8 +95,8 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
               }, 0) || 10;
 
               return (
-                <div key={i} className="flex items-start gap-4 rounded-2xl border border-[#e0c7bb] bg-white p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#ead7cc] font-bold text-sm">
+                <div key={i} className="flex items-start gap-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#dbe4f0] font-bold text-sm">
                     {i + 1}
                   </div>
                   <div className="flex-1">
@@ -104,10 +104,10 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
                       <p className="font-bold text-sm">{s.title}</p>
                       <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${s.color}`}>{s.difficulty}</span>
                     </div>
-                    <p className="mt-0.5 text-xs text-[#7a6258]">{s.speakers} · {s.topic}</p>
+                    <p className="mt-0.5 text-xs text-[#4a5568]">{s.speakers} · {s.topic}</p>
                     <div className="mt-2 flex flex-wrap gap-1">
                       {section?.questionGroups?.map((g, gi) => (
-                        <span key={gi} className="rounded-full bg-[#f7eee8] border border-[#e0c7bb] px-2 py-0.5 text-xs font-semibold">
+                        <span key={gi} className="rounded-full bg-[#f0f2f5] border border-[#c8d5e8] px-2 py-0.5 text-xs font-semibold">
                           {g.label}
                         </span>
                       ))}
@@ -115,7 +115,7 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-sm font-bold">{questionCount}</p>
-                    <p className="text-xs text-[#7a6258]">questions</p>
+                    <p className="text-xs text-[#4a5568]">questions</p>
                   </div>
                 </div>
               );
@@ -124,7 +124,7 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
         </div>
 
         {/* Timing breakdown */}
-        <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 shadow-sm">
+        <div className="mt-6 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
           <h2 className="text-lg font-bold">⏱️ How time works</h2>
           <div className="mt-4 flex flex-col gap-2">
             {[
@@ -133,12 +133,12 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
               { phase: "Between sections", time: "30 sec", desc: "Read next section questions" },
               { phase: "Review time", time: "10 min", desc: "Check and edit all your answers" },
             ].map((row, i) => (
-              <div key={i} className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-white px-4 py-3">
+              <div key={i} className="flex items-center justify-between rounded-2xl border border-[#c8d5e8] bg-white px-4 py-3">
                 <div>
                   <p className="text-sm font-semibold">{row.phase}</p>
-                  <p className="text-xs text-[#7a6258]">{row.desc}</p>
+                  <p className="text-xs text-[#4a5568]">{row.desc}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-[#ead7cc] px-3 py-1 text-xs font-bold text-[#3b2f2f]">{row.time}</span>
+                <span className="shrink-0 rounded-full bg-[#dbe4f0] px-3 py-1 text-xs font-bold text-[#1e2d4a]">{row.time}</span>
               </div>
             ))}
           </div>
@@ -146,14 +146,14 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
 
         {/* PDF Download */}
         {pdfUrl && (
-          <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-5 shadow-sm">
+          <div className="mt-6 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-5 shadow-sm">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-bold">📄 Question Paper PDF</p>
-                <p className="mt-1 text-sm text-[#7a6258]">Download and print the question paper to follow along, just like the real exam.</p>
+                <p className="mt-1 text-sm text-[#4a5568]">Download and print the question paper to follow along, just like the real exam.</p>
               </div>
               <a href={pdfUrl} target="_blank" rel="noopener noreferrer"
-                className="shrink-0 rounded-2xl bg-[#3b2f2f] px-5 py-3 text-sm font-bold text-white hover:bg-[#2f2424]">
+                className="shrink-0 rounded-2xl bg-[#1e2d4a] px-5 py-3 text-sm font-bold text-white hover:bg-[#162038]">
                 Download PDF
               </a>
             </div>
@@ -162,11 +162,11 @@ export default function ExamIntro({ title, examType, sections, pdfUrl, onStart, 
 
         {/* Start button */}
         <button onClick={onStart}
-          className="mt-8 w-full rounded-2xl bg-[#3b2f2f] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:bg-[#2f2424]">
+          className="mt-8 w-full rounded-2xl bg-[#1e2d4a] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:bg-[#162038]">
           I am ready — Start Test →
         </button>
 
-        <p className="mt-4 text-center text-xs text-[#7a6258]">
+        <p className="mt-4 text-center text-xs text-[#4a5568]">
           Once you start, the timer begins. Make sure you are in a quiet environment.
         </p>
 

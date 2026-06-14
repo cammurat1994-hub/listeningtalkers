@@ -38,16 +38,16 @@ const levels = [
 
 export default function LevelScreen({ onSelectLevel, onBack }: Props) {
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <section className="mx-auto max-w-5xl px-6 py-16">
 
         {/* Header */}
         <div className="text-center">
-          <button onClick={onBack} className="mb-6 flex items-center gap-2 mx-auto text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+          <button onClick={onBack} className="mb-6 flex items-center gap-2 mx-auto text-sm font-semibold text-[#4a5568] hover:text-[#1e2d4a]">
             ← Back
           </button>
           <h1 className="text-4xl font-bold md:text-6xl">Choose your level</h1>
-          <p className="mt-4 text-lg text-[#7a6258]">
+          <p className="mt-4 text-lg text-[#4a5568]">
             Select the level that matches your current English proficiency.
           </p>
         </div>
@@ -58,7 +58,7 @@ export default function LevelScreen({ onSelectLevel, onBack }: Props) {
             <button
               key={level.id}
               onClick={() => onSelectLevel(level.id)}
-              className={`group rounded-[2rem] border-2 bg-[#fffaf7] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md ${level.color}`}
+              className={`group rounded-[2rem] border-2 bg-[#ffffff] p-8 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md ${level.color}`}
             >
               <div className="flex items-start justify-between">
                 <div className="text-5xl">{level.emoji}</div>
@@ -68,27 +68,27 @@ export default function LevelScreen({ onSelectLevel, onBack }: Props) {
               </div>
 
               <h2 className="mt-5 text-2xl font-bold">{level.label}</h2>
-              <p className="mt-2 text-sm text-[#7a6258]">{level.desc}</p>
+              <p className="mt-2 text-sm text-[#4a5568]">{level.desc}</p>
 
               <div className="mt-5 flex flex-col gap-1">
                 {level.exams.map((exam) => (
-                  <p key={exam} className="text-xs font-semibold text-[#c9a99a]">
+                  <p key={exam} className="text-xs font-semibold text-[#8ba3c4]">
                     📊 {exam}
                   </p>
                 ))}
               </div>
 
               <div className="mt-6 flex items-center justify-between">
-                <span className="text-sm font-bold text-[#3b2f2f]">Select level</span>
-                <span className="text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</span>
+                <span className="text-sm font-bold text-[#1e2d4a]">Select level</span>
+                <span className="text-[#8ba3c4] transition group-hover:translate-x-1 group-hover:text-[#1e2d4a]">→</span>
               </div>
             </button>
           ))}
         </div>
 
         {/* Info */}
-        <div className="mt-10 rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-6 text-center shadow-sm">
-          <p className="text-sm text-[#7a6258]">
+        <div className="mt-10 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 text-center shadow-sm">
+          <p className="text-sm text-[#4a5568]">
             💡 <strong>Not sure which level?</strong> Start with Beginner and work your way up. 
             You can always switch levels from the home screen.
           </p>

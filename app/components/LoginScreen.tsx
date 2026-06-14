@@ -35,7 +35,7 @@ export default function LoginScreen({ onGuestLogin }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <div className="mx-auto max-w-5xl px-6 py-16">
         <div className="grid gap-12 md:grid-cols-2 md:items-center">
 
@@ -48,10 +48,10 @@ export default function LoginScreen({ onGuestLogin }: Props) {
 
             <h1 className="mt-8 text-5xl font-bold leading-tight md:text-6xl">
               Master IELTS<br />
-              <span className="text-[#c9a99a]">Listening.</span>
+              <span className="text-[#8ba3c4]">Listening.</span>
             </h1>
 
-            <p className="mt-5 text-lg text-[#7a6258]">
+            <p className="mt-5 text-lg text-[#4a5568]">
               The only platform focused entirely on listening practice.
               Every question type, every level, all in one place.
             </p>
@@ -59,35 +59,35 @@ export default function LoginScreen({ onGuestLogin }: Props) {
             <div className="mt-8 flex flex-col gap-3">
               {features.map((f) => (
                 <div key={f.text} className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ead7cc] text-sm">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dbe4f0] text-sm">
                     {f.emoji}
                   </div>
-                  <p className="text-sm font-semibold text-[#3b2f2f]">{f.text}</p>
+                  <p className="text-sm font-semibold text-[#1e2d4a]">{f.text}</p>
                 </div>
               ))}
             </div>
 
             <button
               onClick={onGuestLogin}
-              className="mt-8 text-sm font-semibold text-[#7a6258] underline hover:text-[#3b2f2f]"
+              className="mt-8 text-sm font-semibold text-[#4a5568] underline hover:text-[#1e2d4a]"
             >
               Continue as guest (no progress saved) →
             </button>
           </div>
 
           {/* Right — auth card */}
-          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-8 shadow-lg">
+          <div className="rounded-[2rem] border border-[#c8d5e8] bg-white p-8 shadow-lg">
             {!showSignIn ? (
               <>
                 <h2 className="text-2xl font-bold">Start for free</h2>
-                <p className="mt-2 text-sm text-[#7a6258]">
+                <p className="mt-2 text-sm text-[#4a5568]">
                   Create an account to save your progress and track your improvement.
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3">
                   <button
                     onClick={signInWithGoogle}
-                    className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f] shadow-sm transition hover:bg-[#f7eee8]"
+                    className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#c8d5e8] bg-white px-6 py-4 font-semibold text-[#1e2d4a] shadow-sm transition hover:bg-[#f0f2f5]"
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -99,20 +99,20 @@ export default function LoginScreen({ onGuestLogin }: Props) {
                   </button>
 
                   <div className="flex items-center gap-3">
-                    <div className="h-px flex-1 bg-[#e0c7bb]" />
-                    <span className="text-xs text-[#7a6258]">or</span>
-                    <div className="h-px flex-1 bg-[#e0c7bb]" />
+                    <div className="h-px flex-1 bg-[#c8d5e8]" />
+                    <span className="text-xs text-[#4a5568]">or</span>
+                    <div className="h-px flex-1 bg-[#c8d5e8]" />
                   </div>
 
                   <button
                     onClick={() => setShowSignIn(true)}
-                    className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white transition hover:bg-[#2f2424]"
+                    className="w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white transition hover:bg-[#162038]"
                   >
                     Continue with Email
                   </button>
                 </div>
 
-                <p className="mt-6 text-center text-xs text-[#7a6258]">
+                <p className="mt-6 text-center text-xs text-[#4a5568]">
                   By signing in, you agree to our terms of service.
                 </p>
               </>
@@ -122,13 +122,13 @@ export default function LoginScreen({ onGuestLogin }: Props) {
                   📬
                 </div>
                 <h2 className="mt-4 text-2xl font-bold">Check your email</h2>
-                <p className="mt-2 text-sm text-[#7a6258]">
+                <p className="mt-2 text-sm text-[#4a5568]">
                   We sent a magic link to <strong>{email}</strong>.<br />
                   Click the link to sign in.
                 </p>
                 <button
                   onClick={() => { setEmailSent(false); setShowSignIn(false); setEmail(""); }}
-                  className="mt-6 text-sm font-semibold text-[#7a6258] underline"
+                  className="mt-6 text-sm font-semibold text-[#4a5568] underline"
                 >
                   Use a different email
                 </button>
@@ -136,7 +136,7 @@ export default function LoginScreen({ onGuestLogin }: Props) {
             ) : (
               <>
                 <h2 className="text-2xl font-bold">Sign in with email</h2>
-                <p className="mt-2 text-sm text-[#7a6258]">
+                <p className="mt-2 text-sm text-[#4a5568]">
                   We will send you a magic link — no password needed.
                 </p>
 
@@ -147,26 +147,26 @@ export default function LoginScreen({ onGuestLogin }: Props) {
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") signInWithEmail(); }}
                     placeholder="your@email.com"
-                    className="w-full rounded-2xl border border-[#e0c7bb] bg-[#f7eee8] px-5 py-4 text-sm focus:border-[#3b2f2f] focus:outline-none"
+                    className="w-full rounded-2xl border border-[#c8d5e8] bg-[#f0f2f5] px-5 py-4 text-sm focus:border-[#1e2d4a] focus:outline-none"
                   />
                   <button
                     onClick={signInWithEmail}
                     disabled={loading}
-                    className="w-full rounded-2xl bg-[#3b2f2f] px-6 py-4 font-semibold text-white transition hover:bg-[#2f2424] disabled:opacity-50"
+                    className="w-full rounded-2xl bg-[#1e2d4a] px-6 py-4 font-semibold text-white transition hover:bg-[#162038] disabled:opacity-50"
                   >
                     {loading ? "Sending..." : "Send Magic Link →"}
                   </button>
                 </div>
 
                 <div className="mt-4 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-[#e0c7bb]" />
-                  <span className="text-xs text-[#7a6258]">or</span>
-                  <div className="h-px flex-1 bg-[#e0c7bb]" />
+                  <div className="h-px flex-1 bg-[#c8d5e8]" />
+                  <span className="text-xs text-[#4a5568]">or</span>
+                  <div className="h-px flex-1 bg-[#c8d5e8]" />
                 </div>
 
                 <button
                   onClick={signInWithGoogle}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#e0c7bb] bg-white px-6 py-4 font-semibold text-[#3b2f2f] transition hover:bg-[#f7eee8]"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#c8d5e8] bg-white px-6 py-4 font-semibold text-[#1e2d4a] transition hover:bg-[#f0f2f5]"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -179,7 +179,7 @@ export default function LoginScreen({ onGuestLogin }: Props) {
 
                 <button
                   onClick={() => setShowSignIn(false)}
-                  className="mt-4 w-full text-center text-sm font-semibold text-[#7a6258] underline"
+                  className="mt-4 w-full text-center text-sm font-semibold text-[#4a5568] underline"
                 >
                   ← Back
                 </button>

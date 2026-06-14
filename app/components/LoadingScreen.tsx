@@ -14,7 +14,7 @@ export default function LoadingScreen() {
   }, []);
 
   return (
-    <main className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#f7eee8]">
+    <main className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#f0f2f5]">
       <Image
         src="/cat-logo.svg"
         alt="Loading"

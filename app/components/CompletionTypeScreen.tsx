@@ -72,18 +72,18 @@ export default function CompletionTypeScreen({
   };
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <section className="mx-auto max-w-5xl px-6 py-16">
 
         <div className="text-center">
-          <button onClick={onBack} className="mb-6 flex items-center gap-2 mx-auto text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
+          <button onClick={onBack} className="mb-6 flex items-center gap-2 mx-auto text-sm font-semibold text-[#4a5568] hover:text-[#1e2d4a]">
             ← Back
           </button>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#ead7cc] px-4 py-2 text-sm font-semibold">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#dbe4f0] px-4 py-2 text-sm font-semibold">
             📋 Completions
           </div>
           <h1 className="mt-4 text-4xl font-bold md:text-5xl">Choose Completion Type</h1>
-          <p className="mt-4 text-lg text-[#7a6258]">
+          <p className="mt-4 text-lg text-[#4a5568]">
             All completion types appear in IELTS Listening Section 1–4.
           </p>
         </div>
@@ -93,10 +93,10 @@ export default function CompletionTypeScreen({
             <button
               key={type.id}
               onClick={handlers[type.id]}
-              className="group rounded-[2rem] border border-[#e0c7bb] bg-[#fffaf7] p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#3b2f2f] hover:bg-white hover:shadow-md"
+              className="group rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-7 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#1e2d4a] hover:bg-white hover:shadow-md"
             >
               <div className="flex items-start justify-between">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ead7cc] text-3xl">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dbe4f0] text-3xl">
                   {type.emoji}
                 </div>
                 <p className={`rounded-full px-3 py-1 text-xs font-bold ${type.diffColor}`}>
@@ -105,19 +105,19 @@ export default function CompletionTypeScreen({
               </div>
 
               <h2 className="mt-4 text-xl font-bold">{type.title}</h2>
-              <p className="mt-2 text-sm text-[#7a6258]">{type.description}</p>
+              <p className="mt-2 text-sm text-[#4a5568]">{type.description}</p>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {type.exams.map((exam) => (
-                  <span key={exam} className="rounded-full bg-[#3b2f2f] px-3 py-1 text-xs font-bold text-white">
+                  <span key={exam} className="rounded-full bg-[#1e2d4a] px-3 py-1 text-xs font-bold text-white">
                     {exam}
                   </span>
                 ))}
               </div>
 
-              <div className="mt-5 flex items-center justify-between border-t border-[#e0c7bb] pt-4">
+              <div className="mt-5 flex items-center justify-between border-t border-[#c8d5e8] pt-4">
                 <span className="text-sm font-bold">Start practicing</span>
-                <span className="text-[#c9a99a] transition group-hover:translate-x-1 group-hover:text-[#3b2f2f]">→</span>
+                <span className="text-[#8ba3c4] transition group-hover:translate-x-1 group-hover:text-[#1e2d4a]">→</span>
               </div>
             </button>
           ))}

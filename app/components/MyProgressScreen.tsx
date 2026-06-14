@@ -19,25 +19,14 @@ type Result = {
   created_at: string;
 };
 
-type IeltsEpisode = { id: string; exam_section: number | null };
+type IeltsEpisode = { id: string; exam_section: number | null; questions: any };
 
-const levels = ["Beginner", "Intermediate", "Advanced"];
-
-const PRACTICE_TYPE_LABELS: Record<string, string> = {
-  "practice-mcq": "Multiple Choice",
-  "practice-fill": "Fill in the Blank",
-  "practice-dictation": "Dictation",
-  "practice-short": "Short Answer",
-  "practice-matching": "Matching",
-  "practice-map": "Map Labelling",
-  "practice-completion-note": "Note Completion",
-  "practice-completion-form": "Form Completion",
-  "practice-completion-table": "Table Completion",
-  "practice-completion-flow": "Flow Chart",
-  "practice-completion-sentence": "Sentence Completion",
-};
-
-const PRACTICE_TYPES = Object.keys(PRACTICE_TYPE_LABELS);
+const EXAM_TABS = [
+  { id: "ielts", label: "IELTS", emoji: "🎧", active: true },
+  { id: "toefl", label: "TOEFL", emoji: "🎓", active: false },
+  { id: "toeic", label: "TOEIC", emoji: "💼", active: false },
+  { id: "celpip", label: "CELPIP", emoji: "🍁", active: false },
+];
 
 const SECTION_INFO: Record<number, { title: string; desc: string; parts: string; emoji: string }> = {
   1: { title: "Section 1", desc: "Everyday conversation", parts: "Part 1 & 2", emoji: "💬" },
@@ -46,20 +35,57 @@ const SECTION_INFO: Record<number, { title: string; desc: string; parts: string;
   4: { title: "Section 4", desc: "University lecture", parts: "Single part", emoji: "📖" },
 };
 
+const GROUP_TYPE_LABELS: Record<string, string> = {
+  "mcq": "Multiple Choice",
+  "note-completion": "Note Completion",
+  "form-completion": "Form Completion",
+  "table-completion": "Table Completion",
+  "flow-completion": "Flow Chart",
+  "sentence-completion": "Sentence Completion",
+  "short-answer": "Short Answer",
+  "matching": "Matching",
+  "map": "Map Labelling",
+};
+
 function getTypeLabel(t: string): string {
   if (t === "ielts-section") return "IELTS Section";
-  if (PRACTICE_TYPE_LABELS[t]) return PRACTICE_TYPE_LABELS[t];
-  if (t?.includes("completion")) return "Completions";
+  if (t?.includes("completion")) return "Completion";
   if (t?.startsWith("quiz-")) return "Quiz";
   return "Practice";
 }
 
-// IELTS section number — prefer episodes map, fall back to title (e.g. "IELTS S2 — ...")
+// Number of answerable questions inside a single question group.
+function countGroupQuestions(group: any): number {
+  const d = group?.data;
+  if (!d) return 0;
+  switch (group.type) {
+    case "mcq":
+    case "short-answer":
+      return Array.isArray(d) ? d.length : 0;
+    case "note-completion":
+    case "form-completion":
+      return (d.items?.length || d.fields?.length || 0);
+    case "sentence-completion":
+      return d.items?.length || 0;
+    case "matching":
+      return d.items?.length || 0;
+    case "map":
+      return d.points?.length || 0;
+    case "flow-completion":
+      return (d.steps || []).filter((s: any) => s.hasBlank).length;
+    case "table-completion":
+      return (d.rows || []).reduce((n: number, row: any) => n + (row.cells || []).filter((c: string) => c === "___").length, 0);
+    default:
+      return 0;
+  }
+}
+
+// IELTS section number — prefer episodes map, fall back to title (e.g. "... Section 2 ...")
 function getSectionNum(r: Result, sectionMap: Map<string, number>): number | null {
   if (r.episode_type !== "ielts-section") return null;
   const fromMap = sectionMap.get(r.episode_id);
   if (fromMap) return fromMap;
-  const m = r.episode_title?.match(/\bS([1-4])\b/);
+  const m = r.episode_title?.match(/\bS(?:ection)?\s*([1-4])\b/i);
   return m ? parseInt(m[1], 10) : null;
 }
 
@@ -106,17 +132,9 @@ function getMotivationMessage(streak: number, accuracy: number, completed: numbe
   return "💪 Every session counts. Keep going!";
 }
 
-function getAccuracyMessage(pct: number): string {
-  if (pct >= 80) return "Excellent — keep it up!";
-  if (pct >= 60) return "Good progress — a little more practice will get you there.";
-  if (pct >= 40) return "You're building a foundation — consistency is key.";
-  if (pct >= 20) return "Early days — every attempt improves your ear.";
-  return "Just getting started — keep going!";
-}
-
-function AccuracyBar({ pct, color = "bg-[#3b2f2f]" }: { pct: number; color?: string }) {
+function AccuracyBar({ pct, color = "bg-[#1e2d4a]" }: { pct: number; color?: string }) {
   return (
-    <div className="h-2 w-full rounded-full bg-[#f1e3da]">
+    <div className="h-2 w-full rounded-full bg-[#dbe4f0]">
       <div className={`h-2 rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -126,13 +144,13 @@ function barColor(pct: number) {
   if (pct >= 80) return "bg-green-500";
   if (pct >= 60) return "bg-yellow-500";
   if (pct >= 40) return "bg-orange-400";
-  return "bg-[#c9a99a]";
+  return "bg-[#8ba3c4]";
 }
 
 function textColor(pct: number) {
   if (pct >= 80) return "text-green-600";
   if (pct >= 60) return "text-yellow-600";
-  return "text-[#7a6258]";
+  return "text-[#4a5568]";
 }
 
 function relativeDate(iso: string | null): string | null {
@@ -146,7 +164,7 @@ function relativeDate(iso: string | null): string | null {
 export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
   const [results, setResults] = useState<Result[]>([]);
   const [ieltsEpisodes, setIeltsEpisodes] = useState<IeltsEpisode[]>([]);
-  const [selectedLevel, setSelectedLevel] = useState("Beginner");
+  const [examTab, setExamTab] = useState("ielts");
   const [loading, setLoading] = useState(true);
   const [activityPage, setActivityPage] = useState(0);
   const ACTIVITY_PAGE_SIZE = 5;
@@ -163,7 +181,7 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
             .order("created_at", { ascending: false }),
           supabase
             .from("episodes")
-            .select("id, exam_section")
+            .select("id, exam_section, questions")
             .eq("episode_type", "ielts-section"),
         ]);
         if (resRes.data) setResults(resRes.data);
@@ -174,7 +192,6 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
     fetchData();
   }, []);
 
-  // episode_id → section number, and available episodes per section
   const sectionMap = useMemo(() => {
     const m = new Map<string, number>();
     ieltsEpisodes.forEach((e) => { if (e.exam_section) m.set(e.id, e.exam_section); });
@@ -187,14 +204,23 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
     return t;
   }, [ieltsEpisodes]);
 
+  // episode_id → its question groups (flattened across parts) with question counts
+  const episodeGroups = useMemo(() => {
+    const m = new Map<string, { type: string; count: number }[]>();
+    ieltsEpisodes.forEach((e) => {
+      const parts = Array.isArray(e.questions) ? e.questions : [];
+      const groups: { type: string; count: number }[] = [];
+      parts.forEach((p: any) => (p?.groups || []).forEach((g: any) => groups.push({ type: g.type, count: countGroupQuestions(g) })));
+      m.set(e.id, groups);
+    });
+    return m;
+  }, [ieltsEpisodes]);
+
   const latestByEpisode = useMemo(() => {
     const map = new Map<string, Result>();
     results.forEach((r) => { if (!map.has(r.episode_id)) map.set(r.episode_id, r); });
     return map;
   }, [results]);
-
-  const practiceResults = useMemo(() => results.filter(r => !r.episode_type?.startsWith("quiz-")), [results]);
-  const quizResults = useMemo(() => results.filter(r => r.episode_type?.startsWith("quiz-")), [results]);
 
   const completedCount = latestByEpisode.size;
   const totalCorrect = results.reduce((s, r) => s + r.score, 0);
@@ -203,10 +229,9 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
   const streak = calculateStreak(results);
   const longestStreak = useMemo(() => calculateLongestStreak(results), [results]);
   const motivationMessage = getMotivationMessage(streak, overallAccuracy, completedCount);
-
   const lastActivity = results[0] ? relativeDate(results[0].created_at) : null;
 
-  // IELTS Section bazlı istatistikler (S1-S4)
+  // IELTS Section istatistikleri (S1-S4)
   const sectionStats = useMemo(() => {
     const map: Record<number, { episodes: Set<string>; correct: number; total: number; last: string }> = {};
     results.forEach((r) => {
@@ -236,81 +261,46 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
 
   const hasAnyIelts = sectionStats.some((s) => s.hasData || s.available > 0);
 
-  // IELTS odaklı kişiselleştirilmiş motivasyon
-  const ieltsMotivation = useMemo(() => {
-    const withData = sectionStats.filter((s) => s.hasData);
-    if (!withData.length) return null;
-    const strongest = [...withData].sort((a, b) => b.pct - a.pct)[0];
-    const notStarted = sectionStats.find((s) => !s.hasData && s.available > 0);
-    const weakest = [...withData].sort((a, b) => a.pct - b.pct)[0];
-    if (notStarted) {
-      return `💪 You're strong in Section ${strongest.section} (${strongest.pct}%) — give Section ${notStarted.section} a try next!`;
-    }
-    if (weakest.pct < 60 && weakest.section !== strongest.section) {
-      return `📚 Section ${weakest.section} needs some love (${weakest.pct}%). A few more practices will lift your score!`;
-    }
-    return `🌟 Great balance across sections! Section ${strongest.section} is your strongest at ${strongest.pct}%.`;
-  }, [sectionStats]);
-
-  // Practice type bazlı performans
-  const practiceTypeStats = useMemo(() => {
-    const map: Record<string, { correct: number; total: number }> = {};
-    practiceResults.forEach((r) => {
-      const key = r.episode_type;
-      if (!key || !PRACTICE_TYPES.includes(key)) return;
-      if (!map[key]) map[key] = { correct: 0, total: 0 };
-      map[key].correct += r.score;
-      map[key].total += r.total_questions;
+  // Soru tipi performansı — episode doğruluğu, içerdiği soru tiplerine paylaştırılır
+  const questionTypeStats = useMemo(() => {
+    const buckets: Record<string, { correct: number; total: number }> = {};
+    results.forEach((r) => {
+      if (r.episode_type !== "ielts-section" || r.total_questions <= 0) return;
+      const groups = episodeGroups.get(r.episode_id);
+      if (!groups || !groups.length) return;
+      const pct = r.score / r.total_questions;
+      groups.forEach((g) => {
+        if (g.count <= 0) return;
+        if (!buckets[g.type]) buckets[g.type] = { correct: 0, total: 0 };
+        buckets[g.type].total += g.count;
+        buckets[g.type].correct += pct * g.count;
+      });
     });
-    return Object.entries(map)
-      .map(([type, { correct, total }]) => ({
+    return Object.entries(buckets)
+      .map(([type, b]) => ({
         type,
-        label: PRACTICE_TYPE_LABELS[type] || type,
-        pct: total > 0 ? Math.round((correct / total) * 100) : 0,
-        total,
+        label: GROUP_TYPE_LABELS[type] || type,
+        pct: b.total > 0 ? Math.round((b.correct / b.total) * 100) : 0,
       }))
-      .filter(a => a.total > 0)
       .sort((a, b) => a.pct - b.pct);
-  }, [practiceResults]);
-
-  // Quiz type bazlı performans
-  const quizTypeStats = useMemo(() => {
-    const map: Record<string, { correct: number; total: number }> = {};
-    quizResults.forEach((r) => {
-      const key = r.episode_type?.replace("quiz-", "").toUpperCase() || "Quiz";
-      if (!map[key]) map[key] = { correct: 0, total: 0 };
-      map[key].correct += r.score;
-      map[key].total += r.total_questions;
-    });
-    return Object.entries(map)
-      .map(([label, { correct, total }]) => ({
-        label,
-        pct: total > 0 ? Math.round((correct / total) * 100) : 0,
-        total,
-      }))
-      .filter(a => a.total > 0)
-      .sort((a, b) => a.pct - b.pct);
-  }, [quizResults]);
-
-  const levelResults = results.filter((r) => r.level === selectedLevel);
+  }, [results, episodeGroups]);
 
   const pagedActivity = results.slice(activityPage * ACTIVITY_PAGE_SIZE, (activityPage + 1) * ACTIVITY_PAGE_SIZE);
   const totalActivityPages = Math.ceil(results.length / ACTIVITY_PAGE_SIZE);
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7eee8]">
+      <main className="flex min-h-screen items-center justify-center bg-[#f0f2f5]">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#e0c7bb] border-t-[#3b2f2f]" />
-          <p className="text-[#7a6258]">Loading your progress...</p>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#c8d5e8] border-t-[#1e2d4a]" />
+          <p className="text-[#4a5568]">Loading your progress...</p>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f7eee8] text-[#3b2f2f]">
-      {/* Flame animasyonu (CSS) */}
+    <main className="min-h-screen bg-[#f0f2f5] text-[#1e2d4a]">
       <style>{`
         @keyframes flameFlicker {
           0%, 100% { transform: scale(1) rotate(-3deg); opacity: 1; }
@@ -326,296 +316,230 @@ export default function MyProgressScreen({ onBack, onSelectEpisode }: Props) {
       <section className="mx-auto max-w-4xl px-6 py-12">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <button onClick={onBack} className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#7a6258] hover:text-[#3b2f2f]">
-              ← Back
+        <div>
+          <button onClick={onBack} className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#4a5568] hover:text-[#1e2d4a]">
+            ← Back
+          </button>
+          <h1 className="text-4xl font-bold md:text-5xl">My Progress</h1>
+          <p className="mt-2 text-[#4a5568]">Track your listening journey.</p>
+        </div>
+
+        {/* Sınav sekmeleri */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          {EXAM_TABS.map((tab) => (
+            <button key={tab.id} onClick={() => setExamTab(tab.id)}
+              className={`flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-bold transition ${
+                examTab === tab.id ? "border-[#1e2d4a] bg-[#1e2d4a] text-white" : "border-[#c8d5e8] bg-white text-[#1e2d4a] hover:bg-[#ffffff]"
+              }`}>
+              {tab.emoji} {tab.label}
+              {!tab.active && <span className="rounded-full bg-[#dbe4f0] px-1.5 py-0.5 text-[9px] font-semibold text-[#4a5568]">SOON</span>}
             </button>
-            <h1 className="text-4xl font-bold md:text-5xl">My Progress</h1>
-            <p className="mt-2 text-[#7a6258]">Track your IELTS listening journey.</p>
-          </div>
-        </div>
-
-        {/* Motivasyon kartı */}
-        <div className="mt-8 rounded-[2rem] bg-[#3b2f2f] p-6 text-white shadow-sm">
-          <p className="text-lg font-semibold">{motivationMessage}</p>
-          {ieltsMotivation && (
-            <p className="mt-2 text-sm text-[#ead7cc]">{ieltsMotivation}</p>
-          )}
-          {lastActivity && (
-            <p className="mt-2 text-sm text-[#c9a99a]">
-              Last activity: {lastActivity} — {results[0]?.level} · {getTypeLabel(results[0]?.episode_type)}
-            </p>
-          )}
-
-          {/* Streak satırı: current + longest + flame */}
-          <div className="mt-4 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2">
-              <span className={streak > 0 ? "flame-anim text-2xl" : "text-2xl opacity-50"}>🔥</span>
-              <div className="leading-tight">
-                <p className="text-xl font-bold">{streak}</p>
-                <p className="text-[10px] uppercase tracking-wide text-[#c9a99a]">Current streak</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2">
-              <span className="text-2xl">🏆</span>
-              <div className="leading-tight">
-                <p className="text-xl font-bold">{longestStreak}</p>
-                <p className="text-[10px] uppercase tracking-wide text-[#c9a99a]">Longest streak</p>
-              </div>
-            </div>
-            {streak > 0 && (
-              <div className="flex items-center gap-1.5">
-                {Array.from({ length: Math.min(streak, 7) }).map((_, i) => (
-                  <div key={i} className="h-2 w-6 rounded-full bg-orange-400" />
-                ))}
-                {streak > 7 && <span className="text-xs text-orange-300">+{streak - 7}</span>}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Özet kartlar */}
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {[
-            { emoji: "🔥", label: "Streak", value: `${streak}`, sub: streak === 1 ? "day" : "days", color: streak >= 3 ? "border-orange-200 bg-orange-50" : "" },
-            { emoji: "🎧", label: "Practices", value: `${completedCount}`, sub: "completed", color: "" },
-            { emoji: "🎯", label: "Accuracy", value: `${overallAccuracy}%`, sub: "overall", color: overallAccuracy >= 80 ? "border-green-200 bg-green-50" : "" },
-            { emoji: "✅", label: "Correct", value: `${totalCorrect}`, sub: `of ${totalQuestions}`, color: "" },
-          ].map((card) => (
-            <div key={card.label} className={`rounded-[2rem] border p-6 shadow-sm ${card.color || "border-[#e0c7bb] bg-white"}`}>
-              <p className="text-sm text-[#7a6258]">{card.emoji} {card.label}</p>
-              <h2 className="mt-2 text-4xl font-bold">{card.value}</h2>
-              <p className="mt-1 text-xs text-[#7a6258]">{card.sub}</p>
-            </div>
           ))}
         </div>
 
-        {/* IELTS Section ilerleme kartları (S1-S4) */}
-        {hasAnyIelts && (
-          <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold">🎧 IELTS Section Progress</h2>
-            <p className="mt-1 text-xs text-[#7a6258]">Your journey through each Listening section.</p>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              {sectionStats.map((s) => {
-                const info = SECTION_INFO[s.section];
-                return (
-                  <div
-                    key={s.section}
-                    className={`rounded-2xl border p-5 transition ${
-                      s.hasData ? "border-[#e0c7bb] bg-[#fffaf7]" : "border-dashed border-[#e0c7bb] bg-[#f7eee8]/40"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-base font-bold">{info.emoji} {info.title}</p>
-                        <p className="text-xs text-[#7a6258]">{info.desc} · {info.parts}</p>
-                      </div>
-                      {s.hasData ? (
-                        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-sm font-bold ${
-                          s.pct >= 80 ? "bg-green-100 text-green-700" :
-                          s.pct >= 60 ? "bg-yellow-100 text-yellow-700" :
-                          "bg-red-100 text-red-700"
-                        }`}>{s.pct}%</span>
-                      ) : (
-                        <span className="shrink-0 rounded-full bg-[#ead7cc] px-2.5 py-0.5 text-xs font-semibold text-[#7a6258]">New</span>
-                      )}
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                      <div>
-                        <p className="text-lg font-bold">{s.completed}</p>
-                        <p className="text-[10px] uppercase tracking-wide text-[#7a6258]">Done</p>
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold">{s.hasData ? `${s.pct}%` : "—"}</p>
-                        <p className="text-[10px] uppercase tracking-wide text-[#7a6258]">Avg score</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-bold leading-tight pt-1">{relativeDate(s.last) || "—"}</p>
-                        <p className="text-[10px] uppercase tracking-wide text-[#7a6258]">Last</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4">
-                      <div className="mb-1 flex items-center justify-between text-[11px] text-[#7a6258]">
-                        <span>Completed</span>
-                        <span>{s.available > 0 ? `${s.completed}/${s.available}` : s.completed}</span>
-                      </div>
-                      <AccuracyBar pct={s.progress} color={s.hasData ? barColor(s.pct) : "bg-[#c9a99a]"} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Practice ve Quiz 2 kart */}
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-
-          {/* Practice performansı */}
-          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold">🎧 Practice Performance</h2>
-            <p className="mt-1 text-xs text-[#7a6258]">Your accuracy by question type.</p>
-            {practiceTypeStats.length === 0 ? (
-              <p className="mt-4 text-sm text-[#7a6258]">No practice data yet.</p>
-            ) : (
-              <div className="mt-4 flex flex-col gap-4">
-                {practiceTypeStats.map((s) => (
-                  <div key={s.type}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold">{s.label}</span>
-                      <span className={`text-sm font-bold ${textColor(s.pct)}`}>{s.pct}%</span>
-                    </div>
-                    <AccuracyBar pct={s.pct} color={barColor(s.pct)} />
-                    <p className="mt-1 text-xs text-[#7a6258]">{getAccuracyMessage(s.pct)}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Quiz performansı */}
-          <div className="rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold">📝 Quiz Performance</h2>
-            <p className="mt-1 text-xs text-[#7a6258]">Your accuracy by exam type.</p>
-            {quizTypeStats.length === 0 ? (
-              <p className="mt-4 text-sm text-[#7a6258]">No quiz data yet. Try an exam-style quiz!</p>
-            ) : (
-              <div className="mt-4 flex flex-col gap-4">
-                {quizTypeStats.map((s) => (
-                  <div key={s.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold">{s.label}</span>
-                      <span className={`text-sm font-bold ${textColor(s.pct)}`}>{s.pct}%</span>
-                    </div>
-                    <AccuracyBar pct={s.pct} color={barColor(s.pct)} />
-                    <p className="mt-1 text-xs text-[#7a6258]">{getAccuracyMessage(s.pct)}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Progress by Level */}
-        <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-bold">Progress by Level</h2>
-          <div className="mt-5 flex gap-3">
-            {levels.map((level) => {
-              const lvlResults = results.filter((r) => r.level === level);
-              const lvlQ = lvlResults.reduce((s, r) => s + r.total_questions, 0);
-              const lvlC = lvlResults.reduce((s, r) => s + r.score, 0);
-              const acc = lvlQ > 0 ? Math.round((lvlC / lvlQ) * 100) : 0;
-              const practices = new Set(lvlResults.map((r) => r.episode_id)).size;
-              return (
-                <button key={level} onClick={() => setSelectedLevel(level)}
-                  className={`flex-1 rounded-2xl border p-4 text-left transition ${selectedLevel === level ? "border-[#3b2f2f] bg-[#f7eee8]" : "border-[#e0c7bb] hover:bg-[#fffaf7]"}`}>
-                  <p className="font-bold text-sm">{level}</p>
-                  <p className="mt-1 text-2xl font-bold">{acc > 0 ? `${acc}%` : "—"}</p>
-                  <p className="mt-1 text-xs text-[#7a6258]">{practices} practices</p>
-                  <div className="mt-2">
-                    <AccuracyBar pct={acc} color={barColor(acc)} />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {levelResults.length > 0 && (
-            <div className="mt-5 flex flex-col gap-2">
-              <p className="text-sm font-semibold text-[#7a6258]">{selectedLevel} — recent practices</p>
-              {Array.from(new Map(levelResults.map(r => [r.episode_id, r])).values()).slice(0, 5).map((r) => {
-                const acc = Math.round((r.score / r.total_questions) * 100);
-                return (
-                  <button key={r.id} onClick={() => onSelectEpisode(r.episode_id)}
-                    className="flex items-center justify-between rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] px-4 py-3 text-left text-sm hover:bg-[#f1ded5]">
-                    <span className="font-semibold truncate">{r.episode_title}</span>
-                    <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
-                      acc >= 80 ? "bg-green-100 text-green-700" :
-                      acc >= 60 ? "bg-yellow-100 text-yellow-700" :
-                      "bg-red-100 text-red-700"
-                    }`}>{acc}%</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Recent Activity — 5'lik sayfalı */}
-        {results.length > 0 && (
-          <div className="mt-6 rounded-[2rem] border border-[#e0c7bb] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">Recent Activity</h2>
-              {totalActivityPages > 1 && (
-                <p className="text-sm text-[#7a6258]">Page {activityPage + 1} / {totalActivityPages}</p>
-              )}
-            </div>
-            <div className="mt-5 flex flex-col gap-3">
-              {pagedActivity.map((result) => {
-                const acc = result.total_questions > 0 ? Math.round((result.score / result.total_questions) * 100) : 0;
-                const dateLabel = (() => {
-                  const diff = Math.floor((new Date().getTime() - new Date(result.created_at).getTime()) / 86400000);
-                  return diff === 0 ? "Today" : diff === 1 ? "Yesterday" : `${diff}d ago`;
-                })();
-                const sec = getSectionNum(result, sectionMap);
-                const secInfo = sec ? SECTION_INFO[sec] : null;
-                return (
-                  <button key={result.id} onClick={() => onSelectEpisode(result.episode_id)}
-                    className="flex items-center gap-4 rounded-2xl border border-[#e0c7bb] bg-[#fffaf7] p-4 text-left transition hover:bg-[#f1ded5]">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
-                      acc >= 80 ? "bg-green-100 text-green-700" :
-                      acc >= 60 ? "bg-yellow-100 text-yellow-700" :
-                      "bg-red-100 text-red-700"
-                    }`}>{acc}%</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-bold truncate">{result.episode_title}</p>
-                        {secInfo && (
-                          <span className="shrink-0 rounded-full bg-[#ead7cc] px-2 py-0.5 text-[10px] font-bold text-[#3b2f2f]">
-                            {secInfo.emoji} {secInfo.title}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 text-xs text-[#7a6258]">
-                        {result.level} · {getTypeLabel(result.episode_type)}
-                        {secInfo ? ` · ${secInfo.parts}` : ""} · {dateLabel} · {result.score}/{result.total_questions} correct
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[#c9a99a]">→</span>
-                  </button>
-                );
-              })}
-            </div>
-            {totalActivityPages > 1 && (
-              <div className="mt-5 flex items-center justify-center gap-2">
-                <button onClick={() => setActivityPage(p => Math.max(0, p - 1))} disabled={activityPage === 0}
-                  className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">← Prev</button>
-                {Array.from({ length: totalActivityPages }, (_, i) => (
-                  <button key={i} onClick={() => setActivityPage(i)}
-                    className={`rounded-2xl px-4 py-2 text-sm font-semibold ${activityPage === i ? "bg-[#3b2f2f] text-white" : "border border-[#e0c7bb] bg-white hover:bg-[#f1ded5]"}`}>
-                    {i + 1}
-                  </button>
-                ))}
-                <button onClick={() => setActivityPage(p => Math.min(totalActivityPages - 1, p + 1))} disabled={activityPage === totalActivityPages - 1}
-                  className="rounded-2xl border border-[#e0c7bb] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Next →</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Boş durum */}
-        {results.length === 0 && (
-          <div className="mt-12 rounded-[2rem] border border-[#e0c7bb] bg-white p-12 text-center shadow-sm">
-            <p className="text-5xl">🎧</p>
-            <h2 className="mt-4 text-2xl font-bold">No activity yet</h2>
-            <p className="mt-2 text-[#7a6258]">Complete your first practice to start tracking progress.</p>
-            <button onClick={onBack} className="mt-6 rounded-2xl bg-[#3b2f2f] px-8 py-3 font-semibold text-white hover:bg-[#2f2424]">
-              Start Practicing →
+        {/* Non-IELTS tablar: Coming Soon */}
+        {examTab !== "ielts" && (
+          <div className="mt-8 rounded-[2rem] border border-[#c8d5e8] bg-white p-12 text-center shadow-sm">
+            <p className="text-5xl">🚧</p>
+            <h2 className="mt-4 text-2xl font-bold">{EXAM_TABS.find(t => t.id === examTab)?.label} — Coming Soon</h2>
+            <p className="mt-2 text-[#4a5568]">We&apos;re working on it. For now, track your progress in the IELTS tab.</p>
+            <button onClick={() => setExamTab("ielts")} className="mt-6 rounded-2xl bg-[#1e2d4a] px-8 py-3 font-semibold text-white hover:bg-[#162038]">
+              Go to IELTS →
             </button>
           </div>
+        )}
+
+        {/* ───────── IELTS SEKMESİ ───────── */}
+        {examTab === "ielts" && (
+          <>
+            {/* Motivasyon kartı — sade */}
+            <div className="mt-8 rounded-[2rem] bg-[#1e2d4a] p-6 text-white shadow-sm">
+              <p className="text-lg font-semibold">{motivationMessage}</p>
+              {lastActivity && (
+                <p className="mt-2 text-sm text-[#8ba3c4]">
+                  Last activity: {lastActivity} · {getTypeLabel(results[0]?.episode_type)}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2">
+                  <span className={streak > 0 ? "flame-anim text-2xl" : "text-2xl opacity-50"}>🔥</span>
+                  <div className="leading-tight">
+                    <p className="text-xl font-bold">{streak}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-[#8ba3c4]">Current streak</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2">
+                  <span className="text-2xl">🏆</span>
+                  <div className="leading-tight">
+                    <p className="text-xl font-bold">{longestStreak}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-[#8ba3c4]">Longest streak</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4 özet kart */}
+            <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[
+                { emoji: "🔥", label: "Streak", value: `${streak}`, sub: streak === 1 ? "day" : "days", color: streak >= 3 ? "border-orange-200 bg-orange-50" : "" },
+                { emoji: "🎧", label: "Completed", value: `${completedCount}`, sub: "practices", color: "" },
+                { emoji: "🎯", label: "Accuracy", value: `${overallAccuracy}%`, sub: "overall", color: overallAccuracy >= 80 ? "border-green-200 bg-green-50" : "" },
+                { emoji: "✅", label: "Correct", value: `${totalCorrect}`, sub: `of ${totalQuestions}`, color: "" },
+              ].map((card) => (
+                <div key={card.label} className={`rounded-[2rem] border p-6 shadow-sm ${card.color || "border-[#c8d5e8] bg-white"}`}>
+                  <p className="text-sm text-[#4a5568]">{card.emoji} {card.label}</p>
+                  <h2 className="mt-2 text-4xl font-bold">{card.value}</h2>
+                  <p className="mt-1 text-xs text-[#4a5568]">{card.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* IELTS Section kartları */}
+            {hasAnyIelts && (
+              <div className="mt-6 rounded-[2rem] border border-[#c8d5e8] bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-bold">🎧 IELTS Section Progress</h2>
+                <p className="mt-1 text-xs text-[#4a5568]">Your journey through each Listening section.</p>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  {sectionStats.map((s) => {
+                    const info = SECTION_INFO[s.section];
+                    return (
+                      <div key={s.section}
+                        className={`rounded-2xl border p-5 transition ${s.hasData ? "border-[#c8d5e8] bg-[#ffffff]" : "border-dashed border-[#c8d5e8] bg-[#f0f2f5]/40"}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-base font-bold">{info.emoji} {info.title}</p>
+                            <p className="text-xs text-[#4a5568]">{info.desc} · {info.parts}</p>
+                          </div>
+                          {s.hasData ? (
+                            <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-sm font-bold ${
+                              s.pct >= 80 ? "bg-green-100 text-green-700" :
+                              s.pct >= 60 ? "bg-yellow-100 text-yellow-700" :
+                              "bg-red-100 text-red-700"
+                            }`}>{s.pct}%</span>
+                          ) : (
+                            <span className="shrink-0 rounded-full bg-[#dbe4f0] px-2.5 py-0.5 text-xs font-semibold text-[#4a5568]">New</span>
+                          )}
+                        </div>
+                        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <p className="text-lg font-bold">{s.completed}</p>
+                            <p className="text-[10px] uppercase tracking-wide text-[#4a5568]">Done</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold">{s.hasData ? `${s.pct}%` : "—"}</p>
+                            <p className="text-[10px] uppercase tracking-wide text-[#4a5568]">Avg score</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold leading-tight pt-1">{relativeDate(s.last) || "—"}</p>
+                            <p className="text-[10px] uppercase tracking-wide text-[#4a5568]">Last</p>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <div className="mb-1 flex items-center justify-between text-[11px] text-[#4a5568]">
+                            <span>Completed</span>
+                            <span>{s.available > 0 ? `${s.completed}/${s.available}` : s.completed}</span>
+                          </div>
+                          <AccuracyBar pct={s.progress} color={s.hasData ? barColor(s.pct) : "bg-[#8ba3c4]"} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Soru Tipi Performansı */}
+            {questionTypeStats.length > 0 && (
+              <div className="mt-6 rounded-[2rem] border border-[#c8d5e8] bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-bold">📊 Question Type Performance</h2>
+                <p className="mt-1 text-xs text-[#4a5568]">Estimated accuracy by question type across your IELTS sections.</p>
+                <div className="mt-5 flex flex-col gap-4">
+                  {questionTypeStats.map((s) => (
+                    <div key={s.type}>
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-sm font-semibold">{s.label}</span>
+                        <span className={`text-sm font-bold ${textColor(s.pct)}`}>{s.pct}%</span>
+                      </div>
+                      <AccuracyBar pct={s.pct} color={barColor(s.pct)} />
+                      {s.pct < 60 && (
+                        <p className="mt-1 text-xs font-semibold text-[#4a5568]">💡 Practice {s.label} more to improve →</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent Activity — sade */}
+            {results.length > 0 && (
+              <div className="mt-6 rounded-[2rem] border border-[#c8d5e8] bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold">Recent Activity</h2>
+                  {totalActivityPages > 1 && (
+                    <p className="text-sm text-[#4a5568]">Page {activityPage + 1} / {totalActivityPages}</p>
+                  )}
+                </div>
+                <div className="mt-5 flex flex-col gap-3">
+                  {pagedActivity.map((result) => {
+                    const acc = result.total_questions > 0 ? Math.round((result.score / result.total_questions) * 100) : 0;
+                    const dateLabel = relativeDate(result.created_at);
+                    const sec = getSectionNum(result, sectionMap);
+                    const secInfo = sec ? SECTION_INFO[sec] : null;
+                    return (
+                      <button key={result.id} onClick={() => onSelectEpisode(result.episode_id)}
+                        className="flex items-center gap-4 rounded-2xl border border-[#c8d5e8] bg-[#ffffff] p-4 text-left transition hover:bg-[#dbe4f0]">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
+                          acc >= 80 ? "bg-green-100 text-green-700" :
+                          acc >= 60 ? "bg-yellow-100 text-yellow-700" :
+                          "bg-red-100 text-red-700"
+                        }`}>{acc}%</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold truncate">{result.episode_title}</p>
+                            {secInfo && (
+                              <span className="shrink-0 rounded-full bg-[#dbe4f0] px-2 py-0.5 text-[10px] font-bold text-[#1e2d4a]">
+                                {secInfo.emoji} {secInfo.title}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-xs text-[#4a5568]">
+                            {getTypeLabel(result.episode_type)} · {dateLabel} · {result.score}/{result.total_questions} correct
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[#8ba3c4]">→</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {totalActivityPages > 1 && (
+                  <div className="mt-5 flex items-center justify-center gap-2">
+                    <button onClick={() => setActivityPage(p => Math.max(0, p - 1))} disabled={activityPage === 0}
+                      className="rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">← Prev</button>
+                    {Array.from({ length: totalActivityPages }, (_, i) => (
+                      <button key={i} onClick={() => setActivityPage(i)}
+                        className={`rounded-2xl px-4 py-2 text-sm font-semibold ${activityPage === i ? "bg-[#1e2d4a] text-white" : "border border-[#c8d5e8] bg-white hover:bg-[#dbe4f0]"}`}>
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button onClick={() => setActivityPage(p => Math.min(totalActivityPages - 1, p + 1))} disabled={activityPage === totalActivityPages - 1}
+                      className="rounded-2xl border border-[#c8d5e8] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Next →</button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Boş durum */}
+            {results.length === 0 && (
+              <div className="mt-12 rounded-[2rem] border border-[#c8d5e8] bg-white p-12 text-center shadow-sm">
+                <p className="text-5xl">🎧</p>
+                <h2 className="mt-4 text-2xl font-bold">No activity yet</h2>
+                <p className="mt-2 text-[#4a5568]">Complete your first practice to start tracking progress.</p>
+                <button onClick={onBack} className="mt-6 rounded-2xl bg-[#1e2d4a] px-8 py-3 font-semibold text-white hover:bg-[#162038]">
+                  Start Practicing →
+                </button>
+              </div>
+            )}
+          </>
         )}
 
       </section>
