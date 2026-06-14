@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://listeningtalkers.com"),
   title: {
     default: "ListeningTalkers — Free IELTS Listening Practice",
     template: "%s | ListeningTalkers",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "./lib/supabase";
 
 import LoginScreen from "./components/LoginScreen";
@@ -92,6 +93,7 @@ function UserPanel({ userEmail, onNavigate, onLogout }: {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [screen, setScreen] = useState<Screen>("login");
   const [selectedLevel] = useState("Intermediate");
   const [selectedPracticeId, setSelectedPracticeId] = useState("");
@@ -330,7 +332,7 @@ export default function Home() {
       <>
         <UserPanel userEmail={userEmail} onNavigate={navigateTo} onLogout={logout} />
         <HomeScreen
-          onSelectPractice={() => { setIsQuizMode(false); setSelectedIELTSSection(null); goTo("exam-selection"); }}
+          onSelectPractice={() => router.push("/ielts/listening")}
           onSelectQuiz={() => { setIsQuizMode(true); goTo("exam-selection"); }}
         />
       </>
