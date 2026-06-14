@@ -285,7 +285,24 @@ function applyBulkToPart(partIndex: number, type: QuestionGroupType | "", raw: s
 
 function getQuestionTypeDescription(type: QuestionGroupType) {
   switch (type) {
-    case "mcq": return "MCQ bulk format: Q) Question, A) Option A, B) Option B, C) Option C, Correct) A, Explanation) ...";
+    case "mcq": return `Q) Soru metni
+A) Şık A
+B) Şık B
+C) Şık C
+D) Şık D
+E) Şık E
+Correct) B,D
+Explanation) Açıklama
+
+Q) İkinci soru
+A) Şık A
+B) Şık B
+C) Şık C
+Correct) A
+Explanation) Açıklama
+
+⚠️ Her sorunun arasına BOŞ SATIR koyun — yoksa hepsi tek soru olur.
+• Tek cevap: Correct) B  • Choose TWO/THREE: Correct) B,D veya A,C,F`;
     case "matching": return "Matching bulk format: use Q1) item, A) option A, B) option B, ANS1) A, ANS2) B.";
     case "form-completion": return "Form completion bulk: TITLE) form title, FIELD) field text, ANS1) answer.";
     case "note-completion": return "Note completion bulk: TITLE) note title, NOTE) text, ANS1) answer.";
@@ -300,7 +317,7 @@ function getQuestionTypeDescription(type: QuestionGroupType) {
 
 function getQuestionTypePlaceholder(type: QuestionGroupType, partLabel: string) {
   switch (type) {
-    case "mcq": return `${partLabel}: Q) Question\nA) Option A\nB) Option B\nC) Option C\nD) Option D\nCorrect) A`;
+    case "mcq": return `${partLabel}: Q) Question\nA) Option A\nB) Option B\nC) Option C\nCorrect) A\nExplanation) ...\n\nQ) Next question\nA) Option A\nB) Option B\nC) Option C\nCorrect) B\nExplanation) ...`;
     case "matching": return `${partLabel}: Q1) item\nQ2) item\nA) option A\nB) option B\nANS1) A\nANS2) B`;
     case "form-completion": return `${partLabel}: TITLE) Form\nFIELD) Name: ___\nANS1) Answer`;
     case "note-completion": return `${partLabel}: TITLE) Notes\nNOTE) Speaker: ___\nANS1) Answer`;
@@ -1856,9 +1873,9 @@ if (isExam) {
                       <button onClick={() => { setPartBulkText1(""); setPartBulkError1(""); setPartBulkType1(""); setSectionParts(prev => [{ ...prev[0], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" }, prev[1]]); }} className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm">Reset</button>
                     </div>
                     {partBulkType1 && (
-                      <p className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm text-[#4a5568]">
+                      <pre className="mt-3 whitespace-pre-wrap rounded-2xl border border-[#c8d5e8] bg-white p-3 font-mono text-xs leading-5 text-[#4a5568]">
                         {getQuestionTypeDescription(partBulkType1)}
-                      </p>
+                      </pre>
                     )}
                     {partBulkType1 === "map" && (
                       <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">
@@ -1954,9 +1971,9 @@ if (isExam) {
                         <button onClick={() => { setPartBulkText2(""); setPartBulkError2(""); setPartBulkType2(""); setSectionParts(prev => [prev[0], { ...prev[1], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" }]); }} className="rounded-2xl border border-[#c8d5e8] bg-white p-2 text-sm">Reset</button>
                       </div>
                       {partBulkType2 && (
-                        <p className="mt-3 rounded-2xl border border-[#c8d5e8] bg-white p-3 text-sm text-[#4a5568]">
+                        <pre className="mt-3 whitespace-pre-wrap rounded-2xl border border-[#c8d5e8] bg-white p-3 font-mono text-xs leading-5 text-[#4a5568]">
                           {getQuestionTypeDescription(partBulkType2)}
-                        </p>
+                        </pre>
                       )}
                       {partBulkType2 === "map" && (
                         <div className="mt-4 rounded-2xl border border-[#c8d5e8] bg-white p-4">

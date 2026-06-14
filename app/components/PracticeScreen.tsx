@@ -58,11 +58,35 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
+// User-facing name for an IELTS question group. We deliberately ignore the
+// admin-side group.label (e.g. "Bulk mcq") and always show the question type.
+const IELTS_GROUP_TYPE_NAMES: Record<string, string> = {
+  "mcq": "Multiple Choice Questions",
+  "note-completion": "Note Completion",
+  "form-completion": "Form Completion",
+  "table-completion": "Table Completion",
+  "flow-completion": "Flow Chart Completion",
+  "sentence-completion": "Sentence Completion",
+  "short-answer": "Short Answer",
+  "matching": "Matching",
+  "map": "Map Labelling",
+};
+function ieltsGroupTypeName(type: string): string {
+  return IELTS_GROUP_TYPE_NAMES[type] || "Questions";
+}
+
+// MCQ group data should be an array of questions; normalize legacy/bad rows that
+// stored a single question object so every question renders.
+function asMcqArray(data: any): any[] {
+  if (Array.isArray(data)) return data;
+  return data ? [data] : [];
+}
+
 function renderIeltsGroupPreview(group: any, index: number) {
-  const label = group.label || `Group ${index + 1}`;
+  const label = ieltsGroupTypeName(group.type);
   switch (group.type) {
     case "mcq": {
-      const questions = group.data || [];
+      const questions = asMcqArray(group.data);
       return (
         <div key={index} className="rounded-3xl border border-[#c8d5e8] bg-white p-5 shadow-sm">
           <p className="font-bold text-[#1e2d4a]">{label}</p>
@@ -786,7 +810,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
               });
             });
           } else if (group.type === "mcq") {
-            (group.data || []).forEach((q: any, qi: number) => {
+            asMcqArray(group.data).forEach((q: any, qi: number) => {
               total++;
               const key = `${part.part}-${group.id}-${qi}`;
               const correctArr = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
@@ -1229,7 +1253,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
                 return (
                   <div key={groupKey} className="mb-6 rounded-[2rem] border border-[#c8d5e8] bg-[#ffffff] p-6 shadow-sm">
                     {group.wordLimit && <div className="mb-4 rounded-2xl bg-[#dbe4f0] px-4 py-2 text-sm font-semibold text-[#1e2d4a]">✏️ Write {group.wordLimit}</div>}
-                    <p className="mb-3 text-sm font-bold text-[#4a5568] uppercase tracking-wide">{group.label}</p>
+                    <p className="mb-3 text-sm font-bold text-[#4a5568] uppercase tracking-wide">{ieltsGroupTypeName(group.type)}</p>
 
                     {(group.type === "note-completion" || group.type === "form-completion") && (() => {
                       const items = group.data?.items || group.data?.fields || [];
@@ -1325,7 +1349,7 @@ export default function PracticeScreen({ episodeId, onBack, onNextEpisode, onNav
 
                     {group.type === "mcq" && (
                       <div className="flex flex-col gap-4">
-                        {(group.data || []).map((q: any, qi: number) => {
+                        {asMcqArray(group.data).map((q: any, qi: number) => {
                           const key = `${currentPart.part}-${group.id}-${qi}`;
                           const confirmed = ieltsChecked[key] || false;
                           const selected = ieltsAnswers[key] || [];
