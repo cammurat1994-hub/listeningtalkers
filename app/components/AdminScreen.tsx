@@ -993,7 +993,11 @@ export default function AdminScreen({ onBack }: Props) {
         const autoApplyPending = (part: IELTSSectionPart, type: QuestionGroupType | "", text: string, idx: number): IELTSSectionPart => {
           if (!text.trim() || !type) return part;
           const parsed = applyBulkToPart(idx, type, text);
-          if (!parsed) return part;
+          // MCQ / short-answer / matching return arrays; an empty array is truthy, so guard length too.
+          const isEmptyParsed = !parsed
+            || (Array.isArray(parsed) && parsed.length === 0)
+            || (typeof parsed === "object" && !Array.isArray(parsed) && Object.keys(parsed).length === 0);
+          if (isEmptyParsed) return part;
           const groupData = (typeof parsed === "object" && type === "map")
             ? { ...parsed, _imageFile: part.mapImageFile || undefined, imageUrl: part.mapImageUrl || undefined }
             : parsed;
