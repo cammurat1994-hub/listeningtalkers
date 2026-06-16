@@ -991,23 +991,33 @@ export default function AdminScreen({ onBack }: Props) {
       } else if (episodeType === "ielts-section") {
         // Auto-apply any bulk text that was pasted but not "Apply"-ed before publishing.
         const autoApplyPending = (part: IELTSSectionPart, type: QuestionGroupType | "", text: string, idx: number): IELTSSectionPart => {
-          if (!text.trim() || !type) return part;
+          console.log(`[autoApplyPending idx=${idx}] type=`, type, "text.trim() empty?", !text.trim());
+          if (!text.trim() || !type) { console.log(`[autoApplyPending idx=${idx}] SKIPPED (no text or no type)`); return part; }
           const parsed = applyBulkToPart(idx, type, text);
+          console.log(`[autoApplyPending idx=${idx}] applyBulkToPart returned:`, parsed, "isArray?", Array.isArray(parsed), "len/keys:", Array.isArray(parsed) ? parsed.length : parsed && typeof parsed === "object" ? Object.keys(parsed).length : "n/a");
           // MCQ / short-answer / matching return arrays; an empty array is truthy, so guard length too.
           const isEmptyParsed = !parsed
             || (Array.isArray(parsed) && parsed.length === 0)
             || (typeof parsed === "object" && !Array.isArray(parsed) && Object.keys(parsed).length === 0);
-          if (isEmptyParsed) return part;
+          if (isEmptyParsed) { console.log(`[autoApplyPending idx=${idx}] SKIPPED (empty parse result)`); return part; }
           const groupData = (typeof parsed === "object" && type === "map")
             ? { ...parsed, _imageFile: part.mapImageFile || undefined, imageUrl: part.mapImageUrl || undefined }
             : parsed;
           const group: QuestionGroup = { id: `group-bulk-${Date.now()}-${idx}`, type: type as QuestionGroupType, label: `Bulk ${type}`, wordLimit: "", data: groupData };
+          console.log(`[autoApplyPending idx=${idx}] ADDED group:`, JSON.stringify(group));
           return { ...part, questionGroups: [...part.questionGroups, group] };
         };
+        console.log("partBulkType1:", partBulkType1);
+        console.log("partBulkText1 length:", partBulkText1.length);
+        console.log("sectionParts[0].questionGroups before:", JSON.stringify(sectionParts[0].questionGroups));
+        console.log("partBulkType2:", partBulkType2);
+        console.log("partBulkText2 length:", partBulkText2.length);
+        console.log("sectionParts[1].questionGroups before:", JSON.stringify(sectionParts[1].questionGroups));
         const partsForPublish = [
           autoApplyPending(sectionParts[0], partBulkType1, partBulkText1, 0),
           sectionNumber !== 4 ? autoApplyPending(sectionParts[1], partBulkType2, partBulkText2, 1) : sectionParts[1],
         ];
+        console.log("partsForPublish (after auto-apply):", JSON.stringify(partsForPublish.map((p, i) => ({ part: i + 1, groups: p.questionGroups.map(g => ({ type: g.type, count: Array.isArray(g.data) ? g.data.length : "obj" })) }))));
         const processedParts = await Promise.all(partsForPublish.map(async (part, pi) => {
           let audioUrl = part.audioUrl;
           if (part.audioFile) audioUrl = await uploadFile(part.audioFile, "episode");
