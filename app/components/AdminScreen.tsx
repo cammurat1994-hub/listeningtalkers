@@ -154,30 +154,34 @@ function createEmptyPart(): IELTSSectionPart {
   return { audioFile: null, audioUrl: "", introAudioFile: null, introAudioUrl: "", questionGroups: [], mapImageFile: null, mapImageUrl: "", mapImagePreview: "" };
 }
 function parseBulkMCQ(raw: string): MCQQuestion[] {
-  const blocks = raw.trim().split(/\n{2,}/);
+  // Split questions on each `Q)` marker rather than on blank lines: pasted text
+  // often uses CRLF or omits blank separators, which collapses everything into a
+  // single question. Normalize line endings, then start a new question per Q-line.
+  const lines = raw.replace(/\r\n?/g, "\n").split("\n").map(l => l.trim()).filter(Boolean);
   const parsed: MCQQuestion[] = [];
-  for (const block of blocks) {
-    const lines = block.trim().split("\n").map(l => l.trim()).filter(Boolean);
-    if (!lines.length) continue;
-    const q: MCQQuestion = { question: "", options: { A: "", B: "", C: "" }, correctAnswer: "A", explanation: "" };
-    for (const line of lines) {
-      if (/^Q[):.\s]/i.test(line)) q.question = line.replace(/^Q[):.\s]+/i, "").trim();
-      else if (/^A[):.\s]/i.test(line)) q.options.A = line.replace(/^A[):.\s]+/i, "").trim();
-      else if (/^B[):.\s]/i.test(line)) q.options.B = line.replace(/^B[):.\s]+/i, "").trim();
-      else if (/^C[):.\s]/i.test(line)) q.options.C = line.replace(/^C[):.\s]+/i, "").trim();
-      else if (/^D[):.\s]/i.test(line)) q.options.D = line.replace(/^D[):.\s]+/i, "").trim();
-      else if (/^E[):.\s]/i.test(line)) q.options.E = line.replace(/^E[):.\s]+/i, "").trim();
-      else if (/^F[):.\s]/i.test(line)) q.options.F = line.replace(/^F[):.\s]+/i, "").trim();
-      else if (/^G[):.\s]/i.test(line)) q.options.G = line.replace(/^G[):.\s]+/i, "").trim();
-      else if (/^correct[):.\s]/i.test(line)) {
-        const raw = line.replace(/^correct[):.\s]+/i, "").trim().toUpperCase();
-        const answers = raw.split(",").map(a => a.trim()).filter(a => /^[A-G]$/.test(a));
-        q.correctAnswer = answers.length === 1 ? answers[0] : answers;
-      }
-      else if (/^explanation[):.\s]/i.test(line)) q.explanation = line.replace(/^explanation[):.\s]+/i, "").trim();
+  let q: MCQQuestion | null = null;
+  const flush = () => { if (q && q.question) parsed.push(q); };
+  for (const line of lines) {
+    if (/^Q[):.\s]/i.test(line)) {
+      flush();
+      q = { question: line.replace(/^Q[):.\s]+/i, "").trim(), options: { A: "", B: "", C: "" }, correctAnswer: "A", explanation: "" };
     }
-    if (q.question) parsed.push(q);
+    else if (!q) continue;
+    else if (/^A[):.\s]/i.test(line)) q.options.A = line.replace(/^A[):.\s]+/i, "").trim();
+    else if (/^B[):.\s]/i.test(line)) q.options.B = line.replace(/^B[):.\s]+/i, "").trim();
+    else if (/^C[):.\s]/i.test(line)) q.options.C = line.replace(/^C[):.\s]+/i, "").trim();
+    else if (/^D[):.\s]/i.test(line)) q.options.D = line.replace(/^D[):.\s]+/i, "").trim();
+    else if (/^E[):.\s]/i.test(line)) q.options.E = line.replace(/^E[):.\s]+/i, "").trim();
+    else if (/^F[):.\s]/i.test(line)) q.options.F = line.replace(/^F[):.\s]+/i, "").trim();
+    else if (/^G[):.\s]/i.test(line)) q.options.G = line.replace(/^G[):.\s]+/i, "").trim();
+    else if (/^correct[):.\s]/i.test(line)) {
+      const rawAns = line.replace(/^correct[):.\s]+/i, "").trim().toUpperCase();
+      const answers = rawAns.split(",").map(a => a.trim()).filter(a => /^[A-G]$/.test(a));
+      q.correctAnswer = answers.length === 1 ? answers[0] : answers;
+    }
+    else if (/^explanation[):.\s]/i.test(line)) q.explanation = line.replace(/^explanation[):.\s]+/i, "").trim();
   }
+  flush();
   return parsed;
 }
 
@@ -991,33 +995,23 @@ export default function AdminScreen({ onBack }: Props) {
       } else if (episodeType === "ielts-section") {
         // Auto-apply any bulk text that was pasted but not "Apply"-ed before publishing.
         const autoApplyPending = (part: IELTSSectionPart, type: QuestionGroupType | "", text: string, idx: number): IELTSSectionPart => {
-          console.log(`[autoApplyPending idx=${idx}] type=`, type, "text.trim() empty?", !text.trim());
-          if (!text.trim() || !type) { console.log(`[autoApplyPending idx=${idx}] SKIPPED (no text or no type)`); return part; }
+          if (!text.trim() || !type) return part;
           const parsed = applyBulkToPart(idx, type, text);
-          console.log(`[autoApplyPending idx=${idx}] applyBulkToPart returned:`, parsed, "isArray?", Array.isArray(parsed), "len/keys:", Array.isArray(parsed) ? parsed.length : parsed && typeof parsed === "object" ? Object.keys(parsed).length : "n/a");
           // MCQ / short-answer / matching return arrays; an empty array is truthy, so guard length too.
           const isEmptyParsed = !parsed
             || (Array.isArray(parsed) && parsed.length === 0)
             || (typeof parsed === "object" && !Array.isArray(parsed) && Object.keys(parsed).length === 0);
-          if (isEmptyParsed) { console.log(`[autoApplyPending idx=${idx}] SKIPPED (empty parse result)`); return part; }
+          if (isEmptyParsed) return part;
           const groupData = (typeof parsed === "object" && type === "map")
             ? { ...parsed, _imageFile: part.mapImageFile || undefined, imageUrl: part.mapImageUrl || undefined }
             : parsed;
           const group: QuestionGroup = { id: `group-bulk-${Date.now()}-${idx}`, type: type as QuestionGroupType, label: `Bulk ${type}`, wordLimit: "", data: groupData };
-          console.log(`[autoApplyPending idx=${idx}] ADDED group:`, JSON.stringify(group));
           return { ...part, questionGroups: [...part.questionGroups, group] };
         };
-        console.log("partBulkType1:", partBulkType1);
-        console.log("partBulkText1 length:", partBulkText1.length);
-        console.log("sectionParts[0].questionGroups before:", JSON.stringify(sectionParts[0].questionGroups));
-        console.log("partBulkType2:", partBulkType2);
-        console.log("partBulkText2 length:", partBulkText2.length);
-        console.log("sectionParts[1].questionGroups before:", JSON.stringify(sectionParts[1].questionGroups));
         const partsForPublish = [
           autoApplyPending(sectionParts[0], partBulkType1, partBulkText1, 0),
           sectionNumber !== 4 ? autoApplyPending(sectionParts[1], partBulkType2, partBulkText2, 1) : sectionParts[1],
         ];
-        console.log("partsForPublish (after auto-apply):", JSON.stringify(partsForPublish.map((p, i) => ({ part: i + 1, groups: p.questionGroups.map(g => ({ type: g.type, count: Array.isArray(g.data) ? g.data.length : "obj" })) }))));
         const processedParts = await Promise.all(partsForPublish.map(async (part, pi) => {
           let audioUrl = part.audioUrl;
           if (part.audioFile) audioUrl = await uploadFile(part.audioFile, "episode");
